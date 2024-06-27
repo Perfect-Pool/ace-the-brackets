@@ -1,0 +1,14 @@
+account_id: "perfectpool"
+actions:
+  perfectpool/perfectpool:
+    runtime: v2
+    sources: actions
+    specs:
+      updateAce:
+        description: "Update Ace on Blockchain"
+        function: updateAce:updateAce
+        trigger:
+          type: webhook
+          webhook:
+            authenticated: true
+project_slug: "perfectpool"

@@ -1,0 +1,14 @@
+account_id: "perfectpool"
+actions:
+  perfectpool/perfectpool:
+    runtime: v2
+    sources: actions
+    specs:
+      ethFaucet:
+        description: "ETH Faucet"
+        function: ethFaucet:ethFaucet
+        trigger:
+          type: webhook
+          webhook:
+            authenticated: true
+project_slug: "perfectpool"

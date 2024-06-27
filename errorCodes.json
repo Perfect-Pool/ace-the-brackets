@@ -1,0 +1,16 @@
+{
+  "GamesHub": {
+    "GH-01": "Caller is not a Project Contract or an Administrator",
+    "GH-02": "Invalid Contract Address",
+    "GH-03": "Contract Call Failed"
+  },
+  "AceTheBrackets8": {
+    "ACE-01": "Caller is not the authorized game contract.",
+    "ACE-02": "Game index is out of bounds.",
+    "ACE-03": "Insufficient number of tokens provided for the game.",
+    "ACE-04": "Mismatch between the number of tokens and symbols provided.",
+    "ACE-05": "Invalid token ID or symbol provided.",
+    "ACE-06": "Invalid winners array provided.",
+    "ACE-07": "Invalid round number provided."
+  }
+}

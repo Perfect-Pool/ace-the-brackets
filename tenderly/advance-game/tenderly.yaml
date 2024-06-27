@@ -1,0 +1,14 @@
+account_id: "perfectpool"
+actions:
+  perfectpool/perfectpool:
+    runtime: v2
+    sources: actions
+    specs:
+      aceTheBrackets:
+        description: "Advance Games for AceTheBrackets"
+        function: advanceGames:advanceGames
+        trigger:
+          type: periodic
+          periodic:
+            interval: 10m
+project_slug: "perfectpool"
