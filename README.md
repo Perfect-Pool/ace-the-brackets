@@ -1,4 +1,4 @@
-# Ace The Brackets
+# ✅ Ace the Brackets
 
 **Ace the Brackets** is a prediction game that employs a bracket-style system to determine the winner in a single-elimination competition between top coins and tokens, based on their price performance.
 
