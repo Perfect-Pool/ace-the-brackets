@@ -64,7 +64,7 @@ const getRandomUniqueElements = (arr: Coin[], n: number): Coin[] => {
     return result;
 };
 
-const getCoinsTop = async (limit: number, maxCoins: number, context: Context): Promise<Coin[]> => {
+const getCoinsTop = async (limit: number, maxCoins: number, context: Context, lastTimeStamp: number): Promise<Coin[]> => {
     const apiKey = await context.secrets.get("project.cmcAPIKey");
     const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest`;
 
@@ -93,11 +93,12 @@ const getCoinsTop = async (limit: number, maxCoins: number, context: Context): P
         return formattedCoins;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
+        callRollbackAPI(context, lastTimeStamp);
         return [];
     }
 }
 
-const getPriceCMC = async (coin: string, context: Context): Promise<any> => {
+const getPriceCMC = async (coin: string, context: Context, lastTimeStamp: number): Promise<any> => {
     const apiKey = await context.secrets.get("project.cmcAPIKey");
     const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest`;
 
@@ -115,6 +116,7 @@ const getPriceCMC = async (coin: string, context: Context): Promise<any> => {
         return response.data.data;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
+        callRollbackAPI(context, lastTimeStamp);
         return [];
     }
 }
@@ -353,19 +355,9 @@ function createDataUpdate(resultGames: any[]) {
     return dataUpdate;
 }
 
-async function getGasPrice(provider: ethers.providers.Provider): Promise<ethers.BigNumber> {
-    try {
-        const gasPrice = await provider.getGasPrice();
-        return gasPrice;
-    } catch (error) {
-        console.error("Erro ao obter o preço do GAS:", error);
-        throw error;
-    }
-}
-
 export const advanceGamesMain: ActionFn = async (context: Context, event: Event) => {
     const lastTimeStamp = Math.floor(Date.now() / 1000 / 60) * 60;
-    const lastT = await context.storage.getNumber('lastTimeStamp');
+    const lastT = await context.storage.getNumber('lastTimeStampMain');
 
     // lastT must be 5 mins or more older than lastTimeStamp
     if (lastT && (lastTimeStamp - lastT < (6 * 60))) {
@@ -373,7 +365,7 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
         return;
     }
 
-    await context.storage.putNumber('lastTimeStamp', lastTimeStamp);
+    await context.storage.putNumber('lastTimeStampMain', lastTimeStamp);
 
     const privateKey = await context.secrets.get("project.addressPrivateKey");
     const rpcUrl = await context.secrets.get(".rpcUrl");
@@ -399,7 +391,7 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
     }
 
     console.log("Fetching coins for a new game");
-    const newGameCoins = await getCoinsTop(150, 8, context);
+    const newGameCoins = await getCoinsTop(150, 8, context, lastTimeStamp);
     const newGameCalldata = await createCalldataForNewGame(newGameCoins);
     let coins = newGameCoins.map((coin) => coin.symbol).join(",");
 
@@ -421,7 +413,7 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
     console.log("Coins for all games:", coins);
 
     console.log("Fetching prices");
-    const prices = await getPriceCMC(coins, context);
+    const prices = await getPriceCMC(coins, context, lastTimeStamp);
 
     if (!prices || Object.keys(prices).length === 0) {
         console.error("Failed to fetch prices");
@@ -453,8 +445,6 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
     let estimatedGas;
     let gasLimit;
 
-    const gasPrice = await getGasPrice(provider);
-
     try {
         estimatedGas = await aceContract.estimateGas.performGames(
             newGameCalldata,
@@ -469,7 +459,6 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
         return;
     }
 
-    console.log("Gas price:", gasPrice.toString());
     console.log("Gas limit:", gasLimit.toString());
 
     console.log(
@@ -482,8 +471,7 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
             updateGamesCalldata,
             lastTimeStamp,
             {
-                gasLimit: gasLimit,
-                gasPrice: gasPrice,
+                gasLimit: gasLimit
             }
         );
 

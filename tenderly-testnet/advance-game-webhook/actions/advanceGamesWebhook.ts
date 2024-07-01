@@ -92,6 +92,7 @@ const getCoinsTop = async (limit: number, maxCoins: number, context: Context): P
         return formattedCoins;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
+        callRollbackAPI(context);
         return [];
     }
 }
@@ -114,6 +115,7 @@ const getPriceCMC = async (coin: string, context: Context): Promise<any> => {
         return response.data.data;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
+        callRollbackAPI(context);
         return [];
     }
 }
@@ -352,15 +354,6 @@ function createDataUpdate(resultGames: any[]) {
     return dataUpdate;
 }
 
-async function getGasPrice(provider: ethers.providers.Provider): Promise<ethers.BigNumber> {
-    try {
-        const gasPrice = await provider.getGasPrice();
-        return gasPrice;
-    } catch (error) {
-        console.error("Erro ao obter o preço do GAS:", error);
-        throw error;
-    }
-}
 export const advanceGamesWebhook: ActionFn = async (context: Context, event: Event) => {
     const lastTimeStamp = Math.floor(Date.now() / 1000 / 600) * 600;
     const privateKey = await context.secrets.get("project.addressPrivateKey");
@@ -441,8 +434,6 @@ export const advanceGamesWebhook: ActionFn = async (context: Context, event: Eve
     let estimatedGas;
     let gasLimit;
 
-    const gasPrice = await getGasPrice(provider);
-
     try {
         estimatedGas = await aceContract.estimateGas.performGames(
             newGameCalldata,
@@ -457,7 +448,6 @@ export const advanceGamesWebhook: ActionFn = async (context: Context, event: Eve
         return;
     }
 
-    console.log("Gas price:", gasPrice.toString());
     console.log("Gas limit:", gasLimit.toString());
 
     console.log(
@@ -470,8 +460,7 @@ export const advanceGamesWebhook: ActionFn = async (context: Context, event: Eve
             updateGamesCalldata,
             lastTimeStamp,
             {
-                gasLimit: gasLimit,
-                gasPrice: gasPrice,
+                gasLimit: gasLimit
             }
         );
 

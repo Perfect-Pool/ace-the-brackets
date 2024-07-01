@@ -64,7 +64,7 @@ const getRandomUniqueElements = (arr: Coin[], n: number): Coin[] => {
     return result;
 };
 
-const getCoinsTop = async (limit: number, maxCoins: number, context: Context): Promise<Coin[]> => {
+const getCoinsTop = async (limit: number, maxCoins: number, context: Context, lastTimeStamp: number): Promise<Coin[]> => {
     const apiKey = await context.secrets.get("project.cmcAPIKey");
     const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest`;
 
@@ -93,11 +93,12 @@ const getCoinsTop = async (limit: number, maxCoins: number, context: Context): P
         return formattedCoins;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
+        callRollbackAPI(context, lastTimeStamp);
         return [];
     }
 }
 
-const getPriceCMC = async (coin: string, context: Context): Promise<any> => {
+const getPriceCMC = async (coin: string, context: Context, lastTimeStamp: number): Promise<any> => {
     const apiKey = await context.secrets.get("project.cmcAPIKey");
     const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest`;
 
@@ -115,6 +116,7 @@ const getPriceCMC = async (coin: string, context: Context): Promise<any> => {
         return response.data.data;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
+        callRollbackAPI(context, lastTimeStamp);
         return [];
     }
 }
@@ -353,15 +355,6 @@ function createDataUpdate(resultGames: any[]) {
     return dataUpdate;
 }
 
-async function getGasPrice(provider: ethers.providers.Provider): Promise<ethers.BigNumber> {
-    try {
-        const gasPrice = await provider.getGasPrice();
-        return gasPrice;
-    } catch (error) {
-        console.error("Erro ao obter o preço do GAS:", error);
-        throw error;
-    }
-}
 export const advanceGamesWebhookMain: ActionFn = async (context: Context, event: Event) => {
     const webhookEvent = event as WebhookEvent;
     const lastTimeStamp = webhookEvent.payload.lastTimeStamp;
@@ -390,7 +383,7 @@ export const advanceGamesWebhookMain: ActionFn = async (context: Context, event:
     }
 
     console.log("Fetching coins for a new game");
-    const newGameCoins = await getCoinsTop(150, 8, context);
+    const newGameCoins = await getCoinsTop(150, 8, context, lastTimeStamp);
     const newGameCalldata = await createCalldataForNewGame(newGameCoins);
     let coins = newGameCoins.map((coin) => coin.symbol).join(",");
 
@@ -412,7 +405,7 @@ export const advanceGamesWebhookMain: ActionFn = async (context: Context, event:
     console.log("Coins for all games:", coins);
 
     console.log("Fetching prices");
-    const prices = await getPriceCMC(coins, context);
+    const prices = await getPriceCMC(coins, context, lastTimeStamp);
 
     if (!prices || Object.keys(prices).length === 0) {
         console.error("Failed to fetch prices");
@@ -444,8 +437,6 @@ export const advanceGamesWebhookMain: ActionFn = async (context: Context, event:
     let estimatedGas;
     let gasLimit;
 
-    const gasPrice = await getGasPrice(provider);
-
     try {
         estimatedGas = await aceContract.estimateGas.performGames(
             newGameCalldata,
@@ -460,7 +451,6 @@ export const advanceGamesWebhookMain: ActionFn = async (context: Context, event:
         return;
     }
 
-    console.log("Gas price:", gasPrice.toString());
     console.log("Gas limit:", gasLimit.toString());
 
     console.log(
@@ -474,7 +464,6 @@ export const advanceGamesWebhookMain: ActionFn = async (context: Context, event:
             lastTimeStamp,
             {
                 gasLimit: gasLimit,
-                gasPrice: gasPrice,
             }
         );
 

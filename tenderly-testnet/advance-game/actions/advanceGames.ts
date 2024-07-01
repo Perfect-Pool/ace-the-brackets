@@ -92,6 +92,7 @@ const getCoinsTop = async (limit: number, maxCoins: number, context: Context): P
         return formattedCoins;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
+        callRollbackAPI(context);
         return [];
     }
 }
@@ -114,6 +115,7 @@ const getPriceCMC = async (coin: string, context: Context): Promise<any> => {
         return response.data.data;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
+        callRollbackAPI(context);
         return [];
     }
 }
@@ -352,16 +354,6 @@ function createDataUpdate(resultGames: any[]) {
     return dataUpdate;
 }
 
-async function getGasPrice(provider: ethers.providers.Provider): Promise<ethers.BigNumber> {
-    try {
-        const gasPrice = await provider.getGasPrice();
-        return gasPrice;
-    } catch (error) {
-        console.error("Erro ao obter o preço do GAS:", error);
-        throw error;
-    }
-}
-
 export const advanceGames: ActionFn = async (context: Context, event: Event) => {
     const lastTimeStamp = Math.floor(Date.now() / 1000 / 60) * 60;
     const lastT = await context.storage.getNumber('lastTimeStamp');
@@ -452,8 +444,6 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
     let estimatedGas;
     let gasLimit;
 
-    const gasPrice = await getGasPrice(provider);
-
     try {
         estimatedGas = await aceContract.estimateGas.performGames(
             newGameCalldata,
@@ -468,7 +458,6 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
         return;
     }
 
-    console.log("Gas price:", gasPrice.toString());
     console.log("Gas limit:", gasLimit.toString());
 
     console.log(
@@ -481,8 +470,7 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
             updateGamesCalldata,
             lastTimeStamp,
             {
-                gasLimit: gasLimit,
-                gasPrice: gasPrice,
+                gasLimit: gasLimit
             }
         );
 
