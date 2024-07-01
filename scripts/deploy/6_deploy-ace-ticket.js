@@ -8,6 +8,13 @@ async function main() {
   const networkName = hre.network.name;
   const networkData = data[networkName];
 
+  let tokenAddress;
+  if (networkName.includes("-testnet")) {
+    tokenAddress = networkData.TOKEN_ADDRESS;
+  }else{
+    tokenAddress = networkData.USDC;
+  }
+
   // Carregar o contrato GamesHub
   const GamesHub = await ethers.getContractFactory("GamesHub");
   const gamesHub = await GamesHub.attach(networkData.GAMES_HUB);
@@ -18,7 +25,7 @@ async function main() {
 
   if (networkData.NFT_BRACKETS === "") {
     const AceTicket8 = await ethers.getContractFactory("AceTicket8");
-    const aceTicket8 = await AceTicket8.deploy(gamesHub.address, networkData.Executor);
+    const aceTicket8 = await AceTicket8.deploy(gamesHub.address, networkData.Executor, tokenAddress);
     await aceTicket8.deployed();
     console.log(`AceTicket8 deployed at ${aceTicket8.address}`);
 
