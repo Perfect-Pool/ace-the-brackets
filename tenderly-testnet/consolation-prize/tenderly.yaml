@@ -4,9 +4,9 @@ actions:
     runtime: v2
     sources: actions
     specs:
-      prizeIterationMain:
-        description: "Event trigger to consolation prize Base Mainnet"
-        function: consolationPrizeMain:consolationPrizeMain
+      prizeIteration:
+        description: "Event trigger to consolation prize"
+        function: consolationPrize:consolationPrize
         trigger:
           type: transaction
           transaction:

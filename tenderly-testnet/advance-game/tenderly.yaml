@@ -4,9 +4,9 @@ actions:
     runtime: v2
     sources: actions
     specs:
-      aceTheBracketsMain:
-        description: "Advance Games for AceTheBrackets Base Mainnet"
-        function: advanceGamesMain:advanceGamesMain
+      aceTheBrackets:
+        description: "Advance Games for AceTheBrackets"
+        function: advanceGames:advanceGames
         trigger:
           type: periodic
           periodic:

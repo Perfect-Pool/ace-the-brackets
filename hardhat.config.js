@@ -31,7 +31,6 @@ module.exports = {
       url: process.env.BASE_RPC_URL,
       accounts: [privateKey],
       chainId: parseInt(process.env.BASE_CHAIN_ID),
-      gasPrice: 2000,
     },
     polygon: {
       url: process.env.POLYGON_RPC_URL,

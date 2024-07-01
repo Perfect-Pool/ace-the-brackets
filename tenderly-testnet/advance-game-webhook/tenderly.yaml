@@ -4,9 +4,9 @@ actions:
     runtime: v2
     sources: actions
     specs:
-      advanceGamesWebhookMain:
-        description: "Advance Games Webhook Base Mainnet"
-        function: advanceGamesWebhookMain:advanceGamesWebhookMain
+      advanceGamesWebhook:
+        description: "Advance Games Webhook"
+        function: advanceGamesWebhook:advanceGamesWebhook
         trigger:
           type: webhook
           webhook:
