@@ -171,7 +171,7 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
      * @param bets The array of bets for the game.
      */
     function safeMint(uint256 _gameId, uint256[7] memory bets) public {
-        // require(!aceContract.paused(), "Game paused.");
+        require(!aceContract.paused(), "Game paused.");
         require(aceContract.getGameStatus(_gameId) == 0, "Bets closed.");
 
         (uint256[8] memory tokens, , ) = aceContract.getRoundData(_gameId, 0);
@@ -211,6 +211,7 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
             getPotStatus(tokenToGameId[_tokenId]),
             "Pot still being calculated."
         );
+        require(ownerOf(_tokenId) == msg.sender, "Not the owner of the ticket.");
 
         uint8 status = aceContract.getGameStatus(tokenToGameId[_tokenId]);
         require(status == 4, "Game not finished.");
@@ -271,6 +272,7 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
         uint256 totalAmount = 0;
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             if (!getPotStatus(tokenToGameId[_tokenIds[i]])) continue;
+            if (ownerOf(_tokenIds[i]) != msg.sender) continue;
 
             uint8 status = aceContract.getGameStatus(
                 tokenToGameId[_tokenIds[i]]
