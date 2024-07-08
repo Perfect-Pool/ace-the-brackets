@@ -2,7 +2,6 @@ import { ActionFn, Context, Event } from "@tenderly/actions";
 
 import { ethers } from "ethers";
 import axios, { AxiosRequestConfig } from 'axios';
-
 interface Coin {
     id: number;
     symbol: string;
@@ -16,7 +15,7 @@ interface DecodedGame {
     prices: number[];
 }
 
-async function callRollbackAPI(context: Context): Promise<void> {
+async function callRollbackAPI(context: Context, timestampExec: number): Promise<void> {
     try {
         const accessToken = await context.secrets.get('project.accessToken');
 
@@ -29,6 +28,7 @@ async function callRollbackAPI(context: Context): Promise<void> {
             },
             data: {
                 rollback: true,
+                lastTimeStamp: timestampExec
             },
         };
 
@@ -63,7 +63,7 @@ const getRandomUniqueElements = (arr: Coin[], n: number): Coin[] => {
     return result;
 };
 
-const getCoinsTop = async (limit: number, maxCoins: number, context: Context): Promise<Coin[]> => {
+const getCoinsTop = async (limit: number, maxCoins: number, context: Context, timestampExec: number): Promise<Coin[]> => {
     const apiKey = await context.secrets.get("project.cmcAPIKey");
     const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest`;
 
@@ -77,7 +77,6 @@ const getCoinsTop = async (limit: number, maxCoins: number, context: Context): P
             headers: {
                 "X-CMC_PRO_API_KEY": apiKey,
             },
-            timeout: 5000,
         });
 
         const coinsData = response.data.data;
@@ -92,30 +91,35 @@ const getCoinsTop = async (limit: number, maxCoins: number, context: Context): P
         return formattedCoins;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
-        callRollbackAPI(context);
+        callRollbackAPI(context, timestampExec);
         return [];
     }
 }
 
-const getPriceCMC = async (coin: string, context: Context): Promise<any> => {
+const getPriceCMC = async (coin: string, context: Context, timestampExec: number): Promise<any> => {
     const apiKey = await context.secrets.get("project.cmcAPIKey");
-    const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest`;
+    const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/historical`;
+
+    const timestamptoIso8601 = new Date(timestampExec * 1000).toISOString();
+    console.log("Timestamp to ISO8601: ", timestamptoIso8601);
 
     try {
         const response = await axios.get(url, {
             params: {
                 symbol: coin,
+                time_end: timestamptoIso8601,
+                interval: "5m",
+                count : 10
             },
             headers: {
                 "X-CMC_PRO_API_KEY": apiKey,
             },
-            timeout: 5000,
         });
 
         return response.data.data;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
-        callRollbackAPI(context);
+        callRollbackAPI(context, timestampExec);
         return [];
     }
 }
@@ -194,11 +198,20 @@ const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) =>
                 continue;
             }
 
+            const moeda = prices[game.coins[index]];
+            const moedaNext = prices[game.coins[index + 1]];
+
+            if (!moeda || !moedaNext || !moeda.quotes || !moedaNext.quotes || moeda.quotes.length === 0 || moedaNext.quotes.length === 0) {
+                console.error("Prices not found for coin: ", game.coins[index]);
+                console.error("Price: ", prices[game.coins[index]]);
+                continue;
+            }
+
             const priceCurrent = Math.floor(
-                prices[game.coins[index]].quote.USD.price * 10 ** 8
+                moeda.quotes[0].quote.USD.price * 10 ** 8
             );
             const priceNext = Math.floor(
-                prices[game.coins[index + 1]].quote.USD.price * 10 ** 8
+                moedaNext.quotes[0].quote.USD.price * 10 ** 8
             );
             console.log("Price current ", game.coins[index], ": ", priceCurrent);
             console.log("Price next ", game.coins[index + 1], ": ", priceNext);
@@ -217,9 +230,9 @@ const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) =>
 
                 if (variationCurrent === variationNext) {
                     const volumeChangeCurrent =
-                        prices[game.coins[index]].quote.USD.volume_change_24h;
+                        moeda.quotes[0].quote.USD.volume_change_24h;
                     const volumeChangeNext =
-                        prices[game.coins[index + 1]].quote.USD.volume_change_24h;
+                        moedaNext.quotes[0].quote.USD.volume_change_24h;
 
                     if (
                         volumeChangeCurrent !== undefined &&
@@ -385,12 +398,12 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
         aceContract = new ethers.Contract(CONTRACT_ADDRESS, abi, wallet);
     } catch (error) {
         console.error("Failed to fetch contract:", error);
-        await callRollbackAPI(context);
+        await callRollbackAPI(context, lastTimeStamp);
         return;
     }
 
     console.log("Fetching coins for a new game");
-    const newGameCoins = await getCoinsTop(150, 8, context);
+    const newGameCoins = await getCoinsTop(150, 8, context, lastTimeStamp);
     const newGameCalldata = await createCalldataForNewGame(newGameCoins);
     let coins = newGameCoins.map((coin) => coin.symbol).join(",");
 
@@ -412,11 +425,11 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
     console.log("Coins for all games:", coins);
 
     console.log("Fetching prices");
-    const prices = await getPriceCMC(coins, context);
+    const prices = await getPriceCMC(coins, context, lastTimeStamp);
 
     if (!prices || Object.keys(prices).length === 0) {
         console.error("Failed to fetch prices");
-        await callRollbackAPI(context);
+        await callRollbackAPI(context, lastTimeStamp);
         return;
     }
 
@@ -427,7 +440,7 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
 
     if (resultGames === null || resultGames.length !== decodedGames.length) {
         console.error("Failed to calculate game results");
-        await callRollbackAPI(context);
+        await callRollbackAPI(context, lastTimeStamp);
         return;
     }
 
@@ -454,7 +467,7 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
     } catch (error) {
         console.error("Failed to estimate gas:", error);
         await new Promise((resolve) => setTimeout(resolve, 5000));
-        await callRollbackAPI(context);
+        await callRollbackAPI(context, lastTimeStamp);
         return;
     }
 
@@ -479,6 +492,6 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
     } catch (error) {
         console.error("Failed to perform games:", error);
         await new Promise((resolve) => setTimeout(resolve, 5000));
-        await callRollbackAPI(context);
+        await callRollbackAPI(context, lastTimeStamp);
     }
 };

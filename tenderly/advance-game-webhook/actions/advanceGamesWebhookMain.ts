@@ -16,20 +16,20 @@ interface DecodedGame {
     prices: number[];
 }
 
-async function callRollbackAPI(context: Context, lastTimeStamp: number): Promise<void> {
+async function callRollbackAPI(context: Context, timestampExec: number): Promise<void> {
     try {
         const accessToken = await context.secrets.get('project.accessToken');
 
         const config: AxiosRequestConfig = {
             method: 'POST',
-            url: 'https://api.tenderly.co/api/v1/actions/5e0ece2f-f1bb-4202-a558-f50c350db6ba/webhook',
+            url: 'https://api.tenderly.co/api/v1/actions/398dc012-da36-4c60-ac40-ed00f38e0a76/webhook',
             headers: {
                 'x-access-key': accessToken,
                 'Content-Type': 'application/json',
             },
             data: {
                 rollback: true,
-                lastTimeStamp: lastTimeStamp,
+                lastTimeStamp: timestampExec
             },
         };
 
@@ -64,7 +64,7 @@ const getRandomUniqueElements = (arr: Coin[], n: number): Coin[] => {
     return result;
 };
 
-const getCoinsTop = async (limit: number, maxCoins: number, context: Context, lastTimeStamp: number): Promise<Coin[]> => {
+const getCoinsTop = async (limit: number, maxCoins: number, context: Context, timestampExec: number): Promise<Coin[]> => {
     const apiKey = await context.secrets.get("project.cmcAPIKey");
     const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest`;
 
@@ -78,7 +78,6 @@ const getCoinsTop = async (limit: number, maxCoins: number, context: Context, la
             headers: {
                 "X-CMC_PRO_API_KEY": apiKey,
             },
-            timeout: 5000,
         });
 
         const coinsData = response.data.data;
@@ -93,30 +92,35 @@ const getCoinsTop = async (limit: number, maxCoins: number, context: Context, la
         return formattedCoins;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
-        callRollbackAPI(context, lastTimeStamp);
+        callRollbackAPI(context, timestampExec);
         return [];
     }
 }
 
-const getPriceCMC = async (coin: string, context: Context, lastTimeStamp: number): Promise<any> => {
+const getPriceCMC = async (coin: string, context: Context, timestampExec: number): Promise<any> => {
     const apiKey = await context.secrets.get("project.cmcAPIKey");
-    const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest`;
+    const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/historical`;
+
+    const timestamptoIso8601 = new Date(timestampExec * 1000).toISOString();
+    console.log("Timestamp to ISO8601: ", timestamptoIso8601);
 
     try {
         const response = await axios.get(url, {
             params: {
                 symbol: coin,
+                time_end: timestamptoIso8601,
+                interval: "5m",
+                count : 10
             },
             headers: {
                 "X-CMC_PRO_API_KEY": apiKey,
             },
-            timeout: 5000,
         });
 
         return response.data.data;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
-        callRollbackAPI(context, lastTimeStamp);
+        callRollbackAPI(context, timestampExec);
         return [];
     }
 }
@@ -195,11 +199,20 @@ const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) =>
                 continue;
             }
 
+            const moeda = prices[game.coins[index]];
+            const moedaNext = prices[game.coins[index + 1]];
+
+            if (!moeda || !moedaNext || !moeda.quotes || !moedaNext.quotes || moeda.quotes.length === 0 || moedaNext.quotes.length === 0) {
+                console.error("Prices not found for coin: ", game.coins[index]);
+                console.error("Price: ", prices[game.coins[index]]);
+                continue;
+            }
+
             const priceCurrent = Math.floor(
-                prices[game.coins[index]].quote.USD.price * 10 ** 8
+                moeda.quotes[0].quote.USD.price * 10 ** 8
             );
             const priceNext = Math.floor(
-                prices[game.coins[index + 1]].quote.USD.price * 10 ** 8
+                moedaNext.quotes[0].quote.USD.price * 10 ** 8
             );
             console.log("Price current ", game.coins[index], ": ", priceCurrent);
             console.log("Price next ", game.coins[index + 1], ": ", priceNext);
@@ -218,9 +231,9 @@ const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) =>
 
                 if (variationCurrent === variationNext) {
                     const volumeChangeCurrent =
-                        prices[game.coins[index]].quote.USD.volume_change_24h;
+                        moeda.quotes[0].quote.USD.volume_change_24h;
                     const volumeChangeNext =
-                        prices[game.coins[index + 1]].quote.USD.volume_change_24h;
+                        moedaNext.quotes[0].quote.USD.volume_change_24h;
 
                     if (
                         volumeChangeCurrent !== undefined &&
@@ -358,10 +371,21 @@ function createDataUpdate(resultGames: any[]) {
 export const advanceGamesWebhookMain: ActionFn = async (context: Context, event: Event) => {
     const webhookEvent = event as WebhookEvent;
     const lastTimeStamp = webhookEvent.payload.lastTimeStamp;
+    const lastT = await context.storage.getNumber('lastTimeStampWebhookMain');
+
+    // lastT must be 5 mins or more older than lastTimeStamp
+    if (lastT && (lastTimeStamp - lastT < (30))) {
+        console.log('Last timestamp is too recent');
+        await new Promise((resolve) => setTimeout(resolve, 10000));
+        await callRollbackAPI(context, lastTimeStamp);
+        return;
+    }
+
+    await context.storage.putNumber('lastTimeStampWebhookMain', lastTimeStamp);
 
     const privateKey = await context.secrets.get("project.addressPrivateKey");
-    const rpcUrl = await context.secrets.get(".rpcUrl");
-    const CONTRACT_ADDRESS = await context.secrets.get(".aceTheBrackets.contract");
+    const rpcUrl = await context.secrets.get("base.rpcUrl");
+    const CONTRACT_ADDRESS = await context.secrets.get("base.aceTheBrackets.contract");
     const abiText = await context.secrets.get("aceTheBrackets.abi");
     const abi = JSON.parse(abiText);
 
@@ -463,7 +487,7 @@ export const advanceGamesWebhookMain: ActionFn = async (context: Context, event:
             updateGamesCalldata,
             lastTimeStamp,
             {
-                gasLimit: gasLimit,
+                gasLimit: gasLimit
             }
         );
 

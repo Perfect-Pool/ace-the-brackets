@@ -30,8 +30,8 @@ export const consolationPrizeMain: ActionFn = async (context: Context, event: Ev
     const transactionEvent = event as TransactionEvent;
 
     const privateKey = await context.secrets.get("project.addressPrivateKey");
-    const rpcUrl = await context.secrets.get(".rpcUrl");
-    const CONTRACT_ADDRESS = await context.secrets.get(".aceTicket.contract");
+    const rpcUrl = await context.secrets.get("base.rpcUrl");
+    const CONTRACT_ADDRESS = await context.secrets.get("base.aceTicket.contract");
     const abiText = await context.secrets.get("aceTicket.abi");
     const abi = JSON.parse(abiText);
 
