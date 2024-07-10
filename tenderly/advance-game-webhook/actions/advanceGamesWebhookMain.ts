@@ -368,6 +368,24 @@ function createDataUpdate(resultGames: any[]) {
     return dataUpdate;
 }
 
+
+async function getGasPrice(provider: ethers.providers.Provider, context: Context)
+    : Promise<ethers.BigNumber> {
+    try {
+        const gasPrice = await provider.getGasPrice();
+        return gasPrice.mul(120).div(100);
+    } catch (error) {
+        console.error("Error on getting gas price");
+        if (error instanceof Error) {
+            const errorString = error.toString();
+            await context.storage.putStr('errorAdvanceMain', errorString);
+        } else {
+            await context.storage.putStr('errorAdvanceMain', 'An unknown error occurred at getting gas price');
+        }
+        throw error;
+    }
+}
+
 export const advanceGamesWebhookMain: ActionFn = async (context: Context, event: Event) => {
     const webhookEvent = event as WebhookEvent;
     const lastTimeStamp = webhookEvent.payload.lastTimeStamp;
@@ -475,11 +493,9 @@ export const advanceGamesWebhookMain: ActionFn = async (context: Context, event:
         return;
     }
 
+    const gasPrice = await getGasPrice(provider, context);
     console.log("Gas limit:", gasLimit.toString());
-
-    console.log(
-        `Estimated gas: ${estimatedGas.toString()}, adjusted gas limit: ${gasLimit.toString()}`
-    );
+    console.log("Gas price:", gasPrice.toString());
 
     try {
         const tx = await aceContract.performGames(
@@ -487,7 +503,8 @@ export const advanceGamesWebhookMain: ActionFn = async (context: Context, event:
             updateGamesCalldata,
             lastTimeStamp,
             {
-                gasLimit: gasLimit
+                gasLimit: gasLimit,
+                gasPrice: gasPrice,
             }
         );
 

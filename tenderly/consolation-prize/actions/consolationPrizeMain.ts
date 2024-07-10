@@ -9,22 +9,22 @@ interface DecodedData {
     iterateEnd: number;
 }
 
-// async function getGasPrice(provider: ethers.providers.Provider, context: Context)
-//     : Promise<ethers.BigNumber> {
-//     try {
-//         const gasPrice = await provider.getGasPrice();
-//         return gasPrice;
-//     } catch (error) {
-//         console.error("Error on getting gas price");
-//         if (error instanceof Error) {
-//             const errorString = error.toString();
-//             await context.storage.putStr('errorConsolation', errorString);
-//         } else {
-//             await context.storage.putStr('errorConsolation', 'An unknown error occurred at getting gas price');
-//         }
-//         throw error;
-//     }
-// }
+async function getGasPrice(provider: ethers.providers.Provider, context: Context)
+    : Promise<ethers.BigNumber> {
+    try {
+        const gasPrice = await provider.getGasPrice();
+        return gasPrice.mul(120).div(100);
+    } catch (error) {
+        console.error("Error on getting gas price");
+        if (error instanceof Error) {
+            const errorString = error.toString();
+            await context.storage.putStr('errorConsolationMain', errorString);
+        } else {
+            await context.storage.putStr('errorConsolationMain', 'An unknown error occurred at getting gas price');
+        }
+        throw error;
+    }
+}
 
 export const consolationPrizeMain: ActionFn = async (context: Context, event: Event) => {
     const transactionEvent = event as TransactionEvent;
@@ -48,9 +48,9 @@ export const consolationPrizeMain: ActionFn = async (context: Context, event: Ev
         console.error("Failed to fetch contract.");
         if (error instanceof Error) {
             const errorString = error.toString();
-            await context.storage.putStr('errorConsolation', errorString);
+            await context.storage.putStr('errorConsolationMain', errorString);
         } else {
-            await context.storage.putStr('errorConsolation', 'An unknown error occurred at fetching contract');
+            await context.storage.putStr('errorConsolationMain', 'An unknown error occurred at fetching contract');
         }
         return;
     }
@@ -88,7 +88,7 @@ export const consolationPrizeMain: ActionFn = async (context: Context, event: Ev
 
     if (decodedData.gameId === 0) {
         console.error("Failed to decode data for all logs");
-        await context.storage.putStr('errorConsolation', 'Failed to decode data for all logs');
+        await context.storage.putStr('errorConsolationMain', 'Failed to decode data for all logs');
         return;
     }
 
@@ -111,18 +111,18 @@ export const consolationPrizeMain: ActionFn = async (context: Context, event: Ev
         console.error("Failed to estimate gas.");
         if (error instanceof Error) {
             const errorString = error.toString();
-            await context.storage.putStr('errorConsolation', errorString);
+            await context.storage.putStr('errorConsolationMain', errorString);
         } else {
-            await context.storage.putStr('errorConsolation', 'An unknown error occurred at estimating gas');
+            await context.storage.putStr('errorConsolationMain', 'An unknown error occurred at estimating gas');
         }
         return;
     }
 
-    // const gasPrice = await getGasPrice(provider, context);
-
     console.log(
         `Estimated gas: ${estimatedGas.toString()}, adjusted gas limit: ${gasLimit.toString()}`
     );
+
+    const gasPrice = await getGasPrice(provider, context);
 
     try {
         const tx = await aceTicketContract.iterateGameTokenIds(
@@ -131,7 +131,7 @@ export const consolationPrizeMain: ActionFn = async (context: Context, event: Ev
             iterateEndToBigInt,
             {
                 gasLimit: gasLimit,
-                // gasPrice: gasPrice,
+                gasPrice: gasPrice,
             }
         );
 
@@ -141,9 +141,9 @@ export const consolationPrizeMain: ActionFn = async (context: Context, event: Ev
         console.error("Failed to perform iteration.");
         if (error instanceof Error) {
             const errorString = error.toString();
-            await context.storage.putStr('errorConsolation', errorString);
+            await context.storage.putStr('errorConsolationMain', errorString);
         } else {
-            await context.storage.putStr('errorConsolation', 'An unknown error occurred at sending transaction');
+            await context.storage.putStr('errorConsolationMain', 'An unknown error occurred at sending transaction');
         }
     }
 };
