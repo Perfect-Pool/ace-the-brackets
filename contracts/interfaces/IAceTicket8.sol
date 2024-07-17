@@ -25,4 +25,6 @@ interface IAceTicket8 {
     function amountPrizeClaimed(
         uint256 _tokenId
     ) external view returns (uint256 amountToClaim, uint256 amountClaimed);
+
+    function betWinQty(uint256 _tokenId) external view returns (uint8);
 }

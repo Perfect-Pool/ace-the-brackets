@@ -73,9 +73,15 @@ contract NftMetadata is Ownable {
         uint256 _gameId,
         uint256 _tokenId
     ) public view returns (string memory) {
-        (uint256 prize, uint256 amountClaimed) = IAceTicket8(
+        IAceTicket8 ticket = IAceTicket8(
             gamesHub.helpers(keccak256("ACE_TICKET"))
-        ).amountPrizeClaimed(_tokenId);
+        );
+        uint8 winQty = ticket.betWinQty(_tokenId);
+        uint256 prize = 0;
+        uint256 amountClaimed = 0;
+
+        if (winQty > 0)
+            (prize, amountClaimed) = ticket.amountPrizeClaimed(_tokenId);
 
         return
             string(

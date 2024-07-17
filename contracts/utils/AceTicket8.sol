@@ -389,7 +389,8 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
                 return;
             }
             uint8 points = betWinQty(_gameData.tokenIds[i]);
-
+            if(points == 0) continue;
+            
             if (_gameData.consolationPoints < points) {
                 _gameData.consolationPoints = points;
             }
@@ -582,6 +583,9 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
 
         uint8 points = betWinQty(_tokenId);
         if (points != gameData[_gameId].consolationPoints) {
+            return (0, 0);
+        }
+        if(gameData[_gameId].consolationWinners[points].length == 0) {
             return (0, 0);
         }
         return (
