@@ -519,11 +519,11 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
 
         await tx.wait();
         console.log(`Games successfully updated. TX: ${tx.hash}`);
+        await context.storage.putNumber('executedMain', lastTimeStamp);
     } catch (error) {
         console.error("Failed to perform games:", error);
         await new Promise((resolve) => setTimeout(resolve, 5000));
         await callRollbackAPI(context, lastTimeStamp);
     }
 
-    await context.storage.putNumber('executedMain', lastTimeStamp);
 };
