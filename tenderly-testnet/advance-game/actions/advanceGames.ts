@@ -98,7 +98,7 @@ const getCoinsTop = async (limit: number, maxCoins: number, context: Context, ti
 
 const getPriceCMC = async (coin: string, context: Context, timestampExec: number): Promise<any> => {
     const apiKey = await context.secrets.get("project.cmcAPIKeyTest");
-    const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/historical`;
+    const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest`;
 
     const timestamptoIso8601 = new Date(timestampExec * 1000).toISOString();
     console.log("Timestamp to ISO8601: ", timestamptoIso8601);
