@@ -384,6 +384,7 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
     }
 
     await context.storage.putNumber('lastTimeStamp', lastTimeStamp);
+    await context.storage.putNumber('lastTimeStampWebhook', lastTimeStamp);
 
     const privateKey = await context.secrets.get("project.addressPrivateKey");
     const rpcUrl = await context.secrets.get("baseSepolia.rpcUrl");
