@@ -198,7 +198,7 @@ const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) =>
             const moeda = prices[game.coins[index]];
             const moedaNext = prices[game.coins[index + 1]];
 
-            if (!moeda || !moedaNext || !moeda.quotes || !moedaNext.quotes || moeda.quotes.length === 0 || moedaNext.quotes.length === 0) {
+            if (!moeda || !moedaNext || !moeda?.quote?.USD || !moedaNext?.quote?.USD) {
                 console.error("Prices not found for coin: ", game.coins[index]);
                 console.error("Price: ", prices[game.coins[index]]);
                 continue;
