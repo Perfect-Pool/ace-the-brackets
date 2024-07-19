@@ -370,9 +370,15 @@ function createDataUpdate(resultGames: any[]) {
 export const advanceGames: ActionFn = async (context: Context, event: Event) => {
     const lastTimeStamp = Math.floor(Date.now() / 1000 / 60) * 60;
     const lastT = await context.storage.getNumber('lastTimeStamp');
+    const lastExecuted = await context.storage.getNumber('executed');
+
+    if (lastExecuted === lastTimeStamp) {
+        console.log('Already executed');
+        return;
+    }
 
     // lastT must be 5 mins or more older than lastTimeStamp
-    if (lastT && (lastTimeStamp - lastT < (6 * 60))) {
+    if (lastT && (lastTimeStamp - lastT < (8 * 60))) {
         console.log('Last timestamp is too recent');
         return;
     }
@@ -501,4 +507,6 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
         await new Promise((resolve) => setTimeout(resolve, 5000));
         await callRollbackAPI(context, lastTimeStamp);
     }
+
+    await context.storage.putNumber('executed', lastTimeStamp);
 };

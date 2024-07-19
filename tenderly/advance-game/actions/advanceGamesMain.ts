@@ -21,7 +21,7 @@ async function callRollbackAPI(context: Context, timestampExec: number): Promise
 
         const config: AxiosRequestConfig = {
             method: 'POST',
-            url: 'https://api.tenderly.co/api/v1/actions/5e0ece2f-f1bb-4202-a558-f50c350db6ba/webhook',
+            url: 'https://api.tenderly.co/api/v1/actions/ef971901-54b7-4a85-b762-9e2419ca98fe/webhook',
             headers: {
                 'x-access-key': accessToken,
                 'Content-Type': 'application/json',
@@ -387,9 +387,15 @@ async function getGasPrice(provider: ethers.providers.Provider, context: Context
 export const advanceGamesMain: ActionFn = async (context: Context, event: Event) => {
     const lastTimeStamp = Math.floor(Date.now() / 1000 / 60) * 60;
     const lastT = await context.storage.getNumber('lastTimeStampMain');
+    const lastExecuted = await context.storage.getNumber('executedMain');
+
+    if (lastExecuted === lastTimeStamp) {
+        console.log('Already executed');
+        return;
+    }
 
     // lastT must be 5 mins or more older than lastTimeStamp
-    if (lastT && (lastTimeStamp - lastT < (6 * 60))) {
+    if (lastT && (lastTimeStamp - lastT < (8 * 60))) {
         console.log('Last timestamp is too recent');
         return;
     }
@@ -517,4 +523,6 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
         await new Promise((resolve) => setTimeout(resolve, 5000));
         await callRollbackAPI(context, lastTimeStamp);
     }
+
+    await context.storage.putNumber('executedMain', lastTimeStamp);
 };

@@ -22,7 +22,7 @@ async function callRollbackAPI(context: Context, timestampExec: number): Promise
 
         const config: AxiosRequestConfig = {
             method: 'POST',
-            url: 'https://api.tenderly.co/api/v1/actions/398dc012-da36-4c60-ac40-ed00f38e0a76/webhook',
+            url: 'https://api.tenderly.co/api/v1/actions/ef971901-54b7-4a85-b762-9e2419ca98fe/webhook',
             headers: {
                 'x-access-key': accessToken,
                 'Content-Type': 'application/json',
@@ -390,9 +390,15 @@ export const advanceGamesWebhookMain: ActionFn = async (context: Context, event:
     const webhookEvent = event as WebhookEvent;
     const lastTimeStamp = webhookEvent.payload.lastTimeStamp;
     const lastT = await context.storage.getNumber('lastTimeStampWebhookMain');
+    const lastExecuted = await context.storage.getNumber('executedMain');
+
+    if (lastExecuted === lastTimeStamp) {
+        console.log('Already executed');
+        return;
+    }
 
     // lastT must be 5 mins or more older than lastTimeStamp
-    if (lastT && (lastTimeStamp - lastT < (60))) {
+    if (lastT && (lastTimeStamp - lastT < (30))) {
         console.log('Last timestamp is too recent');
         await new Promise((resolve) => setTimeout(resolve, 10000));
         await callRollbackAPI(context, lastTimeStamp);
@@ -522,4 +528,6 @@ export const advanceGamesWebhookMain: ActionFn = async (context: Context, event:
         await new Promise((resolve) => setTimeout(resolve, 5000));
         await callRollbackAPI(context, lastTimeStamp);
     }
+    
+    await context.storage.putNumber('executedMain', lastTimeStamp);
 };
