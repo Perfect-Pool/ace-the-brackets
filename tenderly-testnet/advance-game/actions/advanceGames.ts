@@ -91,7 +91,7 @@ const getCoinsTop = async (limit: number, maxCoins: number, context: Context, ti
         return formattedCoins;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
-        callRollbackAPI(context, timestampExec);
+        await callRollbackAPI(context, timestampExec);
         return [];
     }
 }
@@ -106,10 +106,7 @@ const getPriceCMC = async (coin: string, context: Context, timestampExec: number
     try {
         const response = await axios.get(url, {
             params: {
-                symbol: coin,
-                time_end: timestamptoIso8601,
-                interval: "5m",
-                count: 10
+                symbol: coin
             },
             headers: {
                 "X-CMC_PRO_API_KEY": apiKey,
@@ -208,10 +205,10 @@ const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) =>
             }
 
             const priceCurrent = Math.floor(
-                moeda.quotes[0].quote.USD.price * 10 ** 8
+                moeda.quote.USD.price * 10 ** 8
             );
             const priceNext = Math.floor(
-                moedaNext.quotes[0].quote.USD.price * 10 ** 8
+                moedaNext.quote.USD.price * 10 ** 8
             );
             console.log("Price current ", game.coins[index], ": ", priceCurrent);
             console.log("Price next ", game.coins[index + 1], ": ", priceNext);
@@ -230,9 +227,9 @@ const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) =>
 
                 if (variationCurrent === variationNext) {
                     const volumeChangeCurrent =
-                        moeda.quotes[0].quote.USD.volume_change_24h;
+                        moeda.quote.USD.volume_change_24h;
                     const volumeChangeNext =
-                        moedaNext.quotes[0].quote.USD.volume_change_24h;
+                        moedaNext.quote.USD.volume_change_24h;
 
                     if (
                         volumeChangeCurrent !== undefined &&
