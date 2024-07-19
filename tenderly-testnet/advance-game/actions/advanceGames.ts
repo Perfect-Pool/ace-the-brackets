@@ -64,7 +64,7 @@ const getRandomUniqueElements = (arr: Coin[], n: number): Coin[] => {
 };
 
 const getCoinsTop = async (limit: number, maxCoins: number, context: Context, timestampExec: number): Promise<Coin[]> => {
-    const apiKey = await context.secrets.get("project.cmcAPIKey");
+    const apiKey = await context.secrets.get("project.cmcAPIKeyTest");
     const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest`;
 
     try {
@@ -97,7 +97,7 @@ const getCoinsTop = async (limit: number, maxCoins: number, context: Context, ti
 }
 
 const getPriceCMC = async (coin: string, context: Context, timestampExec: number): Promise<any> => {
-    const apiKey = await context.secrets.get("project.cmcAPIKey");
+    const apiKey = await context.secrets.get("project.cmcAPIKeyTest");
     const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/historical`;
 
     const timestamptoIso8601 = new Date(timestampExec * 1000).toISOString();
@@ -109,7 +109,7 @@ const getPriceCMC = async (coin: string, context: Context, timestampExec: number
                 symbol: coin,
                 time_end: timestamptoIso8601,
                 interval: "5m",
-                count : 10
+                count: 10
             },
             headers: {
                 "X-CMC_PRO_API_KEY": apiKey,
@@ -444,8 +444,15 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
         return;
     }
 
-    const updateGamesCalldata =
-        resultGames.length === 0 ? "0x" : createDataUpdate(resultGames);
+    let updateGamesCalldata;
+    try {
+        updateGamesCalldata =
+            resultGames.length === 0 ? "0x" : createDataUpdate(resultGames);
+    } catch (error) {
+        console.error("Failed to create update games calldata:", error);
+        await callRollbackAPI(context, lastTimeStamp);
+        return;
+    }
 
     console.log("Preparing transaction to perform games");
 

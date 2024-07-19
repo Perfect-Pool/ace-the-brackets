@@ -65,7 +65,7 @@ const getRandomUniqueElements = (arr: Coin[], n: number): Coin[] => {
 };
 
 const getCoinsTop = async (limit: number, maxCoins: number, context: Context, timestampExec: number): Promise<Coin[]> => {
-    const apiKey = await context.secrets.get("project.cmcAPIKey");
+    const apiKey = await context.secrets.get("project.cmcAPIKeyTest");
     const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest`;
 
     try {
@@ -98,7 +98,7 @@ const getCoinsTop = async (limit: number, maxCoins: number, context: Context, ti
 }
 
 const getPriceCMC = async (coin: string, context: Context, timestampExec: number): Promise<any> => {
-    const apiKey = await context.secrets.get("project.cmcAPIKey");
+    const apiKey = await context.secrets.get("project.cmcAPIKeyTest");
     const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/historical`;
 
     const timestamptoIso8601 = new Date(timestampExec * 1000).toISOString();
@@ -184,6 +184,7 @@ const updateCoinsList = (coins: string, decodedGames: DecodedGame[]) => {
 
     return Array.from(symbolsSet).join(",");
 };
+
 
 const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) => {
     let resultGames: any[] = [];
@@ -374,7 +375,7 @@ export const advanceGamesWebhook: ActionFn = async (context: Context, event: Eve
     const lastT = await context.storage.getNumber('lastTimeStampWebhook');
 
     // lastT must be 5 mins or more older than lastTimeStamp
-    if (lastT && (lastTimeStamp - lastT < (30))) {
+    if (lastT && (lastTimeStamp - lastT < (60))) {
         console.log('Last timestamp is too recent');
         await new Promise((resolve) => setTimeout(resolve, 10000));
         await callRollbackAPI(context, lastTimeStamp);
@@ -448,8 +449,15 @@ export const advanceGamesWebhook: ActionFn = async (context: Context, event: Eve
         return;
     }
 
-    const updateGamesCalldata =
+    let updateGamesCalldata;
+    try {
+        updateGamesCalldata =
         resultGames.length === 0 ? "0x" : createDataUpdate(resultGames);
+    } catch (error) {
+        console.error("Failed to create update games calldata:", error);
+        await callRollbackAPI(context, lastTimeStamp);
+        return;
+    }
 
     console.log("Preparing transaction to perform games");
 

@@ -392,7 +392,7 @@ export const advanceGamesWebhookMain: ActionFn = async (context: Context, event:
     const lastT = await context.storage.getNumber('lastTimeStampWebhookMain');
 
     // lastT must be 5 mins or more older than lastTimeStamp
-    if (lastT && (lastTimeStamp - lastT < (30))) {
+    if (lastT && (lastTimeStamp - lastT < (60))) {
         console.log('Last timestamp is too recent');
         await new Promise((resolve) => setTimeout(resolve, 10000));
         await callRollbackAPI(context, lastTimeStamp);
@@ -466,8 +466,15 @@ export const advanceGamesWebhookMain: ActionFn = async (context: Context, event:
         return;
     }
 
-    const updateGamesCalldata =
+    let updateGamesCalldata;
+    try {
+        updateGamesCalldata =
         resultGames.length === 0 ? "0x" : createDataUpdate(resultGames);
+    } catch (error) {
+        console.error("Failed to create update games calldata:", error);
+        await callRollbackAPI(context, lastTimeStamp);
+        return;
+    }
 
     console.log("Preparing transaction to perform games");
 

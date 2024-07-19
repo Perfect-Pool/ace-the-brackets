@@ -461,8 +461,15 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
         return;
     }
 
-    const updateGamesCalldata =
+    let updateGamesCalldata;
+    try {
+        updateGamesCalldata =
         resultGames.length === 0 ? "0x" : createDataUpdate(resultGames);
+    } catch (error) {
+        console.error("Failed to create update games calldata:", error);
+        await callRollbackAPI(context, lastTimeStamp);
+        return;
+    }
 
     console.log("Preparing transaction to perform games");
 
