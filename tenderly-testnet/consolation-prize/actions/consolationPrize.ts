@@ -1,6 +1,7 @@
 import { ActionFn, Context, Event, TransactionEvent } from "@tenderly/actions";
 
 import { ethers } from "ethers";
+import axios from "axios";
 
 // Decoded data structure
 interface DecodedData {
@@ -8,23 +9,32 @@ interface DecodedData {
     iterateStart: number;
     iterateEnd: number;
 }
+interface LogPayload {
+    message: string;
+    level: 'debug' | 'info' | 'warning' | 'error' | 'fatal';
+}
 
-// async function getGasPrice(provider: ethers.providers.Provider, context: Context)
-//     : Promise<ethers.BigNumber> {
-//     try {
-//         const gasPrice = await provider.getGasPrice();
-//         return gasPrice;
-//     } catch (error) {
-//         console.error("Error on getting gas price");
-//         if (error instanceof Error) {
-//             const errorString = error.toString();
-//             await context.storage.putStr('errorConsolation', errorString);
-//         } else {
-//             await context.storage.putStr('errorConsolation', 'An unknown error occurred at getting gas price');
-//         }
-//         throw error;
-//     }
-// }
+async function sendErrorLog(message: string, context: Context): Promise<void> {
+    const url = await context.secrets.get("sentry.test.url");
+    const apikey = await context.secrets.get("sentry.test.key");
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-API-Key': apikey
+    };
+
+    const payload: LogPayload = {
+        message,
+        level: 'error'
+    };
+
+    try {
+        await axios.post(url, payload, { headers });
+        console.log('Error log sent successfully');
+    } catch (error) {
+        console.error('Failed to send error log:', error);
+    }
+}
 
 export const consolationPrize: ActionFn = async (context: Context, event: Event) => {
     const transactionEvent = event as TransactionEvent;
@@ -46,6 +56,7 @@ export const consolationPrize: ActionFn = async (context: Context, event: Event)
         aceTicketContract = new ethers.Contract(CONTRACT_ADDRESS, abi, wallet);
     } catch (error) {
         console.error("Failed to fetch contract.");
+        await sendErrorLog('Failed to fetch contract on consolation prize automation.', context);
         if (error instanceof Error) {
             const errorString = error.toString();
             await context.storage.putStr('errorConsolation', errorString);
@@ -88,6 +99,7 @@ export const consolationPrize: ActionFn = async (context: Context, event: Event)
 
     if (decodedData.gameId === 0) {
         console.error("Failed to decode data for all logs");
+        await sendErrorLog('Failed to decode data for all logs on consolation prize automation.', context);
         await context.storage.putStr('errorConsolation', 'Failed to decode data for all logs');
         return;
     }
@@ -109,6 +121,8 @@ export const consolationPrize: ActionFn = async (context: Context, event: Event)
         gasLimit = estimatedGas.mul(120).div(100);
     } catch (error) {
         console.error("Failed to estimate gas.");
+
+        await sendErrorLog('Failed to estimate gas on consolation prize automation.', context);
         if (error instanceof Error) {
             const errorString = error.toString();
             await context.storage.putStr('errorConsolation', errorString);
@@ -117,8 +131,6 @@ export const consolationPrize: ActionFn = async (context: Context, event: Event)
         }
         return;
     }
-
-    // const gasPrice = await getGasPrice(provider, context);
 
     console.log(
         `Estimated gas: ${estimatedGas.toString()}, adjusted gas limit: ${gasLimit.toString()}`
@@ -131,7 +143,6 @@ export const consolationPrize: ActionFn = async (context: Context, event: Event)
             iterateEndToBigInt,
             {
                 gasLimit: gasLimit,
-                // gasPrice: gasPrice,
             }
         );
 
@@ -139,6 +150,8 @@ export const consolationPrize: ActionFn = async (context: Context, event: Event)
         console.log(`Games successfully iterated. TX: ${tx.hash}`);
     } catch (error) {
         console.error("Failed to perform iteration.");
+
+        await sendErrorLog('Failed to perform iteration on consolation prize automation.', context);
         if (error instanceof Error) {
             const errorString = error.toString();
             await context.storage.putStr('errorConsolation', errorString);

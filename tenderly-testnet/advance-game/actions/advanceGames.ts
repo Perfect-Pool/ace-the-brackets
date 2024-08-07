@@ -1,7 +1,7 @@
 import { ActionFn, Context, Event } from "@tenderly/actions";
 
 import { ethers } from "ethers";
-import axios, { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 interface Coin {
     id: number;
     symbol: string;
@@ -15,27 +15,30 @@ interface DecodedGame {
     prices: number[];
 }
 
-async function callRollbackAPI(context: Context, timestampExec: number): Promise<void> {
+interface LogPayload {
+    message: string;
+    level: 'debug' | 'info' | 'warning' | 'error' | 'fatal';
+}
+
+async function sendErrorLog(message: string, context: Context): Promise<void> {
+    const url = await context.secrets.get("sentry.test.url");
+    const apikey = await context.secrets.get("sentry.test.key");
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-API-Key': apikey
+    };
+
+    const payload: LogPayload = {
+        message,
+        level: 'error'
+    };
+
     try {
-        const accessToken = await context.secrets.get('project.accessToken');
-
-        const config: AxiosRequestConfig = {
-            method: 'POST',
-            url: 'https://api.tenderly.co/api/v1/actions/5e0ece2f-f1bb-4202-a558-f50c350db6ba/webhook',
-            headers: {
-                'x-access-key': accessToken,
-                'Content-Type': 'application/json',
-            },
-            data: {
-                rollback: true,
-                lastTimeStamp: timestampExec
-            },
-        };
-
-        const response = await axios(config);
-        console.log("API chamada com sucesso: ", response.data);
+        await axios.post(url, payload, { headers });
+        console.log('Error log sent successfully');
     } catch (error) {
-        console.error('Error calling API:', error);
+        console.error('Failed to send error log:', error);
     }
 }
 
@@ -91,7 +94,7 @@ const getCoinsTop = async (limit: number, maxCoins: number, context: Context, ti
         return formattedCoins;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
-        await callRollbackAPI(context, timestampExec);
+        await sendErrorLog("CoinMarketCap API call failed on ACE Testnet", context);
         return [];
     }
 }
@@ -116,7 +119,7 @@ const getPriceCMC = async (coin: string, context: Context, timestampExec: number
         return response.data.data;
     } catch (error) {
         console.error("CoinMarketCap API call failed:", error);
-        callRollbackAPI(context, timestampExec);
+        await sendErrorLog("CoinMarketCap API call failed on ACE Testnet", context);
         return [];
     }
 }
@@ -402,7 +405,7 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
         aceContract = new ethers.Contract(CONTRACT_ADDRESS, abi, wallet);
     } catch (error) {
         console.error("Failed to fetch contract:", error);
-        await callRollbackAPI(context, lastTimeStamp);
+        await sendErrorLog("Failed to fetch contract on ACE Testnet", context);
         return;
     }
 
@@ -433,7 +436,7 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
 
     if (!prices || Object.keys(prices).length === 0) {
         console.error("Failed to fetch prices");
-        await callRollbackAPI(context, lastTimeStamp);
+        await sendErrorLog("Failed to fetch prices on ACE Testnet", context);
         return;
     }
 
@@ -444,7 +447,7 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
 
     if (resultGames === null || resultGames.length !== decodedGames.length) {
         console.error("Failed to calculate game results");
-        await callRollbackAPI(context, lastTimeStamp);
+        await sendErrorLog("Failed to calculate game results on ACE Testnet", context);
         return;
     }
 
@@ -454,7 +457,7 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
             resultGames.length === 0 ? "0x" : createDataUpdate(resultGames);
     } catch (error) {
         console.error("Failed to create update games calldata:", error);
-        await callRollbackAPI(context, lastTimeStamp);
+        await sendErrorLog("Failed to create update games calldata on ACE Testnet", context);
         return;
     }
 
@@ -477,8 +480,7 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
         gasLimit = estimatedGas.mul(110).div(100);
     } catch (error) {
         console.error("Failed to estimate gas:", error);
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-        await callRollbackAPI(context, lastTimeStamp);
+        await sendErrorLog("Failed to estimate gas on ACE Testnet", context);
         return;
     }
 
@@ -503,8 +505,7 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
         await context.storage.putNumber('executed', lastTimeStamp);
     } catch (error) {
         console.error("Failed to perform games:", error);
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-        await callRollbackAPI(context, lastTimeStamp);
+        await sendErrorLog("Failed to perform games on ACE Testnet", context);
     }
 
 };
