@@ -6,17 +6,6 @@ import "../interfaces/IAceTicket8.sol";
 import "../interfaces/IAceTheBrackets8.sol";
 
 contract AceTheBrackets8 is IAceTheBrackets8 {
-    /** EVENTS **/
-    event GameCreated(uint256 gameIndex);
-    event GameActivated(uint256 gameIndex);
-    event GameAdvanced(uint256 gameIndex, uint8 round);
-    event GameFinished(uint256 gameIndex); //, bytes32 result);
-    event DaysToClaimPrizeChanged(uint8 daysToClaimPrize);
-    event Paused(bool paused);
-    event PriceFeedAdded(uint256 tokenIndex);
-    event UpdatePerformed(uint256 lastTimeStamp);
-    event GameReset(uint256 gameId);
-
     /** STRUCTS **/
     struct Round {
         uint256[8] tokens;
@@ -96,7 +85,6 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
      */
     function setPaused(bool _paused) external onlyGameContract {
         paused = _paused;
-        emit Paused(_paused);
     }
 
     /**
@@ -184,21 +172,6 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
             games[totalGames].rounds[0].tokens[i] = _cmcIds[i];
         }
 
-        games[totalGames].start = _lastTimeStamp;
-        uint256 timer = _lastTimeStamp + betTime;
-        uint256 _roundDuration = roundDuration;
-
-        games[totalGames].rounds[0].start = timer;
-        timer += _roundDuration;
-        games[totalGames].rounds[0].end = timer;
-        games[totalGames].rounds[1].start = timer;
-        timer += _roundDuration;
-        games[totalGames].rounds[1].end = timer;
-        games[totalGames].rounds[2].start = timer;
-        timer += _roundDuration;
-        games[totalGames].rounds[2].end = timer;
-        games[totalGames].end = timer;
-
         activeGames.push(totalGames);
         gameIndexToActiveIndex[totalGames] = activeGames.length - 1;
     }
@@ -217,14 +190,19 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
         if (currentRound > 2) removeGame(gameIndex);
 
         if (!games[gameIndex].activated) {
+            uint256[8] memory pricesArray = abi.decode(_prices, (uint256[8]));
+
+            if (pricesArray[0] == 0) {
+                _updateTimestamps(gameIndex);
+                return;
+            }
+
+            if (games[gameIndex].rounds[0].start == 0) {
+                _updateTimestamps(gameIndex);
+            }
+
             games[gameIndex].activated = true;
-
-            games[gameIndex].rounds[0].pricesStart = abi.decode(
-                _prices,
-                (uint256[8])
-            );
-
-            emit GameActivated(gameIndex);
+            games[gameIndex].rounds[0].pricesStart = pricesArray;
             return;
         }
 
@@ -278,6 +256,29 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
     }
 
     /**
+     * @dev Internal function to receive a timestamp a game number and update all timestamps
+     * @param _gameId The game number
+     */
+    function _updateTimestamps(uint256 _gameId) internal {
+        uint256 _lastTimeStamp = block.timestamp;
+        _lastTimeStamp = _lastTimeStamp - (_lastTimeStamp % betTime);
+
+        uint256 timer = _lastTimeStamp + betTime;
+        uint256 _roundDuration = roundDuration;
+
+        games[_gameId].rounds[0].start = timer;
+        timer += _roundDuration;
+        games[_gameId].rounds[0].end = timer;
+        games[_gameId].rounds[1].start = timer;
+        timer += _roundDuration;
+        games[_gameId].rounds[1].end = timer;
+        games[_gameId].rounds[2].start = timer;
+        timer += _roundDuration;
+        games[_gameId].rounds[2].end = timer;
+        games[_gameId].end = timer;
+    }
+
+    /**
      * @dev Function to change the days to claim the prize
      * @param _daysToClaimPrize The new days to claim the prize
      */
@@ -285,7 +286,6 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
         uint8 _daysToClaimPrize
     ) external onlyGameContract {
         daysToClaimPrize = _daysToClaimPrize;
-        emit DaysToClaimPrizeChanged(_daysToClaimPrize);
     }
 
     /** AUXILIARY FUNCTIONS **/

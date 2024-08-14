@@ -37,7 +37,7 @@ async function sendErrorLog(message: string, context: Context): Promise<void> {
     try {
         await axios.post(url, payload, { headers });
         console.log('Error log sent successfully');
-    } catch (error) {
+    } catch (error:any) {
         console.error('Failed to send error log:', error);
     }
 }
@@ -503,9 +503,9 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
         await tx.wait();
         console.log(`Games successfully updated. TX: ${tx.hash}`);
         await context.storage.putNumber('executed', lastTimeStamp);
-    } catch (error) {
+    } catch (error:any) {
         console.error("Failed to perform games:", error);
-        await sendErrorLog("Failed to perform games on ACE Testnet", context);
+        await sendErrorLog(`Failed to perform games on ACE: ${error?.message?.split(' [')[0]}`, context);
     }
 
 };
