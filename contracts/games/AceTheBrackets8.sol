@@ -146,7 +146,6 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
      * @param _dataNewGame Data for the new game
      */
     function createGame(
-        uint256 _lastTimeStamp,
         bytes calldata _dataNewGame
     ) external onlyGameContract {
         (uint256[8] memory _cmcIds, string[8] memory _symbols) = abi.decode(
@@ -179,9 +178,14 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
     /**
      * @dev Function to advance a game to the next round
      * @param gameIndex The index of the game
+     * @param _lastTimeStamp The last timestamp
+     * @param _prices The prices of the tokens
+     * @param _pricesWinners The prices of the winners
+     * @param _winners The winners of the round
      */
     function advanceGame(
         uint256 gameIndex,
+        uint256 _lastTimeStamp,
         bytes memory _prices,
         bytes memory _pricesWinners,
         bytes memory _winners
@@ -189,16 +193,16 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
         uint8 currentRound = games[gameIndex].currentRound;
         if (currentRound > 2) removeGame(gameIndex);
 
-        if (!games[gameIndex].activated) {
-            uint256[8] memory pricesArray = abi.decode(_prices, (uint256[8]));
+        uint256[8] memory pricesArray = abi.decode(_prices, (uint256[8]));
 
+        if (!games[gameIndex].activated) {
             if (pricesArray[0] == 0) {
-                _updateTimestamps(gameIndex);
+                _updateTimestamps(gameIndex, _lastTimeStamp);
                 return;
             }
 
             if (games[gameIndex].rounds[0].start == 0) {
-                _updateTimestamps(gameIndex);
+                _updateTimestamps(gameIndex, _lastTimeStamp);
             }
 
             games[gameIndex].activated = true;
@@ -211,10 +215,7 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
 
         uint8 nextRound = currentRound + 1;
 
-        games[gameIndex].rounds[currentRound].pricesEnd = abi.decode(
-            _prices,
-            (uint256[8])
-        );
+        games[gameIndex].rounds[currentRound].pricesEnd = pricesArray;
 
         if (currentRound == 2) {
             games[gameIndex].finalPrice = abi.decode(
@@ -258,13 +259,15 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
     /**
      * @dev Internal function to receive a timestamp a game number and update all timestamps
      * @param _gameId The game number
+     * @param _lastTimeStamp The last timestamp
      */
-    function _updateTimestamps(uint256 _gameId) internal {
-        uint256 _lastTimeStamp = block.timestamp;
+    function _updateTimestamps(uint256 _gameId, uint256 _lastTimeStamp) internal {
         _lastTimeStamp = _lastTimeStamp - (_lastTimeStamp % betTime);
 
         uint256 timer = _lastTimeStamp + betTime;
         uint256 _roundDuration = roundDuration;
+
+        games[_gameId].start = timer;
 
         games[_gameId].rounds[0].start = timer;
         timer += _roundDuration;

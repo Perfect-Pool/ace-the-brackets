@@ -15,6 +15,7 @@ interface IAceTheBrackets8 {
     function createNewGames() external view returns (bool);
 
     function advanceGame(
+        uint256 _lastTimeStamp,
         uint256 gameIndex,
         bytes memory _prices,
         bytes memory _pricesWinners,
@@ -22,7 +23,6 @@ interface IAceTheBrackets8 {
     ) external;
 
     function createGame(
-        uint256 _lastTimeStamp,
         bytes calldata _dataNewGame
     ) external;
 

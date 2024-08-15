@@ -8,6 +8,7 @@ import "../interfaces/IAceTicket8.sol";
 contract Ace8Proxy {
     /** EVENTS **/
     event GameCreated(uint256 gameIndex);
+    event TimerStarted(uint256 gameIndex);
     event GameActivated(uint256 gameIndex);
     event GameAdvanced(uint256 gameIndex, uint8 round);
     event GameFinished(uint256 gameIndex); //, bytes32 result);
@@ -123,12 +124,14 @@ contract Ace8Proxy {
                 if (gameIds[i] == 0) continue;
                 _gameContract.advanceGame(
                     gameIds[i],
+                    _lastTimeStamp,
                     _prices[i],
                     _pricesWinners[i],
                     _winners[i]
                 );
                 uint8 _status = _gameContract.getGameStatus(gameIds[i]);
-                if (_status == 0) emit GameActivated(gameIds[i]);
+                if (_status == 0) emit TimerStarted(gameIds[i]);
+                if (_status == 1) emit GameActivated(gameIds[i]);
                 if (_status == 4) emit GameFinished(gameIds[i]);
                 emit GameAdvanced(gameIds[i], _status == 0 ? 0 : _status - 1);
             }
@@ -143,7 +146,7 @@ contract Ace8Proxy {
             _gameContract = IAceTheBrackets8(
                 gamesHub.games(keccak256("BRACKETS"))
             );
-            _gameContract.createGame(_lastTimeStamp, _dataNewGame);
+            _gameContract.createGame(_dataNewGame);
             uint256 _totalGames = _gameContract.totalGames();
             gameContract[_totalGames] = address(_gameContract);
             emit GameCreated(_totalGames);
@@ -217,9 +220,7 @@ contract Ace8Proxy {
      * @dev Function to set the bet time in minutes
      * @param _betTime The new bet time
      */
-    function setBetTime(
-        uint256 _betTime
-    ) public onlyAdministrator {
+    function setBetTime(uint256 _betTime) public onlyAdministrator {
         IAceTheBrackets8(gamesHub.games(keccak256("BRACKETS"))).setBetTime(
             _betTime
         );
