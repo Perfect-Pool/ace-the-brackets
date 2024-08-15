@@ -143,6 +143,7 @@ const decodeActiveGamesActualCoins = async (encodedGames: string[], aceContract:
             continue;
         }
         const actualRound = decoded[1];
+        // ------------------------------ativar
         console.log("Decoding Game ID: ", gameId);
         const fullGameData = await aceContract.getGameFullData(decoded[0]);
 
@@ -152,11 +153,13 @@ const decodeActiveGamesActualCoins = async (encodedGames: string[], aceContract:
             fullGameData
         );
 
+        // ------------------------------manter desativado
         // const fullRoundData = ethers.utils.defaultAbiCoder.decode(
         //     ["string[]", "uint256[]", "uint256[]", "uint256", "uint256"],
         //     decodedFulldata[actualRound]
         // );
 
+        // ------------------------------ativar
         const gameStart = decodedFulldata[6].toNumber();
         if (gameStart === 0) {
             console.log("This game has no timer yet.");
@@ -167,6 +170,8 @@ const decodeActiveGamesActualCoins = async (encodedGames: string[], aceContract:
             console.log("This game has not started yet.");
             continue;
         }
+
+        // ------------------------------manter desativado
         // const roundEnd = fullRoundData[4].toNumber();
 
         // if (roundEnd > lastTimeStamp) {
@@ -446,11 +451,11 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
         newGameCalldata = await createCalldataForNewGame(newGameCoins);
         coins = newGameCoins.map((coin) => coin.symbol).join(",");
 
-        console.log("New game coins:", newGameCoins);
+        console.log("New game coins:", coins);
     }
 
     coins = updateCoinsList(coins, decodedGames);
-    if(coins === "") {
+    if (coins === "") {
         console.error("No coins found to update games");
         return;
     }

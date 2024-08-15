@@ -74,8 +74,6 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
     uint8 public protocolFee = 100; //10%
     address public executionAddress;
 
-    IAceTheBrackets8 aceContract;
-
     mapping(uint256 => uint256) private tokenToGameId;
     mapping(uint256 => uint256[7]) private nftBet;
     mapping(bytes32 => uint256[]) private betCodeToTokenIds;
@@ -112,10 +110,6 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
     ) ERC721("AceTheBrackets", "ACE") {
         gamesHub = IGamesHub(_gamesHub);
         executionAddress = _executionAddress;
-
-        aceContract = IAceTheBrackets8(
-            gamesHub.games(keccak256("BRACKETS_PROXY"))
-        );
         token = IERC20(_token);
 
         _nextTokenId = 1;
@@ -171,6 +165,9 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
      * @param bets The array of bets for the game.
      */
     function safeMint(uint256 _gameId, uint256[7] memory bets) public {
+        IAceTheBrackets8 aceContract = IAceTheBrackets8(
+            gamesHub.games(keccak256("BRACKETS_PROXY"))
+        );
         require(!aceContract.paused(), "Game paused.");
         require(aceContract.getGameStatus(_gameId) == 0, "Bets closed.");
 
@@ -206,12 +203,18 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
      * @param _tokenId The ID of the ticket to claim tokens from.
      */
     function claimTokens(uint256 _tokenId) public nonReentrant {
+        IAceTheBrackets8 aceContract = IAceTheBrackets8(
+            gamesHub.games(keccak256("BRACKETS_PROXY"))
+        );
         require(!aceContract.paused(), "Game paused.");
         require(
             getPotStatus(tokenToGameId[_tokenId]),
             "Pot still being calculated."
         );
-        require(ownerOf(_tokenId) == msg.sender, "Not the owner of the ticket.");
+        require(
+            ownerOf(_tokenId) == msg.sender,
+            "Not the owner of the ticket."
+        );
 
         uint8 status = aceContract.getGameStatus(tokenToGameId[_tokenId]);
         require(status == 4, "Game not finished.");
@@ -267,6 +270,9 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
      * @param _tokenIds The array of token IDs to claim tokens from.
      */
     function claimAll(uint256[] memory _tokenIds) public nonReentrant {
+        IAceTheBrackets8 aceContract = IAceTheBrackets8(
+            gamesHub.games(keccak256("BRACKETS_PROXY"))
+        );
         require(!aceContract.paused(), "Game paused.");
 
         uint256 totalAmount = 0;
@@ -389,8 +395,8 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
                 return;
             }
             uint8 points = betWinQty(_gameData.tokenIds[i]);
-            if(points == 0) continue;
-            
+            if (points == 0) continue;
+
             if (_gameData.consolationPoints < points) {
                 _gameData.consolationPoints = points;
             }
@@ -502,6 +508,9 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
     function betValidator(
         uint256 _tokenId
     ) public view returns (uint8[7] memory) {
+        IAceTheBrackets8 aceContract = IAceTheBrackets8(
+            gamesHub.games(keccak256("BRACKETS_PROXY"))
+        );
         uint256[7] memory bets = nftBet[_tokenId];
         uint256[7] memory results = aceContract.getFinalResult(
             tokenToGameId[_tokenId]
@@ -545,6 +554,9 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
     function getTokenSymbols(
         uint256 _tokenId
     ) public view returns (string[7] memory) {
+        IAceTheBrackets8 aceContract = IAceTheBrackets8(
+            gamesHub.games(keccak256("BRACKETS_PROXY"))
+        );
         return [
             aceContract.getTokenSymbol(nftBet[_tokenId][0]),
             aceContract.getTokenSymbol(nftBet[_tokenId][1]),
@@ -567,7 +579,11 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
     ) public view returns (uint256 amountToClaim, uint256 amountClaimed) {
         uint256 _gameId = tokenToGameId[_tokenId];
         bytes32 betCode = keccak256(
-            abi.encodePacked(_gameId, aceContract.getFinalResult(_gameId))
+            abi.encodePacked(
+                _gameId,
+                IAceTheBrackets8(gamesHub.games(keccak256("BRACKETS_PROXY")))
+                    .getFinalResult(_gameId)
+            )
         );
 
         bytes32 tokenBetCode = keccak256(
@@ -585,7 +601,7 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
         if (points != gameData[_gameId].consolationPoints) {
             return (0, 0);
         }
-        if(gameData[_gameId].consolationWinners[points].length == 0) {
+        if (gameData[_gameId].consolationWinners[points].length == 0) {
             return (0, 0);
         }
         return (
@@ -650,7 +666,12 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
         return
             betCodeToTokenIds[
                 keccak256(
-                    abi.encodePacked(gameId, aceContract.getFinalResult(gameId))
+                    abi.encodePacked(
+                        gameId,
+                        IAceTheBrackets8(
+                            gamesHub.games(keccak256("BRACKETS_PROXY"))
+                        ).getFinalResult(gameId)
+                    )
                 )
             ];
     }

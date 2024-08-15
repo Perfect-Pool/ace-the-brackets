@@ -55,11 +55,6 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
         _;
     }
 
-    modifier gameOutOfIndex(uint256 gameIndex) {
-        require((gameIndex != 0) && (gameIndex <= totalGames), "ACE-02");
-        _;
-    }
-
     /**
      * @dev Constructor function
      * @param _gamesHubAddress Address of the games hub
@@ -297,7 +292,7 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
      * @dev Function to remove a game from the list of active games
      * @param gameIndex The index of the game to be removed
      */
-    function removeGame(uint256 gameIndex) internal gameOutOfIndex(gameIndex) {
+    function removeGame(uint256 gameIndex) internal {
         //remover o jogo da lista de jogos ativos
         uint8 activeIndex = uint8(gameIndexToActiveIndex[gameIndex]);
 
@@ -317,7 +312,7 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
      */
     function getFinalResult(
         uint256 gameIndex
-    ) public view gameOutOfIndex(gameIndex) returns (uint256[7] memory) {
+    ) public view returns (uint256[7] memory) {
         uint256[7] memory brackets;
 
         brackets[0] = games[gameIndex].rounds[1].tokens[0];
@@ -338,7 +333,7 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
      */
     function getGameStatus(
         uint256 gameIndex
-    ) public view gameOutOfIndex(gameIndex) returns (uint8 status) {
+    ) public view returns (uint8 status) {
         if (!games[gameIndex].activated) {
             return 0;
         } else {
@@ -355,7 +350,7 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
     function getRoundFullData(
         uint256 gameIndex,
         uint8 round
-    ) public view gameOutOfIndex(gameIndex) returns (bytes memory) {
+    ) public view returns (bytes memory) {
         // Return: ABI-encoded string[8], uint256[8], uint256[8], uint256, uint256
         return (
             abi.encode(
@@ -377,7 +372,7 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
      */
     function getGameFullData(
         uint256 gameIndex
-    ) public view gameOutOfIndex(gameIndex) returns (bytes memory) {
+    ) public view returns (bytes memory) {
         // Return: ABI-encoded bytes, bytes, bytes, string, uint256, uint8, uint256, uint256
         // CurrentRound 0-2: Rounds 1-3 / 3: Finished
         // Activated: 0: Inactive / 1: Active
@@ -409,7 +404,6 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
     )
         public
         view
-        gameOutOfIndex(gameIndex)
         returns (uint256[8] memory, uint256[8] memory, uint256[8] memory)
     {
         require(round <= 2, "ACE-07");
