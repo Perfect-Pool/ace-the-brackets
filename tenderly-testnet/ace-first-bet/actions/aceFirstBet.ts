@@ -141,6 +141,7 @@ export const aceFirstBet: ActionFn = async (context: Context, event: Event) => {
     //if getGamePlayers already has a player, then return with a message saying that the game already has a player
     const players = await ticketContract.getGamePlayers(gameId);
     if (players.length > 0) {
+        console.log("Players:", players);
         console.log("Game timer is already ongoing.");
         return;
     }
