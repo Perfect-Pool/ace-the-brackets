@@ -74,15 +74,40 @@ export const aceFirstBet: ActionFn = async (context: Context, event: Event) => {
     const privateKey = await context.secrets.get("project.addressPrivateKey");
     const rpcUrl = await context.secrets.get("baseSepolia.rpcUrl");
     const ACE_CONTRACT_ADDRESS = await context.secrets.get("baseSepolia.aceTheBrackets.contract");
+    const TICKET_CONTRACT = await context.secrets.get("baseSepolia.aceTicket.contract");
     const aceAbiText = await context.secrets.get("aceTheBrackets.abi");
     const aceAbi = JSON.parse(aceAbiText);
+
+    const ticketABI = [
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "gameId",
+                    "type": "uint256"
+                }
+            ],
+            "name": "getGamePlayers",
+            "outputs": [
+                {
+                    "internalType": "uint256[]",
+                    "name": "",
+                    "type": "uint256[]"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+    ];
 
     const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
     const wallet = new ethers.Wallet(privateKey, provider);
 
     let aceContract;
+    let ticketContract;
     try {
         aceContract = new ethers.Contract(ACE_CONTRACT_ADDRESS, aceAbi, wallet);
+        ticketContract = new ethers.Contract(TICKET_CONTRACT, ticketABI, wallet);
     } catch (error) {
         console.error("Failed to fetch contract (s).");
         await sendErrorLog('Failed to fetch contract on ACE first bet automation.', context);
@@ -113,11 +138,18 @@ export const aceFirstBet: ActionFn = async (context: Context, event: Event) => {
         return;
     }
 
+    //if getGamePlayers already has a player, then return with a message saying that the game already has a player
+    const players = await ticketContract.getGamePlayers(gameId);
+    if (players.length > 0) {
+        console.log("Game timer is already ongoing.");
+        return;
+    }
+
     const lastTimeStamp = Math.floor(Date.now() / 1000 / 60) * 60;
     const updateGamesCalldata = encodeUpdateData(gameId);
 
     console.log("Game ID:", gameId);
-    
+
     try {
         estimatedGas = await aceContract.estimateGas.performGames(
             '0x',

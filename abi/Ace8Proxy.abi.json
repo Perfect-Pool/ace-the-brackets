@@ -136,6 +136,19 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "gameIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "TimerStarted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "lastTimeStamp",
         "type": "uint256"
       }

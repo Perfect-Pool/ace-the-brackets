@@ -36,7 +36,7 @@ async function sendErrorLog(message: string, context: Context): Promise<void> {
 
     try {
         await axios.post(url, payload, { headers });
-        console.log('Error log sent successfully');
+        // console.log('Error log sent successfully');
     } catch (error) {
         console.error('Failed to send error log:', error);
     }
@@ -187,10 +187,40 @@ const updateCoinsList = (coins: string, decodedGames: DecodedGame[]) => {
     return Array.from(symbolsSet).join(",");
 };
 
-const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) => {
+//gets the price of a coin. the function MUST return only the price of the coin as number, excluding everything else from the response
+const getIndividualPrice = async (coin: string, context: Context): Promise<number> => {
+    const apiKey = await context.secrets.get("project.cmcAPIKey");
+    const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest`;
+
+    try {
+        const response = await axios.get(url, {
+            params: {
+                symbol: coin,
+            },
+            headers: {
+                "X-CMC_PRO_API_KEY": apiKey
+            },
+        });
+
+        const coinData = response.data.data[coin];
+        const price = Math.floor(
+            coinData.quote.USD.price * 10 ** 8
+        );
+
+        return price===0 ? 1 : price;
+    } catch (error) {
+        console.error("CoinMarketCap API call failed:", error);
+        await sendErrorLog("CoinMarketCap API call failed on ACE Mainnet", context);
+        return 0;
+    }
+}
+
+
+const calculateGameResults = async (decodedGames: DecodedGame[], prices: any, context: Context) => {
     let resultGames: any[] = [];
 
-    decodedGames.forEach(async (game) => {
+    for (let indexGame = 0; indexGame < decodedGames.length; indexGame++) {
+        const game = decodedGames[indexGame];
         const variations: any[] = []
         const actualPrices: any[] = []
         const winners: any[] = []
@@ -203,21 +233,34 @@ const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) =>
 
             const moeda = prices[game.coins[index]];
             const moedaNext = prices[game.coins[index + 1]];
+            let priceCurrent = 0;
+            let priceNext = 0;
+            let nextSkip = false;
+            let currentSkip = false;
 
-            if (!moeda || !moedaNext || !moeda.quotes || !moedaNext.quotes || moeda.quotes.length === 0 || moedaNext.quotes.length === 0) {
-                console.error("Prices not found for coin: ", game.coins[index]);
-                console.error("Price: ", prices[game.coins[index]]);
-                continue;
+            if (!moedaNext || !moedaNext.quotes || moedaNext.quotes.length === 0) {
+                console.error("Prices not found for coin: ", game.coins[index + 1]);
+                console.error("Price: ", prices[game.coins[index + 1]]);
+                console.log("Getting fixed price for ", game.coins[index + 1]);
+                priceNext = await getIndividualPrice(game.coins[index + 1], context);
+                nextSkip = true;
+            }else{
+                priceNext = Math.floor(
+                    moedaNext.quotes[0].quote.USD.price * 10 ** 8
+                );
             }
 
-            const priceCurrent = Math.floor(
-                moeda.quotes[0].quote.USD.price * 10 ** 8
-            );
-            const priceNext = Math.floor(
-                moedaNext.quotes[0].quote.USD.price * 10 ** 8
-            );
-            console.log("Price current ", game.coins[index], ": ", priceCurrent);
-            console.log("Price next ", game.coins[index + 1], ": ", priceNext);
+            if (!moeda || !moeda.quotes || moeda.quotes.length === 0) {
+                console.error("Prices not found for coin: ", game.coins[index]);
+                console.error("Price: ", prices[game.coins[index]]);
+                console.log("Getting individual price for ", game.coins[index]);
+                priceCurrent = await getIndividualPrice(game.coins[index], context);
+                currentSkip = true;
+            }else{
+                priceCurrent = Math.floor(
+                    moeda.quotes[0].quote.USD.price * 10 ** 8
+                );
+            }
 
             actualPrices[index] = priceCurrent;
             actualPrices[index + 1] = priceNext;
@@ -232,10 +275,8 @@ const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) =>
                 variations[index + 1] = variationNext;
 
                 if (variationCurrent === variationNext) {
-                    const volumeChangeCurrent =
-                        moeda.quotes[0].quote.USD.volume_change_24h;
-                    const volumeChangeNext =
-                        moedaNext.quotes[0].quote.USD.volume_change_24h;
+                    const volumeChangeCurrent = !currentSkip ? moeda.quotes[0].quote.USD.volume_change_24h : 0;
+                    const volumeChangeNext = !nextSkip ? moedaNext.quotes[0].quote.USD.volume_change_24h : 0;
 
                     if (
                         volumeChangeCurrent !== undefined &&
@@ -278,7 +319,7 @@ const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) =>
 
         let permitirPush = true;
 
-        //iterar coins e ver se existem valores zerados. Acrescentar valores zerados até fechar 8 posições
+        // iterar coins e ver se existem valores zerados. Acrescentar valores zerados até fechar 8 posições
         permitirPush = !retorno.coins.some((coin) => coin === "");
         if (!(game.game_round === 0 && game.prices[0] === 0)) {
             permitirPush = permitirPush && !retorno.prices.some((price) => price === 0);
@@ -289,26 +330,26 @@ const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) =>
         const expectedLength = game.game_round === 0 ? 8 : game.game_round === 1 ? 4 : 2;
         console.log("Retorno: ", retorno);
 
-        if (permitirPush &&
-            retorno.coins.length === expectedLength
+        if (permitirPush 
+            && retorno.coins.length === expectedLength
         ) {
             if (!(game.game_round === 0 && game.prices[0] === 0) &&
                 !(retorno.variations.length === expectedLength &&
                     retorno.prices.length === expectedLength &&
                     retorno.winners.length === expectedLength / 2 &&
                     retorno.pricesWinners.length === expectedLength / 2)
-            ) return;
+            ) continue;
             while (retorno.coins.length < 8) retorno.coins.push("");
             while (retorno.variations.length < 8) retorno.variations.push(0);
             while (retorno.prices.length < 8) retorno.prices.push(0);
             while (retorno.winners.length < 8) retorno.winners.push(0);
             while (retorno.pricesWinners.length < 8) retorno.pricesWinners.push(0);
             resultGames.push(retorno);
-            return;
-        } else console.log("Falhou na verificação de expectativa de tamanho do retorno.");
+            continue;
+        } else console.log("The game is on betting round");
 
         console.error("Erro ao calcular o retorno do jogo: ", retorno.game_id, " Round: ", game.game_round);
-    });
+    };
 
     console.log("Result games Final: ", resultGames);
     return resultGames;
@@ -461,12 +502,12 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
     }
 
     console.log("Calculating game results");
-    const resultGames = await calculateGameResults(decodedGames, prices);
+    const resultGames = await calculateGameResults(decodedGames, prices, context);
 
     console.log("Decoded games:", decodedGames);
 
     if (resultGames === null || resultGames.length !== decodedGames.length) {
-        console.error("Failed to calculate game results");
+        console.error("Failed to calculate game results:", resultGames);
         await sendErrorLog("Failed to calculate game results on ACE Mainnet", context);
         return;
     }
@@ -500,7 +541,6 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
         gasLimit = estimatedGas.mul(110).div(100);
     } catch (error) {
         console.error("Failed to estimate gas:", error);
-        await new Promise((resolve) => setTimeout(resolve, 5000));
         await sendErrorLog("Failed to estimate gas on ACE Mainnet", context);
         return;
     }

@@ -21,129 +21,6 @@
     "type": "constructor"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint8",
-        "name": "daysToClaimPrize",
-        "type": "uint8"
-      }
-    ],
-    "name": "DaysToClaimPrizeChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "gameIndex",
-        "type": "uint256"
-      }
-    ],
-    "name": "GameActivated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "gameIndex",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint8",
-        "name": "round",
-        "type": "uint8"
-      }
-    ],
-    "name": "GameAdvanced",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "gameIndex",
-        "type": "uint256"
-      }
-    ],
-    "name": "GameCreated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "gameIndex",
-        "type": "uint256"
-      }
-    ],
-    "name": "GameFinished",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "gameId",
-        "type": "uint256"
-      }
-    ],
-    "name": "GameReset",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "paused",
-        "type": "bool"
-      }
-    ],
-    "name": "Paused",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "tokenIndex",
-        "type": "uint256"
-      }
-    ],
-    "name": "PriceFeedAdded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lastTimeStamp",
-        "type": "uint256"
-      }
-    ],
-    "name": "UpdatePerformed",
-    "type": "event"
-  },
-  {
     "inputs": [],
     "name": "MIN_ACTIVE_TOKENS",
     "outputs": [
@@ -161,6 +38,11 @@
       {
         "internalType": "uint256",
         "name": "gameIndex",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_lastTimeStamp",
         "type": "uint256"
       },
       {
@@ -212,11 +94,6 @@
   },
   {
     "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_lastTimeStamp",
-        "type": "uint256"
-      },
       {
         "internalType": "bytes",
         "name": "_dataNewGame",
