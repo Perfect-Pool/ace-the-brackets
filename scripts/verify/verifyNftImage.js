@@ -4,7 +4,7 @@ async function main() {
     const contracts = require("../../contracts.json");
     const networkName = hre.network.name;
 
-    const address = contracts[networkName]["NFT_IMAGE"];
+    const address = contracts[networkName]["NFT_IMAGE_ACE8"];
     if (!address) {
         console.error("NftImage address not found in contracts.json");
         process.exit(1);

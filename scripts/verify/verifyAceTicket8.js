@@ -11,7 +11,7 @@ async function main() {
     tokenAddress = contracts[networkName].USDC;
   }
 
-  const address = contracts[networkName]["NFT_BRACKETS"];
+  const address = contracts[networkName]["NFT_ACE8"];
   if (!address) {
     console.error("AceTicket8 address not found in contracts.json");
     process.exit(1);

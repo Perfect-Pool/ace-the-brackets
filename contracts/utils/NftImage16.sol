@@ -9,7 +9,7 @@ import "../interfaces/IAceTheBrackets8.sol";
 import "../interfaces/IGamesHub.sol";
 import "../interfaces/IAceTicket8.sol";
 
-contract NftImage is Ownable {
+contract NftImage16 is Ownable {
     using Strings for uint16;
     using Strings for uint256;
 

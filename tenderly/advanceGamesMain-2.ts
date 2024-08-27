@@ -36,8 +36,8 @@ async function sendErrorLog(message: string, context: Context): Promise<void> {
 
     try {
         await axios.post(url, payload, { headers });
-        console.log('Error log sent successfully');
-    } catch (error: any) {
+        // console.log('Error log sent successfully');
+    } catch (error) {
         console.error('Failed to send error log:', error);
     }
 }
@@ -127,6 +127,65 @@ const getPriceCMC = async (coin: string, context: Context, timestampExec: number
     }
 }
 
+// Function to decode the data returned by the getActiveGamesActualCoins() function
+const decodeActiveGamesActualCoins = (encodedGames: string[]): DecodedGame[] => {
+    const decodedGames: DecodedGame[] = encodedGames.reduce((acc: DecodedGame[], encodedGame: string) => {
+        if (encodedGame === "0x") {
+            return acc;
+        }
+
+        const decoded = ethers.utils.defaultAbiCoder.decode(
+            ["uint256", "uint8", "string[8]", "uint256[8]"],
+            encodedGame
+        );
+
+        const gameId = decoded[0].toNumber();
+        if (gameId === 0) {
+            return acc;
+        }
+
+        acc.push({
+            game_id: gameId,
+            game_round: decoded[1],
+            coins: decoded[2],
+            prices: decoded[3].map((price: ethers.BigNumber) => price.toNumber()),
+        });
+
+        return acc;
+    }, []);
+
+    // console.log("Decoded games:", decodedGames);
+
+    return decodedGames;
+};
+
+// Function to create the calldata for the createGame function
+const createCalldataForNewGame = async (newGameCoins: { id: number; symbol: string }[]) => {
+    const cmcIds = newGameCoins.map((coin) => coin.id);
+    const symbols = newGameCoins.map((coin) => coin.symbol);
+
+    const calldata = ethers.utils.defaultAbiCoder.encode(
+        ["uint256[8]", "string[8]"],
+        [cmcIds, symbols]
+    );
+
+    return calldata;
+};
+
+const updateCoinsList = (coins: string, decodedGames: DecodedGame[]) => {
+    let symbolsSet = new Set(coins.split(","));
+
+    decodedGames.forEach((game) => {
+        if (!game || game === null || game.game_id === 0) return;
+        game.coins.forEach((coin) => {
+            if (coin.trim() && !symbolsSet.has(coin)) {
+                symbolsSet.add(coin);
+            }
+        });
+    });
+
+    return Array.from(symbolsSet).join(",");
+};
 
 //gets the price of a coin. the function MUST return only the price of the coin as number, excluding everything else from the response
 const getIndividualPrice = async (coin: string, context: Context): Promise<number> => {
@@ -156,103 +215,6 @@ const getIndividualPrice = async (coin: string, context: Context): Promise<numbe
     }
 }
 
-// Function to decode the data returned by the getActiveGamesActualCoins() function
-const decodeActiveGamesActualCoins = async (encodedGames: string[], aceContract: ethers.Contract, lastTimeStamp: number): Promise<DecodedGame[]> => {
-    const decodedGames: DecodedGame[] = [];
-
-    for (const encodedGame of encodedGames) {
-        if (encodedGame === "0x") {
-            continue;
-        }
-
-        const decoded = ethers.utils.defaultAbiCoder.decode(
-            ["uint256", "uint8", "string[8]", "uint256[8]"],
-            encodedGame
-        );
-
-        const gameId = decoded[0].toNumber();
-        if (gameId === 0) {
-            continue;
-        }
-        const actualRound = decoded[1];
-        // ------------------------------ativar
-        console.log("Decoding Game ID: ", gameId);
-        const fullGameData = await aceContract.getGameFullData(decoded[0]);
-
-        console.log("Decoding Full Game Data");
-        const decodedFulldata = ethers.utils.defaultAbiCoder.decode(
-            ["bytes", "bytes", "bytes", "string", "uint256", "uint8", "uint256", "uint256", "bool"],
-            fullGameData
-        );
-
-        // ------------------------------manter desativado
-        // const fullRoundData = ethers.utils.defaultAbiCoder.decode(
-        //     ["string[]", "uint256[]", "uint256[]", "uint256", "uint256"],
-        //     decodedFulldata[actualRound]
-        // );
-
-        // ------------------------------ativar
-        const gameStart = decodedFulldata[6].toNumber();
-        if (gameStart === 0) {
-            console.log("This game has no timer yet.");
-            continue;
-        }
-
-        console.log("Game Start: ", new Date(gameStart * 1000).toISOString());
-        console.log("Last Timestamp: ", new Date(lastTimeStamp * 1000).toISOString());
-
-        if (actualRound === 0 && gameStart > lastTimeStamp) {
-            console.log("This game has not started yet.");
-            continue;
-        }
-
-        // ------------------------------manter desativado
-        // const roundEnd = fullRoundData[4].toNumber();
-
-        // if (roundEnd > lastTimeStamp) {
-        //     console.log("This round has not ended yet.");
-        //     continue;
-        // }
-
-        decodedGames.push({
-            game_id: gameId,
-            game_round: actualRound,
-            coins: decoded[2],
-            prices: decoded[3].map((price: ethers.BigNumber) => price.toNumber()),
-        });
-    }
-
-    return decodedGames;
-};
-
-// Function to create the calldata for the createGame function
-const createCalldataForNewGame = async (newGameCoins: { id: number; symbol: string }[]) => {
-    const cmcIds = newGameCoins.map((coin) => coin.id);
-    const symbols = newGameCoins.map((coin) => coin.symbol);
-
-    const calldata = ethers.utils.defaultAbiCoder.encode(
-        ["uint256[8]", "string[8]"],
-        [cmcIds, symbols]
-    );
-
-    return calldata;
-};
-
-const updateCoinsList = (coins: string, decodedGames: DecodedGame[]) => {
-    let symbolsSet = coins === "" ? new Set() :
-        new Set(coins.split(","));
-
-    decodedGames.forEach((game) => {
-        if (!game || game === null || game.game_id === 0) return;
-        game.coins.forEach((coin) => {
-            if (coin.trim() && !symbolsSet.has(coin)) {
-                symbolsSet.add(coin);
-            }
-        });
-    });
-
-    return Array.from(symbolsSet).join(",");
-};
 
 const calculateGameResults = async (decodedGames: DecodedGame[], prices: any, context: Context) => {
     let resultGames: any[] = [];
@@ -468,14 +430,22 @@ async function getGasPrice(provider: ethers.providers.Provider, context: Context
 
 export const advanceGamesMain: ActionFn = async (context: Context, event: Event) => {
     const lastTimeStamp = Math.floor(Date.now() / 1000 / 60) * 60;
-
     const lastT = await context.storage.getNumber('lastTimeStampMain');
-    // lastT must be 8 mins or more older than lastTimeStamp
+    const lastExecuted = await context.storage.getNumber('executedMain');
+
+    if (lastExecuted === lastTimeStamp) {
+        console.log('Already executed');
+        return;
+    }
+
+    // lastT must be 5 mins or more older than lastTimeStamp
     if (lastT && (lastTimeStamp - lastT < (8 * 60))) {
         console.log('Last timestamp is too recent');
         return;
     }
+
     await context.storage.putNumber('lastTimeStampMain', lastTimeStamp);
+    await context.storage.putNumber('lastTimeStampWebhookMain', lastTimeStamp);
 
     const privateKey = await context.secrets.get("project.addressPrivateKey");
     const rpcUrl = await context.secrets.get("base.rpcUrl");
@@ -496,9 +466,16 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
         aceContract = new ethers.Contract(CONTRACT_ADDRESS, abi, wallet);
     } catch (error) {
         console.error("Failed to fetch contract:", error);
-        await sendErrorLog("Failed to fetch contract on ACE", context);
+        await sendErrorLog("Failed to fetch contract on ACE Mainnet", context);
         return;
     }
+
+    console.log("Fetching coins for a new game");
+    const newGameCoins = await getCoinsTop(150, 8, context, lastTimeStamp);
+    const newGameCalldata = await createCalldataForNewGame(newGameCoins);
+    let coins = newGameCoins.map((coin) => coin.symbol).join(",");
+
+    console.log("Coins for a new game:", coins);
 
     console.log("Fetching active games");
     let gamesData;
@@ -506,33 +483,13 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
         gamesData = await aceContract.getActiveGamesActualCoins();
     } catch (error) {
         console.error("Failed to fetch active games:", error);
-        await sendErrorLog("Failed to fetch active games on ACE ", context);
         return;
     }
 
     console.log("Decoding active games data");
-    const decodedGames = await decodeActiveGamesActualCoins(gamesData, aceContract, lastTimeStamp);
-
-    let coins = "";
-    let newGameCoins;
-    let newGameCalldata = "0x";
-
-    console.log("Checking if there is a new game to be created");
-    if (decodedGames.some((game) => game.game_round === 2)) {
-    // if (true) {
-        newGameCoins = await getCoinsTop(150, 8, context, lastTimeStamp);
-        newGameCalldata = await createCalldataForNewGame(newGameCoins);
-        coins = newGameCoins.map((coin) => coin.symbol).join(",");
-
-        console.log("New game coins:", coins);
-    }
-    
+    const decodedGames = decodeActiveGamesActualCoins(gamesData);
 
     coins = updateCoinsList(coins, decodedGames);
-    if (coins === "") {
-        console.error("No coins found to update games");
-        return;
-    }
     console.log("Coins for all games:", coins);
 
     console.log("Fetching prices");
@@ -540,7 +497,7 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
 
     if (!prices || Object.keys(prices).length === 0) {
         console.error("Failed to fetch prices");
-        await sendErrorLog("Failed to fetch prices on ACE", context);
+        await sendErrorLog("Failed to fetch prices on ACE Mainnet", context);
         return;
     }
 
@@ -550,8 +507,8 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
     console.log("Decoded games:", decodedGames);
 
     if (resultGames === null || resultGames.length !== decodedGames.length) {
-        console.error("Failed to calculate game results");
-        await sendErrorLog("Failed to calculate game results on ACE", context);
+        console.error("Failed to calculate game results:", resultGames);
+        await sendErrorLog("Failed to calculate game results on ACE Mainnet", context);
         return;
     }
 
@@ -561,7 +518,7 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
             resultGames.length === 0 ? "0x" : createDataUpdate(resultGames);
     } catch (error) {
         console.error("Failed to create update games calldata:", error);
-        await sendErrorLog("Failed to create update games calldata on ACE", context);
+        await sendErrorLog("Failed to create update games calldata on ACE Mainnet", context);
         return;
     }
 
@@ -574,7 +531,6 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
     console.log("Sending Transaction");
     let estimatedGas;
     let gasLimit;
-    const gasPrice = await getGasPrice(provider, context);
 
     try {
         estimatedGas = await aceContract.estimateGas.performGames(
@@ -585,15 +541,13 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
         gasLimit = estimatedGas.mul(110).div(100);
     } catch (error) {
         console.error("Failed to estimate gas:", error);
-        await sendErrorLog("Failed to estimate gas on ACE", context);
+        await sendErrorLog("Failed to estimate gas on ACE Mainnet", context);
         return;
     }
 
+    const gasPrice = await getGasPrice(provider, context);
     console.log("Gas limit:", gasLimit.toString());
-
-    console.log(
-        `Estimated gas: ${estimatedGas.toString()}, adjusted gas limit: ${gasLimit.toString()}`
-    );
+    console.log("Gas price:", gasPrice.toString());
 
     try {
         const tx = await aceContract.performGames(
@@ -602,13 +556,13 @@ export const advanceGamesMain: ActionFn = async (context: Context, event: Event)
             lastTimeStamp,
             {
                 gasLimit: gasLimit,
-                gasPrice: gasPrice
+                gasPrice: gasPrice,
             }
         );
 
         await tx.wait();
         console.log(`Games successfully updated. TX: ${tx.hash}`);
-        await context.storage.putNumber('executed', lastTimeStamp);
+        await context.storage.putNumber('executedMain', lastTimeStamp);
     } catch (error: any) {
         console.error("Failed to perform games:", error);
         await sendErrorLog(`Failed to perform games on ACE: ${error?.message?.split(' [')[0]}`, context);

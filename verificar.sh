@@ -6,7 +6,7 @@ echo "Iniciando a verificação dos scripts..."
 # yarn verify-ace base-testnet
 # yarn verify-library-1 base-testnet
 
-# yarn verify-nft base
+yarn verify-nft base
 yarn verify-ace base
 # yarn verify-library-1 base
 

@@ -4,9 +4,9 @@ actions:
     runtime: v2
     sources: actions
     specs:
-      prizeIterationMain:
-        description: "Event trigger to consolation prize Base Mainnet"
-        function: consolationPrizeMain:consolationPrizeMain
+      aceFirstBetMain:
+        description: "Event trigger to consolation prize"
+        function: aceFirstBetMain:aceFirstBetMain
         trigger:
           type: transaction
           transaction:
@@ -15,6 +15,6 @@ actions:
               - network: 8453
                 eventEmitted:
                   contract:
-                    address: 0x6beb48Fe1Ee812b0972bFe497d3887B902323192
-                  name: IterateGameData
+                    address: 0x37c73d2732618B6BDffE33C691C3c9FeA01f15Ad
+                  name: BetPlaced
 project_slug: "perfectpool"

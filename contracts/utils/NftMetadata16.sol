@@ -17,7 +17,7 @@ interface INftImage {
     ) external view returns (string memory);
 }
 
-contract NftMetadata is Ownable {
+contract NftMetadata16 is Ownable {
     using Strings for uint8;
     using Strings for uint256;
 

@@ -4,7 +4,7 @@ async function main() {
   const contracts = require("../../contracts.json");
   const networkName = hre.network.name;
 
-  const address = contracts[networkName]["BRACKETS"];
+  const address = contracts[networkName]["ACE8"];
   if (!address) {
     console.error("AceTheBrackets8 address not found in contracts.json");
     process.exit(1);
@@ -17,12 +17,12 @@ async function main() {
     constructorArguments: [
       contracts[networkName].GAMES_HUB,
       contracts[networkName].Executor,
-      contracts[networkName].LAST_GAME
+      contracts[networkName].LAST_GAME8
     ],
     contract: "contracts/games/AceTheBrackets8.sol:AceTheBrackets8",
   });
 
-  const addressProxy = contracts[networkName]["BRACKETS_PROXY"];
+  const addressProxy = contracts[networkName]["ACE8_PROXY"];
   if (!addressProxy) {
     console.error("Ace8Proxy address not found in contracts.json");
     process.exit(1);
@@ -35,7 +35,7 @@ async function main() {
     constructorArguments: [
       contracts[networkName].GAMES_HUB,
       contracts[networkName].Executor,
-      contracts[networkName].LAST_GAME
+      contracts[networkName].LAST_GAME8
     ],
     contract: "contracts/games/Ace8Proxy.sol:Ace8Proxy",
   });

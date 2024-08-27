@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../interfaces/IGamesHub.sol";
-import "../interfaces/IAceTheBrackets8.sol";
+import "../interfaces/IAceTheBrackets16.sol";
 
 interface IERC20 {
     function transferFrom(
@@ -30,7 +30,7 @@ interface INftMetadata {
     ) external view returns (string memory);
 }
 
-contract AceTicket8 is ERC721, ReentrancyGuard {
+contract AceTicket16 is ERC721, ReentrancyGuard {
     event BetPlaced(
         address indexed _player,
         uint256 indexed _gameId,
@@ -75,7 +75,7 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
     address public executionAddress;
 
     mapping(uint256 => uint256) private tokenToGameId;
-    mapping(uint256 => uint256[7]) private nftBet;
+    mapping(uint256 => uint256[15]) private nftBet;
     mapping(bytes32 => uint256[]) private betCodeToTokenIds;
     mapping(bytes32 => uint256) private gamePot;
     mapping(bytes32 => uint256) private gamePotClaimed;
@@ -92,7 +92,7 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
 
     modifier onlyGameContract() {
         require(
-            msg.sender == gamesHub.games(keccak256("ACE8")),
+            msg.sender == gamesHub.games(keccak256("ACE16")),
             "Caller is not game contract"
         );
         _;
@@ -107,12 +107,12 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
         address _gamesHub,
         address _executionAddress,
         address _token
-    ) ERC721("AceTheBrackets8", "ACE8") {
+    ) ERC721("AceTheBrackets16", "ACE16") {
         gamesHub = IGamesHub(_gamesHub);
         executionAddress = _executionAddress;
         token = IERC20(_token);
 
-        _nextTokenId = 59;
+        _nextTokenId = 1;
         jackpot = 0;
         price = 5 * 10 ** token.decimals();
     }
@@ -164,25 +164,12 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
      * @param _gameId The ID of the game to bet on.
      * @param bets The array of bets for the game.
      */
-    function safeMint(uint256 _gameId, uint256[7] memory bets) public {
-        IAceTheBrackets8 aceContract = IAceTheBrackets8(
-            gamesHub.games(keccak256("ACE8_PROXY"))
+    function safeMint(uint256 _gameId, uint256[15] memory bets) public {
+        IAceTheBrackets16 aceContract = IAceTheBrackets16(
+            gamesHub.games(keccak256("ACE16_PROXY"))
         );
         require(!aceContract.paused(), "Game paused.");
         require(aceContract.getGameStatus(_gameId) == 0, "Bets closed.");
-
-        (uint256[8] memory tokens, , ) = aceContract.getRoundData(_gameId, 0);
-
-        require(
-            ((bets[0] == tokens[0]) || (bets[0] == tokens[1])) &&
-                ((bets[1] == tokens[2]) || (bets[1] == tokens[3])) &&
-                ((bets[2] == tokens[4]) || (bets[2] == tokens[5])) &&
-                ((bets[3] == tokens[6]) || (bets[3] == tokens[7])) &&
-                ((bets[4] == bets[0]) || (bets[4] == bets[1])) &&
-                ((bets[5] == bets[2]) || (bets[5] == bets[3])) &&
-                ((bets[6] == bets[4]) || (bets[6] == bets[5])),
-            "Invalid bet."
-        );
 
         token.transferFrom(msg.sender, address(this), price);
 
@@ -203,8 +190,8 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
      * @param _tokenId The ID of the ticket to claim tokens from.
      */
     function claimTokens(uint256 _tokenId) public nonReentrant {
-        IAceTheBrackets8 aceContract = IAceTheBrackets8(
-            gamesHub.games(keccak256("ACE8_PROXY"))
+        IAceTheBrackets16 aceContract = IAceTheBrackets16(
+            gamesHub.games(keccak256("ACE16_PROXY"))
         );
         require(!aceContract.paused(), "Game paused.");
         require(
@@ -217,7 +204,7 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
         );
 
         uint8 status = aceContract.getGameStatus(tokenToGameId[_tokenId]);
-        require(status == 4, "Game not finished.");
+        require(status == 5, "Game not finished.");
 
         uint256 _gameId = tokenToGameId[_tokenId];
         bytes32 betCode = keccak256(
@@ -270,8 +257,8 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
      * @param _tokenIds The array of token IDs to claim tokens from.
      */
     function claimAll(uint256[] memory _tokenIds) public nonReentrant {
-        IAceTheBrackets8 aceContract = IAceTheBrackets8(
-            gamesHub.games(keccak256("ACE8_PROXY"))
+        IAceTheBrackets16 aceContract = IAceTheBrackets16(
+            gamesHub.games(keccak256("ACE16_PROXY"))
         );
         require(!aceContract.paused(), "Game paused.");
 
@@ -283,7 +270,7 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
             uint8 status = aceContract.getGameStatus(
                 tokenToGameId[_tokenIds[i]]
             );
-            if (status != 4) continue;
+            if (status != 5) continue;
 
             uint256 _gameId = tokenToGameId[_tokenIds[i]];
             bytes32 betCode = keccak256(
@@ -475,7 +462,7 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
         require(_exists(_tokenId), "Token not minted.");
 
         INftMetadata nftMetadata = INftMetadata(
-            gamesHub.helpers(keccak256("NFT_METADATA_ACE8"))
+            gamesHub.helpers(keccak256("NFT_METADATA_ACE16"))
         );
         return nftMetadata.buildMetadata(tokenToGameId[_tokenId], _tokenId);
     }
@@ -487,7 +474,7 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
      */
     function getBetData(
         uint256 _tokenId
-    ) public view returns (uint256[7] memory) {
+    ) public view returns (uint256[15] memory) {
         return nftBet[_tokenId];
     }
 
@@ -507,12 +494,12 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
      */
     function betValidator(
         uint256 _tokenId
-    ) public view returns (uint8[7] memory) {
-        IAceTheBrackets8 aceContract = IAceTheBrackets8(
-            gamesHub.games(keccak256("ACE8_PROXY"))
+    ) public view returns (uint8[15] memory) {
+        IAceTheBrackets16 aceContract = IAceTheBrackets16(
+            gamesHub.games(keccak256("ACE16_PROXY"))
         );
-        uint256[7] memory bets = nftBet[_tokenId];
-        uint256[7] memory results = aceContract.getFinalResult(
+        uint256[15] memory bets = nftBet[_tokenId];
+        uint256[15] memory results = aceContract.getFinalResult(
             tokenToGameId[_tokenId]
         );
 
@@ -523,9 +510,17 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
             status <= 1 ? 0 : (bets[1] == results[1] ? 1 : 2),
             status <= 1 ? 0 : (bets[2] == results[2] ? 1 : 2),
             status <= 1 ? 0 : (bets[3] == results[3] ? 1 : 2),
-            status <= 2 ? 0 : (bets[4] == results[4] ? 1 : 2),
-            status <= 2 ? 0 : (bets[5] == results[5] ? 1 : 2),
-            status <= 3 ? 0 : (bets[6] == results[6] ? 1 : 2)
+            status <= 1 ? 0 : (bets[4] == results[4] ? 1 : 2),
+            status <= 1 ? 0 : (bets[5] == results[5] ? 1 : 2),
+            status <= 1 ? 0 : (bets[6] == results[6] ? 1 : 2),
+            status <= 1 ? 0 : (bets[7] == results[7] ? 1 : 2),
+            status <= 2 ? 0 : (bets[8] == results[8] ? 1 : 2),
+            status <= 2 ? 0 : (bets[9] == results[9] ? 1 : 2),
+            status <= 2 ? 0 : (bets[10] == results[10] ? 1 : 2),
+            status <= 2 ? 0 : (bets[11] == results[11] ? 1 : 2),
+            status <= 3 ? 0 : (bets[12] == results[12] ? 1 : 2),
+            status <= 3 ? 0 : (bets[13] == results[13] ? 1 : 2),
+            status <= 4 ? 0 : (bets[14] == results[14] ? 1 : 2)
         ];
     }
 
@@ -535,10 +530,10 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
      * @return The quantity of winning bets for the token.
      */
     function betWinQty(uint256 _tokenId) public view returns (uint8) {
-        uint8[7] memory validator = betValidator(_tokenId);
+        uint8[15] memory validator = betValidator(_tokenId);
 
         uint8 winQty = 0;
-        for (uint8 i = 0; i < 7; i++) {
+        for (uint8 i = 0; i < 15; i++) {
             if (validator[i] == 1) {
                 winQty++;
             }
@@ -553,9 +548,9 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
      */
     function getTokenSymbols(
         uint256 _tokenId
-    ) public view returns (string[7] memory) {
-        IAceTheBrackets8 aceContract = IAceTheBrackets8(
-            gamesHub.games(keccak256("ACE8_PROXY"))
+    ) public view returns (string[15] memory) {
+        IAceTheBrackets16 aceContract = IAceTheBrackets16(
+            gamesHub.games(keccak256("ACE16_PROXY"))
         );
         return [
             aceContract.getTokenSymbol(nftBet[_tokenId][0]),
@@ -564,7 +559,15 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
             aceContract.getTokenSymbol(nftBet[_tokenId][3]),
             aceContract.getTokenSymbol(nftBet[_tokenId][4]),
             aceContract.getTokenSymbol(nftBet[_tokenId][5]),
-            aceContract.getTokenSymbol(nftBet[_tokenId][6])
+            aceContract.getTokenSymbol(nftBet[_tokenId][6]),
+            aceContract.getTokenSymbol(nftBet[_tokenId][7]),
+            aceContract.getTokenSymbol(nftBet[_tokenId][8]),
+            aceContract.getTokenSymbol(nftBet[_tokenId][9]),
+            aceContract.getTokenSymbol(nftBet[_tokenId][10]),
+            aceContract.getTokenSymbol(nftBet[_tokenId][11]),
+            aceContract.getTokenSymbol(nftBet[_tokenId][12]),
+            aceContract.getTokenSymbol(nftBet[_tokenId][13]),
+            aceContract.getTokenSymbol(nftBet[_tokenId][14])
         ];
     }
 
@@ -581,7 +584,7 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
         bytes32 betCode = keccak256(
             abi.encodePacked(
                 _gameId,
-                IAceTheBrackets8(gamesHub.games(keccak256("ACE8_PROXY")))
+                IAceTheBrackets16(gamesHub.games(keccak256("ACE16_PROXY")))
                     .getFinalResult(_gameId)
             )
         );
@@ -668,8 +671,8 @@ contract AceTicket8 is ERC721, ReentrancyGuard {
                 keccak256(
                     abi.encodePacked(
                         gameId,
-                        IAceTheBrackets8(
-                            gamesHub.games(keccak256("ACE8_PROXY"))
+                        IAceTheBrackets16(
+                            gamesHub.games(keccak256("ACE16_PROXY"))
                         ).getFinalResult(gameId)
                     )
                 )

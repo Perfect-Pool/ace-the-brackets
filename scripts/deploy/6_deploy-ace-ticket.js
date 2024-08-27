@@ -21,15 +21,15 @@ async function main() {
   console.log(`GamesHub loaded at ${gamesHub.address}`);
 
   // Deploy do AceTicket8, se necessário
-  const name = "ACE_TICKET";
+  const name = "NFT_ACE8";
 
-  if (networkData.NFT_BRACKETS === "") {
+  if (networkData.NFT_ACE8 === "") {
     const AceTicket8 = await ethers.getContractFactory("AceTicket8");
     const aceTicket8 = await AceTicket8.deploy(gamesHub.address, networkData.Executor, tokenAddress);
     await aceTicket8.deployed();
     console.log(`AceTicket8 deployed at ${aceTicket8.address}`);
 
-    networkData.NFT_BRACKETS = aceTicket8.address;
+    networkData.NFT_ACE8 = aceTicket8.address;
     fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -43,7 +43,7 @@ async function main() {
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
   } else {
-    console.log(`AceTicket8 already deployed at ${networkData.NFT_BRACKETS}`);
+    console.log(`AceTicket8 already deployed at ${networkData.NFT_ACE8}`);
   }
 }
 

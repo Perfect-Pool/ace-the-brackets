@@ -49,7 +49,7 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
     /** MODIFIERS **/
     modifier onlyGameContract() {
         require(
-            gamesHub.games(keccak256("BRACKETS_PROXY")) == msg.sender,
+            gamesHub.games(keccak256("ACE8_PROXY")) == msg.sender,
             "ACE-01"
         );
         _;
@@ -191,13 +191,12 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
         uint256[8] memory pricesArray = abi.decode(_prices, (uint256[8]));
 
         if (!games[gameIndex].activated) {
-            if (pricesArray[0] == 0) {
+            if (games[gameIndex].start == 0) {
                 _updateTimestamps(gameIndex, _lastTimeStamp);
-                return;
             }
 
-            if (games[gameIndex].rounds[0].start == 0) {
-                _updateTimestamps(gameIndex, _lastTimeStamp);
+            if (pricesArray[0] == 0 && pricesArray[1] == 0) {
+                return;
             }
 
             games[gameIndex].activated = true;
@@ -226,7 +225,7 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
                 abi.encodePacked(gameIndex, getFinalResult(gameIndex))
             );
 
-            IAceTicket8(gamesHub.helpers(keccak256("ACE_TICKET"))).setGamePot(
+            IAceTicket8(gamesHub.helpers(keccak256("NFT_ACE8"))).setGamePot(
                 gameIndex,
                 gameCode
             );
@@ -257,9 +256,7 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
      * @param _lastTimeStamp The last timestamp
      */
     function _updateTimestamps(uint256 _gameId, uint256 _lastTimeStamp) internal {
-        _lastTimeStamp = _lastTimeStamp - (_lastTimeStamp % betTime);
-
-        uint256 timer = _lastTimeStamp + betTime;
+        uint256 timer = _lastTimeStamp - (_lastTimeStamp % betTime) + (betTime * 2);
         uint256 _roundDuration = roundDuration;
 
         games[_gameId].start = timer;

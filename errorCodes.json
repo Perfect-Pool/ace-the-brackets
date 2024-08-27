@@ -11,6 +11,7 @@
     "ACE-04": "Mismatch between the number of tokens and symbols provided.",
     "ACE-05": "Invalid token ID or symbol provided.",
     "ACE-06": "Invalid winners array provided.",
-    "ACE-07": "Invalid round number provided."
+    "ACE-07": "Invalid round number provided.",
+    "ACE-08": "Executor wallet is locked."
   }
 }

@@ -166,6 +166,9 @@ const decodeActiveGamesActualCoins = async (encodedGames: string[], aceContract:
             continue;
         }
 
+        console.log("Game Start: ", new Date(gameStart * 1000).toISOString());
+        console.log("Last Timestamp: ", new Date(lastTimeStamp * 1000).toISOString());
+
         if (actualRound === 0 && gameStart > lastTimeStamp) {
             console.log("This game has not started yet.");
             continue;
@@ -447,12 +450,14 @@ export const advanceGames: ActionFn = async (context: Context, event: Event) => 
 
     console.log("Checking if there is a new game to be created");
     if (decodedGames.some((game) => game.game_round === 2)) {
+    // if (true) {
         newGameCoins = await getCoinsTop(150, 8, context, lastTimeStamp);
         newGameCalldata = await createCalldataForNewGame(newGameCoins);
         coins = newGameCoins.map((coin) => coin.symbol).join(",");
 
         console.log("New game coins:", coins);
     }
+    
 
     coins = updateCoinsList(coins, decodedGames);
     if (coins === "") {

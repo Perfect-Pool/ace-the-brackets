@@ -15,19 +15,18 @@ async function main() {
   console.log(`GamesHub loaded at ${GamesHub.address}`);
   console.log(`Executor Address: ${networkData.Executor}`);
 
-
-  if (networkData.BRACKETS === "") {
+  if (networkData.ACE8 === "") {
     console.log(`Deploying AceTheBrackets8...`);
     const AceTheBrackets8 = await ethers.getContractFactory("AceTheBrackets8");
     const aceTheBrackets = await AceTheBrackets8.deploy(
       networkData.GAMES_HUB,
       networkData.Executor,
-      networkData.LAST_GAME
+      networkData.LAST_GAME8
     );
     await aceTheBrackets.deployed();
 
     console.log(`AceTheBrackets8 deployed at ${aceTheBrackets.address}`);
-    networkData.BRACKETS = aceTheBrackets.address;
+    networkData.ACE8 = aceTheBrackets.address;
     fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -35,27 +34,27 @@ async function main() {
     console.log(`Setting AceTheBrackets8 address to GamesHub...`);
     await GamesHub.setGameContact(
       aceTheBrackets.address,
-      ethers.utils.id("BRACKETS"),
+      ethers.utils.id("ACE8"),
       false
     );
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
   } else {
-    console.log(`AceTheBrackets8 already deployed at ${networkData.BRACKETS}`);
+    console.log(`AceTheBrackets8 already deployed at ${networkData.ACE8}`);
   }
 
-  if (networkData.BRACKETS_PROXY === "") {
+  if (networkData.ACE8_PROXY === "") {
     console.log(`Deploying Ace8Proxy...`);
     const Ace8Proxy = await ethers.getContractFactory("Ace8Proxy");
     const aceProxy = await Ace8Proxy.deploy(
       networkData.GAMES_HUB,
       networkData.Executor,
-      networkData.LAST_GAME
+      networkData.LAST_GAME8
     );
     await aceProxy.deployed();
 
     console.log(`Ace8Proxy deployed at ${aceProxy.address}`);
-    networkData.BRACKETS_PROXY = aceProxy.address;
+    networkData.ACE8_PROXY = aceProxy.address;
     fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -63,26 +62,28 @@ async function main() {
     console.log(`Setting Ace8Proxy address to GamesHub...`);
     await GamesHub.setGameContact(
       aceProxy.address,
-      ethers.utils.id("BRACKETS_PROXY"),
+      ethers.utils.id("ACE8_PROXY"),
       false
     );
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
 
-    console.log(`Setting Ace8Proxy last game...`);
-    const aceProxyExec = await ethers.getContractAt(
-      "Ace8Proxy",
-      aceProxy.address
-    );
-    await aceProxyExec.setGameContract(
-      networkData.LAST_GAME,
-      networkData.PREVIOUS_BRACKETS
-    );
+    if (networkData.PREVIOUS_ACE8 !== "") {
+      console.log(`Setting Ace8Proxy last game...`);
+      const aceProxyExec = await ethers.getContractAt(
+        "Ace8Proxy",
+        aceProxy.address
+      );
+      await aceProxyExec.setGameContract(
+        networkData.LAST_GAME8,
+        networkData.PREVIOUS_ACE8
+      );
+    }
   } else {
-    console.log(`Ace8Proxy already deployed at ${networkData.BRACKETS_PROXY}`);
+    console.log(`Ace8Proxy already deployed at ${networkData.ACE8_PROXY}`);
   }
 
-  // networkData.PREVIOUS_BRACKETS = networkData.BRACKETS;
+  // networkData.PREVIOUS_ACE8 = networkData.ACE8;
   // fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
 }
 

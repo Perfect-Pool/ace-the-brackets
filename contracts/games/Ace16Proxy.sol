@@ -2,9 +2,9 @@
 pragma solidity ^0.8.19;
 
 import "../interfaces/IGamesHub.sol";
-import "../interfaces/IAceTheBrackets8.sol";
+import "../interfaces/IAceTheBrackets16.sol";
 
-contract Ace8Proxy {
+contract Ace16Proxy {
     /** EVENTS **/
     event GameCreated(uint256 gameIndex);
     event TimerStarted(uint256 gameIndex);
@@ -21,15 +21,15 @@ contract Ace8Proxy {
 
     /** STRUCTS **/
     struct Round {
-        uint256[8] tokens;
-        uint256[8] pricesStart;
-        uint256[8] pricesEnd;
+        uint256[16] tokens;
+        uint256[16] pricesStart;
+        uint256[16] pricesEnd;
         uint256 start;
         uint256 end;
     }
 
     struct Game {
-        Round[3] rounds;
+        Round[4] rounds;
         uint256 start;
         uint256 end;
         uint8 currentRound;
@@ -57,8 +57,8 @@ contract Ace8Proxy {
     }
 
     modifier gameOutOfIndex(uint256 gameIndex) {
-        IAceTheBrackets8 _gameContract = IAceTheBrackets8(
-            gamesHub.games(keccak256("ACE8"))
+        IAceTheBrackets16 _gameContract = IAceTheBrackets16(
+            gamesHub.games(keccak256("ACE16"))
         );
         require(
             (gameIndex != 0) && (gameIndex <= _gameContract.totalGames()),
@@ -105,8 +105,8 @@ contract Ace8Proxy {
         bytes calldata _dataUpdate,
         uint256 _lastTimeStamp
     ) public onlyExecutor {
-        IAceTheBrackets8 _gameContract = IAceTheBrackets8(
-            gamesHub.games(keccak256("ACE8"))
+        IAceTheBrackets16 _gameContract = IAceTheBrackets16(
+            gamesHub.games(keccak256("ACE16"))
         );
         if (_gameContract.paused()) return;
         uint256[] memory _activeGames = _gameContract.getActiveGames();
@@ -134,7 +134,7 @@ contract Ace8Proxy {
                 uint8 _status = _gameContract.getGameStatus(gameIds[i]);
                 if (_status == 0) emit TimerStarted(gameIds[i]);
                 if (_status == 1) emit GameActivated(gameIds[i]);
-                if (_status == 4) emit GameFinished(gameIds[i]);
+                if (_status == 5) emit GameFinished(gameIds[i]);
                 emit GameAdvanced(gameIds[i], _status == 0 ? 0 : _status - 1);
             }
         }
@@ -145,8 +145,8 @@ contract Ace8Proxy {
             _gameContract.createNewGames() &&
             _dataNewGame.length != 0
         ) {
-            _gameContract = IAceTheBrackets8(
-                gamesHub.games(keccak256("ACE8"))
+            _gameContract = IAceTheBrackets16(
+                gamesHub.games(keccak256("ACE16"))
             );
             _gameContract.createGame(_dataNewGame);
             uint256 _totalGames = _gameContract.totalGames();
@@ -163,7 +163,7 @@ contract Ace8Proxy {
     function changeDaysToClaimPrize(
         uint8 _daysToClaimPrize
     ) public onlyAdministrator {
-        IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
+        IAceTheBrackets16(gamesHub.games(keccak256("ACE16")))
             .changeDaysToClaimPrize(_daysToClaimPrize);
         emit DaysToClaimPrizeChanged(_daysToClaimPrize);
     }
@@ -173,12 +173,12 @@ contract Ace8Proxy {
      * @param _paused Boolean to pause or unpause the contract
      */
     function setPaused(bool _paused) external onlyAdministrator {
-        IAceTheBrackets8(gamesHub.games(keccak256("ACE8"))).setPaused(
+        IAceTheBrackets16(gamesHub.games(keccak256("ACE16"))).setPaused(
             _paused
         );
         emit Paused(_paused);
     }
-
+    
     /**
      * @dev Lock forever the execution address to never be changed again
      */
@@ -204,7 +204,7 @@ contract Ace8Proxy {
      * @param _gameId The ID of the game to be reset
      */
     function resetGame(uint256 _gameId) external onlyAdministrator {
-        IAceTheBrackets8(gamesHub.games(keccak256("ACE8"))).resetGame(
+        IAceTheBrackets16(gamesHub.games(keccak256("ACE16"))).resetGame(
             _gameId
         );
         emit GameReset(_gameId);
@@ -215,7 +215,7 @@ contract Ace8Proxy {
      * @param _active Boolean to activate or deactivate the contract
      */
     function setCreateNewGames(bool _active) public onlyAdministrator {
-        IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
+        IAceTheBrackets16(gamesHub.games(keccak256("ACE16")))
             .setCreateNewGames(_active);
     }
 
@@ -224,7 +224,7 @@ contract Ace8Proxy {
      * @param _roundDuration The new round duration
      */
     function setRoundDuration(uint256 _roundDuration) public onlyAdministrator {
-        IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
+        IAceTheBrackets16(gamesHub.games(keccak256("ACE16")))
             .setRoundDuration(_roundDuration);
     }
 
@@ -233,7 +233,7 @@ contract Ace8Proxy {
      * @param _betTime The new bet time
      */
     function setBetTime(uint256 _betTime) public onlyAdministrator {
-        IAceTheBrackets8(gamesHub.games(keccak256("ACE8"))).setBetTime(
+        IAceTheBrackets16(gamesHub.games(keccak256("ACE16"))).setBetTime(
             _betTime
         );
     }
@@ -245,7 +245,7 @@ contract Ace8Proxy {
     function setMinConcurrentGames(
         uint8 _minActiveGames
     ) public onlyAdministrator {
-        IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
+        IAceTheBrackets16(gamesHub.games(keccak256("ACE16")))
             .setMinConcurrentGames(_minActiveGames);
     }
 
@@ -258,9 +258,9 @@ contract Ace8Proxy {
      */
     function getFinalResult(
         uint256 gameIndex
-    ) public view gameOutOfIndex(gameIndex) returns (uint256[7] memory) {
+    ) public view gameOutOfIndex(gameIndex) returns (uint256[15] memory) {
         return
-            IAceTheBrackets8(getGameContract(gameIndex)).getFinalResult(
+            IAceTheBrackets16(getGameContract(gameIndex)).getFinalResult(
                 gameIndex
             );
     }
@@ -274,7 +274,7 @@ contract Ace8Proxy {
         uint256 gameIndex
     ) public view gameOutOfIndex(gameIndex) returns (uint8 status) {
         return
-            IAceTheBrackets8(getGameContract(gameIndex)).getGameStatus(
+            IAceTheBrackets16(getGameContract(gameIndex)).getGameStatus(
                 gameIndex
             );
     }
@@ -289,9 +289,9 @@ contract Ace8Proxy {
         uint256 gameIndex,
         uint8 round
     ) private view gameOutOfIndex(gameIndex) returns (bytes memory) {
-        // Return: ABI-encoded string[8], uint256[8], uint256[8], uint256, uint256
+        // Return: ABI-encoded string[16], uint256[16], uint256[16], uint256, uint256
         return
-            IAceTheBrackets8(getGameContract(gameIndex)).getRoundFullData(
+            IAceTheBrackets16(getGameContract(gameIndex)).getRoundFullData(
                 gameIndex,
                 round
             );
@@ -305,11 +305,11 @@ contract Ace8Proxy {
     function getGameFullData(
         uint256 _gameId
     ) public view gameOutOfIndex(_gameId) returns (bytes memory) {
-        // Return: ABI-encoded bytes, bytes, bytes, string, uint256, uint8, uint256, uint256
-        // CurrentRound 0-2: Rounds 1-3 / 3: Finished
+        // Return: ABI-encoded bytes, bytes, bytes, bytes, string, uint256, uint8, uint256, uint256
+        // CurrentRound 0-3: Rounds 1-4 / 5: Finished
         // Activated: 0: Inactive / 1: Active
         return
-            IAceTheBrackets8(getGameContract(_gameId)).getGameFullData(_gameId);
+            IAceTheBrackets16(getGameContract(_gameId)).getGameFullData(_gameId);
     }
 
     /**
@@ -326,10 +326,10 @@ contract Ace8Proxy {
         public
         view
         gameOutOfIndex(_gameId)
-        returns (uint256[8] memory, uint256[8] memory, uint256[8] memory)
+        returns (uint256[16] memory, uint256[16] memory, uint256[16] memory)
     {
         return
-            IAceTheBrackets8(getGameContract(_gameId)).getRoundData(
+            IAceTheBrackets16(getGameContract(_gameId)).getRoundData(
                 _gameId,
                 round
             );
@@ -341,7 +341,7 @@ contract Ace8Proxy {
      */
     function getActiveGames() public view returns (uint256[] memory) {
         return
-            IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
+            IAceTheBrackets16(gamesHub.games(keccak256("ACE16")))
                 .getActiveGames();
     }
 
@@ -353,7 +353,7 @@ contract Ace8Proxy {
         uint256 tokenIndex
     ) public view returns (string memory) {
         return
-            IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
+            IAceTheBrackets16(gamesHub.games(keccak256("ACE16")))
                 .getTokenSymbol(tokenIndex);
     }
 
@@ -363,7 +363,7 @@ contract Ace8Proxy {
      */
     function getTokenId(string memory _symbol) public view returns (uint256) {
         return
-            IAceTheBrackets8(gamesHub.games(keccak256("ACE8"))).getTokenId(
+            IAceTheBrackets16(gamesHub.games(keccak256("ACE16"))).getTokenId(
                 _symbol
             );
     }
@@ -374,9 +374,9 @@ contract Ace8Proxy {
      */
     function getTokensIds(
         bytes memory _symbols
-    ) public view returns (uint256[8] memory) {
+    ) public view returns (uint256[16] memory) {
         return
-            IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
+            IAceTheBrackets16(gamesHub.games(keccak256("ACE16")))
                 .getTokensIds(_symbols);
     }
 
@@ -386,9 +386,9 @@ contract Ace8Proxy {
      */
     function getTokensSymbols(
         bytes memory _tokens
-    ) public view returns (string[8] memory) {
+    ) public view returns (string[16] memory) {
         return
-            IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
+            IAceTheBrackets16(gamesHub.games(keccak256("ACE16")))
                 .getTokensSymbols(_tokens);
     }
 
@@ -396,9 +396,9 @@ contract Ace8Proxy {
      * @dev Function to get the active games actual coins symbols and prices
      * @return _activeGamesActualCoins The array of active games actual coins
      */
-    function getActiveGamesActualCoins() public view returns (bytes[4] memory) {
+    function getActiveGamesActualCoins() public view returns (bytes[5] memory) {
         return
-            IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
+            IAceTheBrackets16(gamesHub.games(keccak256("ACE16")))
                 .getActiveGamesActualCoins();
     }
 
@@ -411,7 +411,7 @@ contract Ace8Proxy {
         uint256 _gameId
     ) public view returns (bytes32) {
         return
-            IAceTheBrackets8(getGameContract(_gameId)).getGameFinishedCode(
+            IAceTheBrackets16(getGameContract(_gameId)).getGameFinishedCode(
                 _gameId
             );
     }
@@ -431,35 +431,35 @@ contract Ace8Proxy {
     /** VARIABLES **/
     function MIN_ACTIVE_TOKENS() public view returns (uint8) {
         return
-            IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
+            IAceTheBrackets16(gamesHub.games(keccak256("ACE16")))
                 .MIN_ACTIVE_TOKENS();
     }
 
     function minActiveGames() public view returns (uint8) {
         return
-            IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
+            IAceTheBrackets16(gamesHub.games(keccak256("ACE16")))
                 .minActiveGames();
     }
 
     function totalGames() public view returns (uint256) {
         return
-            IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
+            IAceTheBrackets16(gamesHub.games(keccak256("ACE16")))
                 .totalGames();
     }
 
     function daysToClaimPrize() public view returns (uint8) {
         return
-            IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
+            IAceTheBrackets16(gamesHub.games(keccak256("ACE16")))
                 .daysToClaimPrize();
     }
 
     function paused() public view returns (bool) {
-        return IAceTheBrackets8(gamesHub.games(keccak256("ACE8"))).paused();
+        return IAceTheBrackets16(gamesHub.games(keccak256("ACE16"))).paused();
     }
 
     function createNewGames() public view returns (bool) {
         return
-            IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
+            IAceTheBrackets16(gamesHub.games(keccak256("ACE16")))
                 .createNewGames();
     }
 }

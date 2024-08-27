@@ -24,8 +24,8 @@ interface LogPayload {
 }
 
 async function sendErrorLog(message: string, context: Context): Promise<void> {
-    const url = await context.secrets.get("sentry.test.url");
-    const apikey = await context.secrets.get("sentry.test.key");
+    const url = await context.secrets.get("sentry.main.url");
+    const apikey = await context.secrets.get("sentry.main.key");
 
     const headers = {
         'Content-Type': 'application/json',
@@ -68,13 +68,13 @@ const encodeUpdateData = (game_id: number): string => {
     );
 };
 
-export const aceFirstBet: ActionFn = async (context: Context, event: Event) => {
+export const aceFirstBetMain: ActionFn = async (context: Context, event: Event) => {
     const transactionEvent = event as TransactionEvent;
 
     const privateKey = await context.secrets.get("project.addressPrivateKey");
-    const rpcUrl = await context.secrets.get("baseSepolia.rpcUrl");
-    const ACE_CONTRACT_ADDRESS = await context.secrets.get("baseSepolia.aceTheBrackets.contract");
-    const TICKET_CONTRACT = await context.secrets.get("baseSepolia.aceTicket.contract");
+    const rpcUrl = await context.secrets.get("base.rpcUrl");
+    const ACE_CONTRACT_ADDRESS = await context.secrets.get("base.aceTheBrackets.contract");
+    const TICKET_CONTRACT = await context.secrets.get("base.aceTicket.contract");
     const aceAbiText = await context.secrets.get("aceTheBrackets.abi");
     const aceAbi = JSON.parse(aceAbiText);
 

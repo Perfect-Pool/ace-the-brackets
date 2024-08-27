@@ -19,9 +19,9 @@ async function main() {
   console.log(`GamesHub loaded at ${gamesHubAddress}`);
   const GamesHub = await ethers.getContractAt("GamesHub", gamesHubAddress);
 
-  const name = "NFT_IMAGE";
+  const name = "NFT_IMAGE_ACE8";
 
-  if (networkData.NFT_IMAGE === "") {
+  if (networkData.NFT_IMAGE_ACE8 === "") {
     console.log("Deploying NftImage...");
     // Linking BuildImageAce library
     const NftImage = await ethers.getContractFactory("NftImage", {
@@ -33,7 +33,7 @@ async function main() {
     await nftImage.deployed();
     console.log(`NftImage deployed at ${nftImage.address}`);
 
-    networkData.NFT_IMAGE = nftImage.address;
+    networkData.NFT_IMAGE_ACE8 = nftImage.address;
     fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
 
     console.log("Setting NftImage address to GamesHub...");
@@ -43,7 +43,7 @@ async function main() {
       true
     );
   } else {
-    console.log(`NftImage already deployed at ${networkData.NFT_IMAGE}`);
+    console.log(`NftImage already deployed at ${networkData.NFT_IMAGE_ACE8}`);
   }
 }
 
