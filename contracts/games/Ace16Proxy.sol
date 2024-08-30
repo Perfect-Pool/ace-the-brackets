@@ -113,13 +113,13 @@ contract Ace16Proxy {
 
         if (_dataUpdate.length != 0) {
             (
-                uint256[4] memory gameIds,
-                bytes[4] memory _prices,
-                bytes[4] memory _pricesWinners,
-                bytes[4] memory _winners
+                uint256[5] memory gameIds,
+                bytes[5] memory _prices,
+                bytes[5] memory _pricesWinners,
+                bytes[5] memory _winners
             ) = abi.decode(
                     _dataUpdate,
-                    (uint256[4], bytes[4], bytes[4], bytes[4])
+                    (uint256[5], bytes[5], bytes[5], bytes[5])
                 );
 
             for (uint8 i = 0; i < _activeGames.length; i++) {

@@ -85,6 +85,76 @@ async function main() {
 
   // networkData.PREVIOUS_ACE8 = networkData.ACE8;
   // fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
+
+  if (networkData.ACE16 === "") {
+    console.log(`Deploying AceTheBrackets16...`);
+    const AceTheBrackets16 = await ethers.getContractFactory(
+      "AceTheBrackets16"
+    );
+    const aceTheBrackets16 = await AceTheBrackets16.deploy(
+      networkData.GAMES_HUB,
+      networkData.Executor,
+      networkData.LAST_GAME16
+    );
+    await aceTheBrackets16.deployed();
+
+    console.log(`AceTheBrackets16 deployed at ${aceTheBrackets16.address}`);
+    networkData.ACE16 = aceTheBrackets16.address;
+    fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    console.log(`Setting AceTheBrackets16 address to GamesHub...`);
+    await GamesHub.setGameContact(
+      aceTheBrackets16.address,
+      ethers.utils.id("ACE16"),
+      false
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  } else {
+    console.log(`AceTheBrackets16 already deployed at ${networkData.ACE16}`);
+  }
+
+  if (networkData.ACE16_PROXY === "") {
+    console.log(`Deploying Ace16Proxy...`);
+    const Ace16Proxy = await ethers.getContractFactory("Ace16Proxy");
+    const aceProxy16 = await Ace16Proxy.deploy(
+      networkData.GAMES_HUB,
+      networkData.Executor,
+      networkData.LAST_GAME16
+    );
+    await aceProxy16.deployed();
+
+    console.log(`Ace16Proxy deployed at ${aceProxy16.address}`);
+    networkData.ACE16_PROXY = aceProxy16.address;
+    fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    console.log(`Setting Ace16Proxy address to GamesHub...`);
+    await GamesHub.setGameContact(
+      aceProxy16.address,
+      ethers.utils.id("ACE16_PROXY"),
+      false
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    if (networkData.PREVIOUS_ACE16 !== "") {
+      console.log(`Setting Ace16Proxy last game...`);
+      const aceProxyExec = await ethers.getContractAt(
+        "Ace16Proxy",
+        aceProxy16.address
+      );
+      await aceProxyExec.setGameContract(
+        networkData.LAST_GAME16,
+        networkData.PREVIOUS_ACE16
+      );
+    }
+  } else {
+    console.log(`Ace16Proxy already deployed at ${networkData.ACE16_PROXY}`);
+  }
 }
 
 main()

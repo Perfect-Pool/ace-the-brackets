@@ -13,11 +13,11 @@ async function main() {
 
   const address = contracts[networkName]["NFT_ACE8"];
   if (!address) {
-    console.error("AceTicket8 address not found in contracts.json");
+    console.error("AceEntry8 address not found in contracts.json");
     process.exit(1);
   }
 
-  console.log("Verifying AceTicket8 at address", address);
+  console.log("Verifying AceEntry8 at address", address);
 
   await hre.run("verify:verify", {
     address: address,
@@ -26,7 +26,26 @@ async function main() {
       contracts[networkName].Executor,
       tokenAddress,
     ],
-    contract: "contracts/utils/AceTicket8.sol:AceTicket8",
+    contract: "contracts/utils/AceEntry8.sol:AceEntry8",
+  });
+
+
+  const address16 = contracts[networkName]["NFT_ACE16"];
+  if (!address16) {
+    console.error("AceEntry16 address not found in contracts.json");
+    process.exit(1);
+  }
+
+  console.log("Verifying AceEntry16 at address", address16);
+
+  await hre.run("verify:verify", {
+    address: address16,
+    constructorArguments: [
+      contracts[networkName].GAMES_HUB,
+      contracts[networkName].Executor,
+      tokenAddress,
+    ],
+    contract: "contracts/utils/AceEntry16.sol:AceEntry16",
   });
 }
 

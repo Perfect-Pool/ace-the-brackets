@@ -209,10 +209,12 @@ const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) =>
             }
 
             const priceCurrent = Math.floor(
-                moeda.quotes[0].quote.USD.price * 10 ** 8
+                // moeda.quotes[0].quote.USD.price * 10 ** 8
+                100 * 10 ** 8
             );
             const priceNext = Math.floor(
-                moedaNext.quotes[0].quote.USD.price * 10 ** 8
+                // moedaNext.quotes[0].quote.USD.price * 10 ** 8
+                20 * 10 ** 8
             );
             console.log("Price current ", game.coins[index], ": ", priceCurrent);
             console.log("Price next ", game.coins[index + 1], ": ", priceNext);
@@ -222,46 +224,47 @@ const calculateGameResults = async (decodedGames: DecodedGame[], prices: any) =>
 
             if (game.prices[index] !== 0) {
                 const variationCurrent =
-                    (priceCurrent - game.prices[index]) / game.prices[index];
+                    // (priceCurrent - game.prices[index]) / game.prices[index];
+                    10;
                 const variationNext =
-                    (priceNext - game.prices[index + 1]) / game.prices[index + 1];
+                    2;
 
                 variations[index] = variationCurrent;
                 variations[index + 1] = variationNext;
 
-                if (variationCurrent === variationNext) {
-                    const volumeChangeCurrent =
-                        moeda.quotes[0].quote.USD.volume_change_24h;
-                    const volumeChangeNext =
-                        moedaNext.quotes[0].quote.USD.volume_change_24h;
+                // if (variationCurrent === variationNext) {
+                //     const volumeChangeCurrent =
+                //         moeda.quotes[0].quote.USD.volume_change_24h;
+                //     const volumeChangeNext =
+                //         moedaNext.quotes[0].quote.USD.volume_change_24h;
 
-                    if (
-                        volumeChangeCurrent !== undefined &&
-                        volumeChangeNext !== undefined
-                    ) {
-                        if (volumeChangeCurrent > volumeChangeNext) {
-                            winners[index / 2] = prices[game.coins[index]].id;
-                            pricesWinners[index / 2] = priceCurrent;
-                        } else {
-                            winners[index / 2] = prices[game.coins[index + 1]].id;
-                            pricesWinners[index / 2] = priceNext;
-                        }
-                    } else {
-                        if (Math.random() > 0.5) {
-                            winners[index / 2] = prices[game.coins[index]].id;
-                            pricesWinners[index / 2] = priceCurrent;
-                        } else {
-                            winners[index / 2] = prices[game.coins[index + 1]].id;
-                            pricesWinners[index / 2] = priceNext;
-                        }
-                    }
-                } else if (variationCurrent > variationNext) {
+                //     if (
+                //         volumeChangeCurrent !== undefined &&
+                //         volumeChangeNext !== undefined
+                //     ) {
+                //         if (volumeChangeCurrent > volumeChangeNext) {
+                //             winners[index / 2] = prices[game.coins[index]].id;
+                //             pricesWinners[index / 2] = priceCurrent;
+                //         } else {
+                //             winners[index / 2] = prices[game.coins[index + 1]].id;
+                //             pricesWinners[index / 2] = priceNext;
+                //         }
+                //     } else {
+                //         if (Math.random() > 0.5) {
+                //             winners[index / 2] = prices[game.coins[index]].id;
+                //             pricesWinners[index / 2] = priceCurrent;
+                //         } else {
+                //             winners[index / 2] = prices[game.coins[index + 1]].id;
+                //             pricesWinners[index / 2] = priceNext;
+                //         }
+                //     }
+                // } else if (variationCurrent > variationNext) {
                     winners[index / 2] = prices[game.coins[index]].id;
                     pricesWinners[index / 2] = priceCurrent;
-                } else {
-                    winners[index / 2] = prices[game.coins[index + 1]].id;
-                    pricesWinners[index / 2] = priceNext;
-                }
+                // } else {
+                //     winners[index / 2] = prices[game.coins[index + 1]].id;
+                //     pricesWinners[index / 2] = priceNext;
+                // }
             }
         }
 
@@ -388,28 +391,12 @@ async function getGasPrice(provider: ethers.providers.Provider, context: Context
 
 export const advanceGamesWebhookMain: ActionFn = async (context: Context, event: Event) => {
     const webhookEvent = event as WebhookEvent;
-    const lastTimeStamp = webhookEvent.payload.lastTimeStamp;
-    const lastT = await context.storage.getNumber('lastTimeStampWebhookMain');
-    const lastExecuted = await context.storage.getNumber('executedMain');
-
-    if (lastExecuted === lastTimeStamp) {
-        console.log('Already executed');
-        return;
-    }
-
-    // lastT must be 5 mins or more older than lastTimeStamp
-    if (lastT && (lastTimeStamp - lastT < (30))) {
-        console.log('Last timestamp is too recent');
-        await new Promise((resolve) => setTimeout(resolve, 10000));
-        await callRollbackAPI(context, lastTimeStamp);
-        return;
-    }
-
-    await context.storage.putNumber('lastTimeStampWebhookMain', lastTimeStamp);
+    console.log("Webhook event:", webhookEvent.payload);
+    const lastTimeStamp = Math.floor(Date.now() / 1000 / 60) * 60;
 
     const privateKey = await context.secrets.get("project.addressPrivateKey");
     const rpcUrl = await context.secrets.get("base.rpcUrl");
-    const CONTRACT_ADDRESS = await context.secrets.get("base.aceTheBrackets.contract");
+    const CONTRACT_ADDRESS = "0x28B527CD5Ea34A7a906D005461D54F5e234B4F3B";
     const abiText = await context.secrets.get("aceTheBrackets.abi");
     const abi = JSON.parse(abiText);
 

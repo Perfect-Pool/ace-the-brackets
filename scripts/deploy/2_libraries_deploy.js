@@ -34,6 +34,35 @@ async function main() {
   } else {
     console.log(`ImageParts already deployed at ${networkData.ImageParts}`);
   }
+
+  
+
+  let imageBetTextsAddress16 = networkData.ImageBetTexts16;
+  if (!imageBetTextsAddress16) {
+    throw new Error("ImageBetTexts16 library is not deployed. Deploy it first.");
+  }
+
+  console.log(`Using ImageBetTexts16 at address: ${imageBetTextsAddress16}`);
+
+  if (networkData.ImageParts16 === "") {
+    console.log(`Deploying ImageParts16...`);
+
+    const ImageParts16 = await ethers.getContractFactory("ImageParts16", {
+      libraries: {
+        ImageBetTexts16: imageBetTextsAddress16,
+      },
+    });
+
+    const imageParts16 = await ImageParts16.deploy();
+    await imageParts16.deployed();
+    console.log(`ImageParts16 deployed at ${imageParts16.address}`);
+
+    networkData.ImageParts16 = imageParts16.address;
+    fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
+
+  } else {
+    console.log(`ImageParts16 already deployed at ${networkData.ImageParts16}`);
+  }
 }
 
 main()

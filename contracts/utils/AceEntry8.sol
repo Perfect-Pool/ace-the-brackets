@@ -30,7 +30,7 @@ interface INftMetadata {
     ) external view returns (string memory);
 }
 
-contract AceTicket8 is ERC721, ReentrancyGuard {
+contract AceEntry8 is ERC721, ReentrancyGuard {
     event BetPlaced(
         address indexed _player,
         uint256 indexed _gameId,

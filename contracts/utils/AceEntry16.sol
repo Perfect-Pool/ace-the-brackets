@@ -30,7 +30,7 @@ interface INftMetadata {
     ) external view returns (string memory);
 }
 
-contract AceTicket16 is ERC721, ReentrancyGuard {
+contract AceEntry16 is ERC721, ReentrancyGuard {
     event BetPlaced(
         address indexed _player,
         uint256 indexed _gameId,
@@ -114,7 +114,7 @@ contract AceTicket16 is ERC721, ReentrancyGuard {
 
         _nextTokenId = 1;
         jackpot = 0;
-        price = 5 * 10 ** token.decimals();
+        price = 2 * 10 ** token.decimals();
     }
 
     /**

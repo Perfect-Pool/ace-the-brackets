@@ -12,7 +12,7 @@ async function main() {
   console.log(`GamesHub loaded at ${gamesHubAddress}`);
   const GamesHub = await ethers.getContractAt("GamesHub", gamesHubAddress);
 
-  const name = "METADATA";
+  const name = "NFT_METADATA_ACE8";
   if (networkData.NFT_METADATA_ACE8 === "") {
     console.log(`Deploying NftMetadata...`);
     const NftMetadata = await ethers.getContractFactory("NftMetadata");
@@ -35,6 +35,31 @@ async function main() {
     await new Promise((resolve) => setTimeout(resolve, 5000));
   } else {
     console.log(`NftMetadata already deployed at ${networkData.NFT_METADATA_ACE8}`);
+  }
+
+  const name16 = "NFT_METADATA_ACE16";
+  if (networkData.NFT_METADATA_ACE16 === "") {
+    console.log(`Deploying NftMetadata16...`);
+    const NftMetadata16 = await ethers.getContractFactory("NftMetadata16");
+    const nftMetadata16 = await NftMetadata16.deploy(gamesHubAddress);
+    await nftMetadata16.deployed();
+    console.log(`NftMetadata16 deployed at ${nftMetadata16.address}`);
+
+    networkData.NFT_METADATA_ACE16 = nftMetadata16.address;
+    fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    console.log(`Setting NftMetadata16 address to GamesHub...`);
+    await GamesHub.setGameContact(
+      nftMetadata16.address,
+      ethers.utils.id(name16),
+      true
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  } else {
+    console.log(`NftMetadata16 already deployed at ${networkData.NFT_METADATA_ACE16}`);
   }
 }
 

@@ -8,7 +8,10 @@ const artifactsDir = path.join(__dirname, "..", "artifacts", "contracts");
 const contracts = [
   { name: "AceTheBrackets8", path: "games/AceTheBrackets8.sol" },
   { name: "Ace8Proxy", path: "games/Ace8Proxy.sol" },
-  { name: "AceTicket8", path: "utils/AceTicket8.sol" },
+  { name: "AceEntry8", path: "utils/AceEntry8.sol" },
+  { name: "AceTheBrackets16", path: "games/AceTheBrackets16.sol" },
+  { name: "Ace16Proxy", path: "games/Ace16Proxy.sol" },
+  { name: "AceEntry16", path: "utils/AceEntry16.sol" },
   { name: "TokenFaucet", path: "utils/TokenFaucet.sol" },
 ];
 

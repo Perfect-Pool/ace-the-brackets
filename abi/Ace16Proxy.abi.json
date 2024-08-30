@@ -291,9 +291,9 @@
     "name": "getActiveGamesActualCoins",
     "outputs": [
       {
-        "internalType": "bytes[4]",
+        "internalType": "bytes[5]",
         "name": "",
-        "type": "bytes[4]"
+        "type": "bytes[5]"
       }
     ],
     "stateMutability": "view",
@@ -310,9 +310,9 @@
     "name": "getFinalResult",
     "outputs": [
       {
-        "internalType": "uint256[7]",
+        "internalType": "uint256[15]",
         "name": "",
-        "type": "uint256[7]"
+        "type": "uint256[15]"
       }
     ],
     "stateMutability": "view",
@@ -410,19 +410,19 @@
     "name": "getRoundData",
     "outputs": [
       {
-        "internalType": "uint256[8]",
+        "internalType": "uint256[16]",
         "name": "",
-        "type": "uint256[8]"
+        "type": "uint256[16]"
       },
       {
-        "internalType": "uint256[8]",
+        "internalType": "uint256[16]",
         "name": "",
-        "type": "uint256[8]"
+        "type": "uint256[16]"
       },
       {
-        "internalType": "uint256[8]",
+        "internalType": "uint256[16]",
         "name": "",
-        "type": "uint256[8]"
+        "type": "uint256[16]"
       }
     ],
     "stateMutability": "view",
@@ -477,9 +477,9 @@
     "name": "getTokensIds",
     "outputs": [
       {
-        "internalType": "uint256[8]",
+        "internalType": "uint256[16]",
         "name": "",
-        "type": "uint256[8]"
+        "type": "uint256[16]"
       }
     ],
     "stateMutability": "view",
@@ -496,9 +496,9 @@
     "name": "getTokensSymbols",
     "outputs": [
       {
-        "internalType": "string[8]",
+        "internalType": "string[16]",
         "name": "",
-        "type": "string[8]"
+        "type": "string[16]"
       }
     ],
     "stateMutability": "view",

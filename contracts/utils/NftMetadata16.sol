@@ -4,16 +4,14 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../libraries/Base64.sol";
-import "../interfaces/IAceTheBrackets8.sol";
+import "../interfaces/IAceTheBrackets16.sol";
 import "../interfaces/IGamesHub.sol";
-import "../interfaces/IAceTicket8.sol";
+import "../interfaces/IAceTicket16.sol";
 
 interface INftImage {
     function buildImage(
         uint256 _gameId,
-        uint256 _tokenId,
-        uint256 prize,
-        bool claimed
+        uint256 _tokenId
     ) external view returns (string memory);
 }
 
@@ -35,31 +33,31 @@ contract NftMetadata16 is Ownable {
         uint256 _gameId,
         uint256 _tokenId
     ) public view returns (string memory) {
-        uint8 status = IAceTheBrackets8(
-            gamesHub.games(keccak256("ACE8_PROXY"))
+        uint8 status = IAceTheBrackets16(
+            gamesHub.games(keccak256("ACE16_PROXY"))
         ).getGameStatus(_gameId);
         if (status == 0) {
             return "Open";
-        } else if (status == 4) {
+        } else if (status == 5) {
             if (
                 keccak256(
                     abi.encodePacked(
-                        IAceTheBrackets8(
-                            gamesHub.games(keccak256("ACE8_PROXY"))
+                        IAceTheBrackets16(
+                            gamesHub.games(keccak256("ACE16_PROXY"))
                         ).getFinalResult(_gameId)
                     )
                 ) ==
                 keccak256(
                     abi.encodePacked(
-                        IAceTicket8(gamesHub.helpers(keccak256("NFT_ACE8")))
+                        IAceTicket16(gamesHub.helpers(keccak256("NFT_ACE16")))
                             .getBetData(_tokenId)
                     )
                 )
             ) {
                 return "Winner";
             } else {
-                (uint256 prize, ) = IAceTicket8(
-                    gamesHub.helpers(keccak256("NFT_ACE8"))
+                (uint256 prize, ) = IAceTicket16(
+                    gamesHub.helpers(keccak256("NFT_ACE16"))
                 ).amountPrizeClaimed(_tokenId);
                 if (prize == 0) return "Loser";
                 else return "High Score Winner";
@@ -73,8 +71,8 @@ contract NftMetadata16 is Ownable {
         uint256 _gameId,
         uint256 _tokenId
     ) public view returns (string memory) {
-        IAceTicket8 ticket = IAceTicket8(
-            gamesHub.helpers(keccak256("NFT_ACE8"))
+        IAceTicket16 ticket = IAceTicket16(
+            gamesHub.helpers(keccak256("NFT_ACE16"))
         );
         uint8 winQty = ticket.betWinQty(_tokenId);
         uint256 prize = 0;
@@ -90,9 +88,9 @@ contract NftMetadata16 is Ownable {
                     Base64.encode(
                         bytes(
                             abi.encodePacked(
-                                '{"name":"Ace NFT #',
+                                '{"name":"Ace Sweet16 NFT #',
                                 _tokenId.toString(),
-                                '","description":"Ace The Brackets NFT from PerfectPool. ',
+                                '","description":"Ace The Brackets Sweet16 NFT from PerfectPool. ',
                                 (
                                     (prize > 0) && (amountClaimed == 0)
                                         ? "Claim your prize "
@@ -100,13 +98,10 @@ contract NftMetadata16 is Ownable {
                                 ),
                                 'at https://perfectpool.io/altcoins/ace-the-brackets","image":"',
                                 INftImage(
-                                    gamesHub.helpers(keccak256("NFT_IMAGE_ACE8"))
-                                ).buildImage(
-                                        _gameId,
-                                        _tokenId,
-                                        prize,
-                                        prize == amountClaimed
-                                    ),
+                                    gamesHub.helpers(
+                                        keccak256("NFT_IMAGE_ACE16")
+                                    )
+                                ).buildImage(_gameId, _tokenId),
                                 '","attributes":[{"trait_type":"Game Status:","value":"',
                                 gameStatus(_gameId, _tokenId),
                                 '"},]}'

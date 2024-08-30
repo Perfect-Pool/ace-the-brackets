@@ -39,6 +39,38 @@ async function main() {
       `BuildImageAce already deployed at ${networkData.BuildImageAce}`
     );
   }
+
+  if (!networkData.ImageParts16 || networkData.ImageParts16 === "") {
+    throw new Error(
+      "ImageParts16 library address not found in contracts.json. Please deploy ImageParts first."
+    );
+  }
+  const imagePartsAddress16 = networkData.ImageParts16;
+
+  if (networkData.BuildImageAce16 === "") {
+    console.log(
+      `Deploying BuildImageAce16 with ImageParts16 at ${imagePartsAddress16}...`
+    );
+
+    const BuildImageAce16 = await ethers.getContractFactory("BuildImageAce16", {
+      libraries: {
+        ImageParts16: imagePartsAddress16,
+      },
+    });
+
+    const buildImageAce16 = await BuildImageAce16.deploy();
+    await buildImageAce16.deployed();
+    console.log(`BuildImageAce16 deployed at ${buildImageAce16.address}`);
+
+    networkData.BuildImageAce16 = buildImageAce16.address;
+    fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  } else {
+    console.log(
+      `BuildImageAce16 already deployed at ${networkData.BuildImageAce16}`
+    );
+  }
 }
 
 main()

@@ -13,174 +13,12 @@
       },
       {
         "internalType": "uint256",
-        "name": "_lastGameId",
+        "name": "lastGameId",
         "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint8",
-        "name": "daysToClaimPrize",
-        "type": "uint8"
-      }
-    ],
-    "name": "DaysToClaimPrizeChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "executionAddress",
-        "type": "address"
-      }
-    ],
-    "name": "ExecutionAddressChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "executionAddress",
-        "type": "address"
-      }
-    ],
-    "name": "ExecutionAddressLockedForever",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "gameIndex",
-        "type": "uint256"
-      }
-    ],
-    "name": "GameActivated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "gameIndex",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint8",
-        "name": "round",
-        "type": "uint8"
-      }
-    ],
-    "name": "GameAdvanced",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "gameIndex",
-        "type": "uint256"
-      }
-    ],
-    "name": "GameCreated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "gameIndex",
-        "type": "uint256"
-      }
-    ],
-    "name": "GameFinished",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "gameId",
-        "type": "uint256"
-      }
-    ],
-    "name": "GameReset",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "paused",
-        "type": "bool"
-      }
-    ],
-    "name": "Paused",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "tokenIndex",
-        "type": "uint256"
-      }
-    ],
-    "name": "PriceFeedAdded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "gameIndex",
-        "type": "uint256"
-      }
-    ],
-    "name": "TimerStarted",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lastTimeStamp",
-        "type": "uint256"
-      }
-    ],
-    "name": "UpdatePerformed",
-    "type": "event"
   },
   {
     "inputs": [],
@@ -198,12 +36,71 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "gameIndex",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_lastTimeStamp",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_prices",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_pricesWinners",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_winners",
+        "type": "bytes"
+      }
+    ],
+    "name": "advanceGame",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "betTime",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint8",
         "name": "_daysToClaimPrize",
         "type": "uint8"
       }
     ],
     "name": "changeDaysToClaimPrize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "_dataNewGame",
+        "type": "bytes"
+      }
+    ],
+    "name": "createGame",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -248,12 +145,43 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "executionLocked",
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "games",
     "outputs": [
       {
+        "internalType": "uint256",
+        "name": "start",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "end",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint8",
+        "name": "currentRound",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "winner",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "finalPrice",
+        "type": "uint256"
+      },
+      {
         "internalType": "bool",
-        "name": "",
+        "name": "activated",
         "type": "bool"
       }
     ],
@@ -291,9 +219,9 @@
     "name": "getActiveGamesActualCoins",
     "outputs": [
       {
-        "internalType": "bytes[4]",
+        "internalType": "bytes[5]",
         "name": "",
-        "type": "bytes[4]"
+        "type": "bytes[5]"
       }
     ],
     "stateMutability": "view",
@@ -310,28 +238,9 @@
     "name": "getFinalResult",
     "outputs": [
       {
-        "internalType": "uint256[7]",
+        "internalType": "uint256[15]",
         "name": "",
-        "type": "uint256[7]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_gameId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getGameContract",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
+        "type": "uint256[15]"
       }
     ],
     "stateMutability": "view",
@@ -360,7 +269,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_gameId",
+        "name": "gameIndex",
         "type": "uint256"
       }
     ],
@@ -398,7 +307,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_gameId",
+        "name": "gameIndex",
         "type": "uint256"
       },
       {
@@ -410,19 +319,43 @@
     "name": "getRoundData",
     "outputs": [
       {
-        "internalType": "uint256[8]",
+        "internalType": "uint256[16]",
         "name": "",
-        "type": "uint256[8]"
+        "type": "uint256[16]"
       },
       {
-        "internalType": "uint256[8]",
+        "internalType": "uint256[16]",
         "name": "",
-        "type": "uint256[8]"
+        "type": "uint256[16]"
       },
       {
-        "internalType": "uint256[8]",
+        "internalType": "uint256[16]",
         "name": "",
-        "type": "uint256[8]"
+        "type": "uint256[16]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "gameIndex",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint8",
+        "name": "round",
+        "type": "uint8"
+      }
+    ],
+    "name": "getRoundFullData",
+    "outputs": [
+      {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
       }
     ],
     "stateMutability": "view",
@@ -477,9 +410,9 @@
     "name": "getTokensIds",
     "outputs": [
       {
-        "internalType": "uint256[8]",
+        "internalType": "uint256[16]",
         "name": "",
-        "type": "uint256[8]"
+        "type": "uint256[16]"
       }
     ],
     "stateMutability": "view",
@@ -496,19 +429,12 @@
     "name": "getTokensSymbols",
     "outputs": [
       {
-        "internalType": "string[8]",
+        "internalType": "string[16]",
         "name": "",
-        "type": "string[8]"
+        "type": "string[16]"
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "lockExecutionAddress",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -540,29 +466,6 @@
   {
     "inputs": [
       {
-        "internalType": "bytes",
-        "name": "_dataNewGame",
-        "type": "bytes"
-      },
-      {
-        "internalType": "bytes",
-        "name": "_dataUpdate",
-        "type": "bytes"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_lastTimeStamp",
-        "type": "uint256"
-      }
-    ],
-    "name": "performGames",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "_gameId",
         "type": "uint256"
@@ -571,6 +474,19 @@
     "name": "resetGame",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "roundDuration",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -595,37 +511,6 @@
       }
     ],
     "name": "setCreateNewGames",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_executionAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setExecutionAddress",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_gameId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_gameAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setGameContract",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
