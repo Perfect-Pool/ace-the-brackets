@@ -7,7 +7,9 @@
   "author": "gabesan21 <141934803+suportelider@users.noreply.github.com>",
   "license": "MIT",
   "dependencies": {
-    "@chainlink/contracts": "^0.8.0",
+    "@chainlink/contracts": "^1.2.0",
+    "@chainlink/env-enc": "^1.0.5",
+    "@chainlink/functions-toolkit": "^0.2.8",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@nomiclabs/hardhat-etherscan": "^3.1.8",
     "@nomiclabs/hardhat-waffle": "^2.0.6",
@@ -36,6 +38,7 @@
     "verify-token": "hardhat run scripts/verify/verifyFakeUSDCToken.js --network",
     "verify-token-faucet": "hardhat run scripts/verify/verifyTokenFaucet.js --network",
     "verify-ace": "hardhat run scripts/verify/verifyAceTheBrackets8.js --network",
+    "verify-ace-automation": "hardhat run scripts/verify/verifyAceAutomation.js --network",
     "verify-nft-metadata": "hardhat run scripts/verify/verifyNftMetadata.js --network",
     "verify-nft-image": "hardhat run scripts/verify/verifyNftImage.js --network",
     "verify-nft": "hardhat run scripts/verify/verifyAceTicket8.js --network",

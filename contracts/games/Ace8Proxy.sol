@@ -71,6 +71,7 @@ contract Ace8Proxy {
      * @dev Constructor function
      * @param _gamesHubAddress Address of the games hub
      * @param _executorAddress Address of the executor
+     * @param _lastGameId The last game ID
      */
     constructor(
         address _gamesHubAddress,
@@ -99,6 +100,8 @@ contract Ace8Proxy {
     /**
      * @dev Function to perform the update of the games
      * @param _dataNewGame Data for the new game
+     * @param _dataUpdate Data for the update
+     * @param _lastTimeStamp The last timestamp
      */
     function performGames(
         bytes calldata _dataNewGame,
@@ -145,9 +148,7 @@ contract Ace8Proxy {
             _gameContract.createNewGames() &&
             _dataNewGame.length != 0
         ) {
-            _gameContract = IAceTheBrackets8(
-                gamesHub.games(keccak256("ACE8"))
-            );
+            _gameContract = IAceTheBrackets8(gamesHub.games(keccak256("ACE8")));
             _gameContract.createGame(_dataNewGame);
             uint256 _totalGames = _gameContract.totalGames();
             gameContract[_totalGames] = address(_gameContract);
@@ -173,9 +174,7 @@ contract Ace8Proxy {
      * @param _paused Boolean to pause or unpause the contract
      */
     function setPaused(bool _paused) external onlyAdministrator {
-        IAceTheBrackets8(gamesHub.games(keccak256("ACE8"))).setPaused(
-            _paused
-        );
+        IAceTheBrackets8(gamesHub.games(keccak256("ACE8"))).setPaused(_paused);
         emit Paused(_paused);
     }
 
@@ -204,9 +203,7 @@ contract Ace8Proxy {
      * @param _gameId The ID of the game to be reset
      */
     function resetGame(uint256 _gameId) external onlyAdministrator {
-        IAceTheBrackets8(gamesHub.games(keccak256("ACE8"))).resetGame(
-            _gameId
-        );
+        IAceTheBrackets8(gamesHub.games(keccak256("ACE8"))).resetGame(_gameId);
         emit GameReset(_gameId);
     }
 
@@ -215,8 +212,9 @@ contract Ace8Proxy {
      * @param _active Boolean to activate or deactivate the contract
      */
     function setCreateNewGames(bool _active) public onlyAdministrator {
-        IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
-            .setCreateNewGames(_active);
+        IAceTheBrackets8(gamesHub.games(keccak256("ACE8"))).setCreateNewGames(
+            _active
+        );
     }
 
     /**
@@ -224,8 +222,9 @@ contract Ace8Proxy {
      * @param _roundDuration The new round duration
      */
     function setRoundDuration(uint256 _roundDuration) public onlyAdministrator {
-        IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
-            .setRoundDuration(_roundDuration);
+        IAceTheBrackets8(gamesHub.games(keccak256("ACE8"))).setRoundDuration(
+            _roundDuration
+        );
     }
 
     /**
@@ -353,8 +352,9 @@ contract Ace8Proxy {
         uint256 tokenIndex
     ) public view returns (string memory) {
         return
-            IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
-                .getTokenSymbol(tokenIndex);
+            IAceTheBrackets8(gamesHub.games(keccak256("ACE8"))).getTokenSymbol(
+                tokenIndex
+            );
     }
 
     /**
@@ -376,8 +376,9 @@ contract Ace8Proxy {
         bytes memory _symbols
     ) public view returns (uint256[8] memory) {
         return
-            IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
-                .getTokensIds(_symbols);
+            IAceTheBrackets8(gamesHub.games(keccak256("ACE8"))).getTokensIds(
+                _symbols
+            );
     }
 
     /**
@@ -442,9 +443,7 @@ contract Ace8Proxy {
     }
 
     function totalGames() public view returns (uint256) {
-        return
-            IAceTheBrackets8(gamesHub.games(keccak256("ACE8")))
-                .totalGames();
+        return IAceTheBrackets8(gamesHub.games(keccak256("ACE8"))).totalGames();
     }
 
     function daysToClaimPrize() public view returns (uint8) {

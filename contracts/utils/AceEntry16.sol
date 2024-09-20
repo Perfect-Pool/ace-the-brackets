@@ -1,6 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+/**
+ * @title AceEntry16
+ * @author PerfectPool
+ * @notice This contract manages the game for a AceTheBrackets16 bracket tournament. 
+ * It allows users to mint NFTs representing their bets, handles the game's pot and jackpot, 
+ * and manages prize distribution. Key features include:
+ * - Minting NFTs that represent bets on game outcomes
+ * - Managing game pots and a global jackpot
+ * - Handling prize claims for winners and consolation prizes
+ * - Iterative processing of game results to determine winners
+ * - Integration with a GamesHub contract for role-based access control
+ * - Customizable parameters such as ticket price and consolation prize percentage
+ */
+
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../interfaces/IGamesHub.sol";
@@ -132,15 +146,6 @@ contract AceEntry16 is ERC721, ReentrancyGuard {
     function changePrice(uint256 _newPrice) public onlyAdmin {
         price = _newPrice;
         emit PriceChanged(_newPrice);
-    }
-
-    /**
-     * @dev Change the protocol fee. Only callable by the admin.
-     * @param _newFee The new protocol fee.
-     */
-    function changeProtocolFee(uint8 _newFee) public onlyAdmin {
-        protocolFee = _newFee;
-        emit ProtocolFeeChanged(_newFee);
     }
 
     /**
@@ -629,10 +634,11 @@ contract AceEntry16 is ERC721, ReentrancyGuard {
     /**
      * @dev Get the quantity of players for a specific game.
      * @param gameId The ID of the game
+     * @return The quantity of players for the game.
      */
     function playerQuantity(
         uint256 gameId
-    ) public view returns (uint256 players) {
+    ) public view returns (uint256) {
         return gameData[gameId].tokenIds.length;
     }
 

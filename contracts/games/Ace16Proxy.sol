@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+/**
+ * @title Ace16Proxy
+ * @author PerfectPool
+ * @notice Proxy contract for Ace16 game, managing upgradeable game logic and storing game data.
+ * Please refer to the original AceTheBrackets16 contract for more informations about overral functionality.
+ */
+
 import "../interfaces/IGamesHub.sol";
 import "../interfaces/IAceTheBrackets16.sol";
 
@@ -99,6 +106,14 @@ contract Ace16Proxy {
     /**
      * @dev Function to perform the update of the games
      * @param _dataNewGame Data for the new game
+     * * - tokensIds: uint256[16]
+     * * - tokensSymbols: string[16]
+     * @param _dataUpdate Data for the update for maximum 5 games
+     * * - gameIds: uint256[5]
+     * * - prices: bytes[5]
+     * * - pricesWinners: bytes[5]
+     * * - winners: bytes[5]
+     * @param _lastTimeStamp The last timestamp
      */
     function performGames(
         bytes calldata _dataNewGame,
@@ -266,7 +281,7 @@ contract Ace16Proxy {
     }
 
     /**
-     * @dev Status of the game. 0 = inactive, 1 ~ 3 = actual round, 4 = finished
+     * @dev Status of the game. 0 = inactive, 1 ~ 4 = actual round, 5 = finished
      * @param gameIndex The index of the game
      * @return status The status of the game
      */
@@ -284,6 +299,11 @@ contract Ace16Proxy {
      * @param gameIndex The index of the game
      * @param round The index of the round
      * @return roundData The data for the round
+     * * - tokens: string[16]
+     * * - pricesStart: uint256[16]
+     * * - pricesEnd: uint256[16]
+     * * - start: uint256
+     * * - end: uint256
      */
     function getRoundFullData(
         uint256 gameIndex,
@@ -300,12 +320,22 @@ contract Ace16Proxy {
     /**
      * @dev Function to get the data for a game
      * @param _gameId The index of the game
-     * @return gameData The data for the game
+     * @return gameData The data for the game (ABI-encoded). round1data variables are the same as returned by getRoundFullData 
+     * * - round1data: bytes
+     * * - round2data: bytes
+     * * - round3data: bytes
+     * * - round4data: bytes
+     * * - winner: string
+     * * - finalPrice: uint256
+     * * - currentRound: uint8
+     * * - start: uint256
+     * * - end: uint256
+     * * - activated: bool
      */
     function getGameFullData(
         uint256 _gameId
     ) public view gameOutOfIndex(_gameId) returns (bytes memory) {
-        // Return: ABI-encoded bytes, bytes, bytes, bytes, string, uint256, uint8, uint256, uint256
+        // Return: ABI-encoded bytes, bytes, bytes, bytes, string, uint256, uint8, uint256, uint256, bool
         // CurrentRound 0-3: Rounds 1-4 / 5: Finished
         // Activated: 0: Inactive / 1: Active
         return
