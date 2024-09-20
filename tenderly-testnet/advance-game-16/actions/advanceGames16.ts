@@ -147,9 +147,15 @@ const getIdsFromSymbols = async (
 
   const ids = await aceContract.getTokensIds(symbolsEncoded);
 
-  return ids.map((
+  let idsString = ids.map((
     id: ethers.BigNumber
   ) => id.toString());
+
+  while (idsString.length < 16) {
+    idsString.push("0");
+  }
+
+  return idsString;
 }
 
 // Function to decode the data returned by the getActiveGamesActualCoins() function
@@ -611,7 +617,11 @@ export const advanceGames16: ActionFn = async (
   console.log("Coins to update games:", coinsGame);
 
   // As getPriceCMC will receive a list of coinsIds, we need to get the ids from the coins symbols
-  const arrayCoinsSymbols = coinsGame.split(",");
+  let arrayCoinsSymbols = coinsGame.split(",");
+  // complete the array with empty strings to have 16 elements
+  while (arrayCoinsSymbols.length < 16) {
+    arrayCoinsSymbols.push("");
+  }
   let coinsIds = [];
   let symbolsArray = [];
   if (coinsGame !== "") {
