@@ -17,6 +17,20 @@ async function main() {
         constructorArguments: [], // Adicionar os argumentos do construtor se necessário
         contract: "contracts/libraries/ImageBetTexts.sol:ImageBetTexts"
     });
+
+    const address16 = contracts[networkName]["Libraries"]["ImageBetTexts16"];
+    if (!address16) {
+        console.error("ImageBetTexts16 address not found in contracts.json");
+        process.exit(1);
+    }
+
+    console.log("Verifying ImageBetTexts16 at address", address16);
+
+    await hre.run("verify:verify", {
+        address: address16,
+        constructorArguments: [], // Adicionar os argumentos do construtor se necessário
+        contract: "contracts/libraries/ImageBetTexts16.sol:ImageBetTexts16"
+    });
 }
 
 main()

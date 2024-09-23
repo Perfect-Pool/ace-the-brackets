@@ -17,6 +17,20 @@ async function main() {
         constructorArguments: [contracts[networkName].GAMES_HUB],
         contract: "contracts/utils/NftImage.sol:NftImage"
     });
+
+    const address16 = contracts[networkName]["NFT_IMAGE_ACE16"];
+    if (!address16) {
+        console.error("NftImage16 address not found in contracts.json");
+        process.exit(1);
+    }
+
+    console.log("Verifying NftImage16 at address", address16);
+
+    await hre.run("verify:verify", {
+        address: address16,
+        constructorArguments: [contracts[networkName].GAMES_HUB],
+        contract: "contracts/utils/NftImage16.sol:NftImage16"
+    });
 }
 
 main()

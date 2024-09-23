@@ -28,9 +28,9 @@ library BuildImageAce16 {
                     '<text style="font-size:15.3px;fill:#fff;font-family:arial;font-weight:400" x="156" y="461" id="text62">',
                     _tokenId,
                     '</text>',
-                    ImageParts16.svgPartDown(status, victory),
                     ImageParts16.buildCircles(betValidator),
-                    ImageParts16.buildBets(tokens)
+                    ImageParts16.buildBets(tokens),
+                    ImageParts16.svgPartDown(status, victory)
                 )
             );
     }
