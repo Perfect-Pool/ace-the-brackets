@@ -56,10 +56,10 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
     using FunctionsRequest for FunctionsRequest.Request;
 
     event CreateNewGame(
-        bytes indexed dataNewGame
+        bytes dataNewGame
     );
     event UpdateGame(
-        bytes indexed updateGame
+        bytes updateGame
     );
 
     bytes32 public donId; // DON ID for the Functions DON to which the requests are sent

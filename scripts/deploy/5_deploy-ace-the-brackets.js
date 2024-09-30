@@ -41,11 +41,6 @@ async function main() {
     await new Promise((resolve) => setTimeout(resolve, 5000));
   } else {
     console.log(`AceTheBrackets8 already deployed at ${networkData.ACE8}`);
-    await GamesHub.setGameContact(
-      networkData.ACE8,
-      ethers.utils.id("ACE8"),
-      false
-    );
   }
 
   if (networkData.ACE8_TEST === "") {
@@ -74,11 +69,6 @@ async function main() {
     await new Promise((resolve) => setTimeout(resolve, 5000));
   } else {
     console.log(`AceTheBrackets8 already deployed at ${networkData.ACE8_TEST}`);
-    await GamesHub.setGameContact(
-      networkData.ACE8_TEST,
-      ethers.utils.id("ACE8_TEST"),
-      false
-    );
   }
 
   if (networkData.ACE8_PROXY === "") {

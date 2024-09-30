@@ -72,40 +72,18 @@ contract LogAutomationAce8 is ILogAutomation {
         bytes memory checkData
     ) external view returns (bool upkeepNeeded, bytes memory performData) {
         upkeepNeeded = true;
-        bytes memory bytesTopic1 = abi.encodePacked(log.topics[1]);
 
         if (checkData.length == 0) {
             // new game
-            performData = abi.encode(
-                true,
-                bytesTopic1
-            );
+            performData = abi.encode(true, log.data);
         } else {
             // update game
-            (uint256 gameId, uint256[8] memory prices) = abi.decode(
-                bytesTopic1,
-                (uint256, uint256[8])
-            );
-
-            IAceTheBrackets8 aceTheBrackets8 = IAceTheBrackets8(
-                gamesHub.games(keccak256("ACE8_TEST"))
-            );
-
-            bytes memory roundFullData = aceTheBrackets8.getRoundFullData(
-                gameId,
-                aceTheBrackets8.getGameStatus(gameId) //round number
-            );
-
             (
-                string[8] memory tokenSymbols,
+                uint256 gameId,
                 uint256[8] memory pricesBegin,
-                ,
-                ,
-
-            ) = abi.decode(
-                    roundFullData,
-                    (string[8], uint256[8], uint256[8], uint256, uint256)
-                );
+                uint256[8] memory prices,
+                uint256[8] memory tokensIds
+            ) = logDataToGameUpdate(log.data);
 
             performData = abi.encode(
                 false,
@@ -113,7 +91,7 @@ contract LogAutomationAce8 is ILogAutomation {
                     gameId,
                     pricesBegin,
                     prices,
-                    aceTheBrackets8.getTokensIds(abi.encode(tokenSymbols))
+                    tokensIds
                 )
             );
         }
@@ -152,6 +130,60 @@ contract LogAutomationAce8 is ILogAutomation {
                 abi.encode(winners)
             );
         }
+    }
+
+    /**
+     * @dev Prepares the data for updating the game
+     * @param logData The log data
+     * @return gameId The ID of the game
+     * @return pricesBegin The previous prices to compare
+     * @return prices The new prices to compare
+     * @return tokensIds The IDs of the tokens
+     */
+
+    function logDataToGameUpdate(
+        bytes memory logData
+    )
+        public
+        view
+        returns (
+            uint256,
+            uint256[8] memory,
+            uint256[8] memory,
+            uint256[8] memory
+        )
+    {
+        (uint256 gameId, uint256[8] memory prices) = abi.decode(
+            logData,
+            (uint256, uint256[8])
+        );
+
+        IAceTheBrackets8 aceTheBrackets8 = IAceTheBrackets8(
+            gamesHub.games(keccak256("ACE8_TEST"))
+        );
+
+        bytes memory roundFullData = aceTheBrackets8.getRoundFullData(
+            gameId,
+            aceTheBrackets8.getGameStatus(gameId) //round number
+        );
+
+        (
+            string[8] memory tokenSymbols,
+            uint256[8] memory pricesBegin,
+            ,
+            ,
+
+        ) = abi.decode(
+                roundFullData,
+                (string[8], uint256[8], uint256[8], uint256, uint256)
+            );
+
+        return (
+            gameId,
+            pricesBegin,
+            prices,
+            aceTheBrackets8.getTokensIds(abi.encode(tokenSymbols))
+        );
     }
 
     /**
@@ -227,48 +259,5 @@ contract LogAutomationAce8 is ILogAutomation {
         }
 
         return (winners, pricesWinners);
-    }
-
-    /**
-     * @dev Converts bytes32 to uint256
-     *
-     * @param _data bytes32 data
-     * @return uint256 data
-     */
-    function bytes32ToUint256(bytes32 _data) internal pure returns (uint256) {
-        return uint256(_data);
-    }
-
-    /**
-     * @dev Converts bytes32 to uint256[8]
-     *
-     * @param _data bytes32 data
-     * @return uint256[8] data
-     */
-    function bytes32ToUint256Array(
-        bytes32 _data
-    ) internal pure returns (uint256[8] memory) {
-        uint256[8] memory result;
-        for (uint256 i = 0; i < 8; i++) {
-            result[i] = uint256(uint32(bytes4(_data << (i * 32))));
-        }
-        return result;
-    }
-
-    /**
-     * @dev Converts bytes32 to string[8]
-     *
-     * @param _data bytes32 data
-     * @return string[8] data
-     */
-    function bytes32ToStringArray(
-        bytes32 _data
-    ) internal pure returns (string[8] memory) {
-        string[8] memory result;
-        for (uint256 i = 0; i < 8; i++) {
-            bytes4 segment = bytes4(_data << (i * 32));
-            result[i] = string(abi.encodePacked(segment));
-        }
-        return result;
     }
 }
