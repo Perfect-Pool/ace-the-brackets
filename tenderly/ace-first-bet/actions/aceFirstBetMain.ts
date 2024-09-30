@@ -45,6 +45,26 @@ async function sendErrorLog(message: string, context: Context): Promise<void> {
     }
 }
 
+
+
+async function getGasPrice(provider: ethers.providers.Provider, context: Context)
+    : Promise<ethers.BigNumber> {
+    try {
+        const gasPrice = await provider.getGasPrice();
+        return gasPrice.mul(120).div(100);
+    } catch (error) {
+        console.error("Error on getting gas price");
+        await sendErrorLog('Failed to get gas price on consolation prize automation', context);
+        if (error instanceof Error) {
+            const errorString = error.toString();
+            await context.storage.putStr('errorConsolationMain', errorString);
+        } else {
+            await context.storage.putStr('errorConsolationMain', 'An unknown error occurred at getting gas price');
+        }
+        throw error;
+    }
+}
+
 const encodeUpdateData = (game_id: number): string => {
     const gameData: GameData = {
         gameId: game_id,
@@ -164,13 +184,16 @@ export const aceFirstBetMain: ActionFn = async (context: Context, event: Event) 
         return;
     }
 
+    const gasPrice = await getGasPrice(provider, context);
+
     try {
         const tx = await aceContract.performGames(
             '0x',
             updateGamesCalldata,
             lastTimeStamp,
             {
-                gasLimit: gasLimit
+                gasLimit: gasLimit,
+                gasPrice: gasPrice
             }
         );
 

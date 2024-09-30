@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/v1_0_0/libraries/FunctionsRequest.sol";
 import "../interfaces/IGamesHub.sol";
 import "../interfaces/IAceTicket8.sol";
 import "../interfaces/IAceTheBrackets8.sol";
+
+interface IFunctionsConsumer {
+    function sendRequestNewGame() external;
+}
 
 contract AceTheBrackets8 is IAceTheBrackets8 {
     /** STRUCTS **/
@@ -51,6 +56,14 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
         require(
             gamesHub.games(keccak256("ACE8_PROXY")) == msg.sender,
             "ACE-01"
+        );
+        _;
+    }
+
+    modifier onlyAutomation() {
+        require(
+            gamesHub.checkRole(keccak256("ACE8_LOGAUTOMATION"), msg.sender),
+            "ACE-02"
         );
         _;
     }
@@ -140,9 +153,7 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
      * @dev Function to create a new game
      * @param _dataNewGame Data for the new game
      */
-    function createGame(
-        bytes calldata _dataNewGame
-    ) external onlyGameContract {
+    function createGame(bytes calldata _dataNewGame) external onlyAutomation {
         (uint256[8] memory _cmcIds, string[8] memory _symbols) = abi.decode(
             _dataNewGame,
             (uint256[8], string[8])
@@ -184,7 +195,7 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
         bytes memory _prices,
         bytes memory _pricesWinners,
         bytes memory _winners
-    ) external onlyGameContract {
+    ) external onlyAutomation {
         uint8 currentRound = games[gameIndex].currentRound;
         if (currentRound > 2) removeGame(gameIndex);
 
@@ -231,6 +242,12 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
             );
 
             gameIdToCode[gameIndex] = gameCode;
+
+            if (createNewGames) {
+                IFunctionsConsumer(
+                    gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                ).sendRequestNewGame();
+            }
         } else {
             if (
                 (currentRound == 0 && winnersArray[4] != 0) ||
@@ -255,8 +272,13 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
      * @param _gameId The game number
      * @param _lastTimeStamp The last timestamp
      */
-    function _updateTimestamps(uint256 _gameId, uint256 _lastTimeStamp) internal {
-        uint256 timer = _lastTimeStamp - (_lastTimeStamp % betTime) + (betTime * 2);
+    function _updateTimestamps(
+        uint256 _gameId,
+        uint256 _lastTimeStamp
+    ) internal {
+        uint256 timer = _lastTimeStamp -
+            (_lastTimeStamp % betTime) +
+            (betTime * 2);
         uint256 _roundDuration = roundDuration;
 
         games[_gameId].start = timer;

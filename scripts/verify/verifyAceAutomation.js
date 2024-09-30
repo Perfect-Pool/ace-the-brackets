@@ -19,6 +19,35 @@ async function main() {
         ],
         contract: "contracts/utils/AutomationAce8.sol:AutomationAce8"
     });
+
+    const addressLog = contracts[networkName]["ACE8_LOGAUTOMATION"];
+    if (!addressLog) {
+        console.error("LogAutomationAce8 address not found in contracts.json");
+        process.exit(1);
+    }
+
+    console.log("Verifying LogAutomationAce8 at address", addressLog);
+
+    await hre.run("verify:verify", {
+        address: addressLog,
+        constructorArguments: [
+            contracts[networkName].GAMES_HUB
+        ],
+        contract: "contracts/utils/LogAutomationAce8.sol:LogAutomationAce8"
+    });
+
+    const addressCodes =  contracts[networkName]["SOURCE_CODES_ACE"];
+    if (!addressCodes) {
+        console.error("SourceCodesAce address not found in contracts.json");
+        process.exit(1);
+    }
+
+    console.log("Verifying SourceCodesAce at address", addressCodes);
+
+    await hre.run("verify:verify", {
+        address: addressCodes,
+        contract: "contracts/utils/SourceCodesAce.sol:SourceCodesAce"
+    });
 }
 
 main()

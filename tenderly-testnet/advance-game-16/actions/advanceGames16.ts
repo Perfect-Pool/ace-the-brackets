@@ -147,16 +147,14 @@ const getIdsFromSymbols = async (
 
   const ids = await aceContract.getTokensIds(symbolsEncoded);
 
-  let idsString = ids.map((
-    id: ethers.BigNumber
-  ) => id.toString());
+  let idsString = ids.map((id: ethers.BigNumber) => id.toString());
 
   while (idsString.length < 16) {
     idsString.push("0");
   }
 
   return idsString;
-}
+};
 
 // Function to decode the data returned by the getActiveGamesActualCoins() function
 const decodeActiveGamesActualCoins = async (
@@ -229,7 +227,7 @@ const decodeActiveGamesActualCoins = async (
     // ------------------------------manter desativado
     const roundEnd = fullRoundData[4].toNumber();
 
-    if (roundEnd > lastTimeStamp) {
+    if (gameStart < lastTimeStamp && roundEnd > lastTimeStamp) {
       console.log("This round has not ended yet.");
       continue;
     }
@@ -307,8 +305,14 @@ const calculateGameResults = async (
         continue;
       }
 
-      const priceCurrent = Math.floor(moeda.quote.USD.price * 10 ** 8);
-      const priceNext = Math.floor(moedaNext.quote.USD.price * 10 ** 8);
+      const priceCurrent =
+        Math.floor(moeda.quote.USD.price * 10 ** 8) === 0
+          ? 1
+          : Math.floor(moeda.quote.USD.price * 10 ** 8);
+      const priceNext =
+        Math.floor(moedaNext.quote.USD.price * 10 ** 8) === 0
+          ? 1
+          : Math.floor(moedaNext.quote.USD.price * 10 ** 8);
       console.log("Price current ", game.coins[index], ": ", priceCurrent);
       console.log("Price next ", game.coins[index + 1], ": ", priceNext);
 
@@ -325,28 +329,12 @@ const calculateGameResults = async (
         variations[index + 1] = variationNext;
 
         if (variationCurrent === variationNext) {
-          const volumeChangeCurrent = moeda.quote.USD.volume_change_24h;
-          const volumeChangeNext = moedaNext.quote.USD.volume_change_24h;
-
-          if (
-            volumeChangeCurrent !== undefined &&
-            volumeChangeNext !== undefined
-          ) {
-            if (volumeChangeCurrent > volumeChangeNext) {
-              winners[index / 2] = prices[game.coinIds[index]].id;
-              pricesWinners[index / 2] = priceCurrent;
-            } else {
-              winners[index / 2] = prices[game.coinIds[index + 1]].id;
-              pricesWinners[index / 2] = priceNext;
-            }
+          if (Math.random() > 0.5) {
+            winners[index / 2] = prices[game.coinIds[index]].id;
+            pricesWinners[index / 2] = priceCurrent;
           } else {
-            if (Math.random() > 0.5) {
-              winners[index / 2] = prices[game.coinIds[index]].id;
-              pricesWinners[index / 2] = priceCurrent;
-            } else {
-              winners[index / 2] = prices[game.coinIds[index + 1]].id;
-              pricesWinners[index / 2] = priceNext;
-            }
+            winners[index / 2] = prices[game.coinIds[index + 1]].id;
+            pricesWinners[index / 2] = priceNext;
           }
         } else if (variationCurrent > variationNext) {
           winners[index / 2] = prices[game.coinIds[index]].id;
@@ -479,6 +467,8 @@ export const advanceGames16: ActionFn = async (
 ) => {
   const lastTimeStamp = Math.floor(Date.now() / 1000 / 60) * 60;
 
+  console.log("Time from Timestamp: ", new Date(lastTimeStamp * 1000).toISOString());
+
   const privateKey = await context.secrets.get("project.addressPrivateKey");
   const rpcUrl = await context.secrets.get("baseSepolia.rpcUrl");
   const CONTRACT_ADDRESS = await context.secrets.get(
@@ -601,7 +591,7 @@ export const advanceGames16: ActionFn = async (
 
   console.log("Checking if there is a new game to be created");
   if (decodedGames.some((game) => game.game_round === 3)) {
-  // if (true) {
+    // if (true) {
     newGameCoins = await getCoinsTop(150, 16, context, lastTimeStamp);
     newGameCalldata = await createCalldataForNewGame(newGameCoins);
     coins = newGameCoins.map((coin) => coin.id).join(",");
