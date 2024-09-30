@@ -72,21 +72,18 @@ contract LogAutomationAce8 is ILogAutomation {
         bytes memory checkData
     ) external view returns (bool upkeepNeeded, bytes memory performData) {
         upkeepNeeded = true;
+        bytes memory bytesTopic1 = abi.encodePacked(log.topics[1]);
 
         if (checkData.length == 0) {
             // new game
-            (
-                uint256[8] memory numericValues,
-                string[8] memory coinSymbols
-            ) = abi.decode(log.data, (uint256[8], string[8]));
             performData = abi.encode(
                 true,
-                abi.encode(numericValues, coinSymbols)
+                bytesTopic1
             );
         } else {
             // update game
             (uint256 gameId, uint256[8] memory prices) = abi.decode(
-                log.data,
+                bytesTopic1,
                 (uint256, uint256[8])
             );
 

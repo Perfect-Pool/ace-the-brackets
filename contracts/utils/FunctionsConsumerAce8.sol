@@ -56,12 +56,10 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
     using FunctionsRequest for FunctionsRequest.Request;
 
     event CreateNewGame(
-        uint256[8] numericValues,
-        string[8] coinSymbols
+        bytes indexed dataNewGame
     );
     event UpdateGame(
-        uint256 gameId,
-        uint256[8] prices
+        bytes indexed updateGame
     );
 
     bytes32 public donId; // DON ID for the Functions DON to which the requests are sent
@@ -114,6 +112,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
     /**
      * @notice Triggers an on-demand Functions request using remote encrypted secrets
      * @param source JavaScript source code
+     * @param secretsLocation Location of secrets (only Location.Remote & Location.DONHosted are supported)
      * @param encryptedSecretsReference Reference pointing to encrypted secrets
      * @param args String arguments passed into the source code and accessible via the global variable `args`
      * @param bytesArgs Bytes arguments passed into the source code and accessible via the global variable `bytesArgs` as hex strings
@@ -122,7 +121,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
      */
     function sendRequest(
         string calldata source,
-        FunctionsRequest.Location,
+        FunctionsRequest.Location secretsLocation,
         bytes calldata encryptedSecretsReference,
         string[] calldata args,
         bytes[] calldata bytesArgs,
@@ -134,8 +133,6 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
                 gamesHub.checkRole(keccak256("ADMIN"), msg.sender),
             "Sender not allowed to send request"
         );
-
-        FunctionsRequest.Location secretsLocation = FunctionsRequest.Location.Remote;
 
         FunctionsRequest.Request memory req;
         req.initializeRequest(
@@ -194,12 +191,12 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
                 (uint256[8] memory numericValues, string[8] memory coinSymbols) = parseMarketDataNew(
                     string(response)
                 );
-                emit CreateNewGame(numericValues, coinSymbols);
+                emit CreateNewGame(abi.encode(numericValues, coinSymbols));
             }else{
                 uint256 gameId = gamesIds[requestId];
                 uint256[8] memory prices = abi.decode(response, (uint256[8]));
 
-                emit UpdateGame(gameId, prices);
+                emit UpdateGame(abi.encode(gameId, prices));
             }
         }
     }

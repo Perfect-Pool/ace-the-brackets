@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/v1_0_0/libraries/FunctionsRequest.sol";
 import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "../interfaces/IGamesHub.sol";
@@ -9,7 +10,7 @@ import "../interfaces/IAceTheBrackets8.sol";
 interface IFunctionsConsumer {
     function sendRequest(
         string calldata source,
-        bytes32 secretsLocation,
+        FunctionsRequest.Location secretsLocation,
         bytes calldata encryptedSecretsReference,
         string[] calldata args,
         bytes[] calldata bytesArgs,
@@ -25,6 +26,7 @@ interface ISourceCodesAce {
 }
 
 contract AutomationAce8 is AutomationCompatibleInterface {
+    using FunctionsRequest for FunctionsRequest.Request;
     using Strings for uint256;
 
     // Events
@@ -49,8 +51,6 @@ contract AutomationAce8 is AutomationCompatibleInterface {
 
     address public upkeepAddress;
     address public executionAddress;
-
-    IFunctionsConsumer public functionsConsumer;
     IGamesHub public gamesHub;
 
     /**
@@ -178,15 +178,16 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         s_upkeepCounter = s_upkeepCounter + 1;
 
         if (performData.length == 0) {
-            functionsConsumer.sendRequest(
-                sourceCodes.sourceNew8(),
-                bytes32(""),
-                encryptedSecretsReference,
-                new string[](0),
-                new bytes[](0),
-                subscriptionId,
-                callbackGasLimit
-            );
+            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
+                .sendRequest(
+                    sourceCodes.sourceNew8(),
+                    FunctionsRequest.Location.Remote,
+                    encryptedSecretsReference,
+                    new string[](0),
+                    new bytes[](0),
+                    subscriptionId,
+                    callbackGasLimit
+                );
 
             emit PerformUpkeep(0, true);
             return;
@@ -203,29 +204,18 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         args[0] = listIds;
         bytesArgs[0] = abi.encode(gameId);
 
-        functionsConsumer.sendRequest(
-            sourceCodes.source8(),
-            bytes32(""),
-            encryptedSecretsReference,
-            args,
-            bytesArgs,
-            subscriptionId,
-            callbackGasLimit
-        );
+        IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
+            .sendRequest(
+                sourceCodes.source8(),
+                FunctionsRequest.Location.Remote,
+                encryptedSecretsReference,
+                args,
+                bytesArgs,
+                subscriptionId,
+                callbackGasLimit
+            );
 
         emit PerformUpkeep(gameId, false);
-    }
-
-    /**
-     * @notice Set the address of the FunctionsConsumer contract
-     * @param _functionsConsumer Address of the FunctionsConsumer contract
-     * @dev Only the administrator can call this function
-     */
-    function setFunctionsConsumer(
-        address _functionsConsumer
-    ) external onlyAdministrator {
-        functionsConsumer = IFunctionsConsumer(_functionsConsumer);
-        emit FunctionsConsumerSet(_functionsConsumer);
     }
 
     /**
@@ -240,7 +230,11 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         uint32 _callbackGasLimit
     ) public {
         require(
-            address(functionsConsumer) == msg.sender,
+            address(
+                IFunctionsConsumer(
+                    gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                )
+            ) == msg.sender,
             "Only FunctionsConsumer can initialize"
         );
         encryptedSecretsReference = _encryptedSecretsReference;
@@ -258,15 +252,16 @@ contract AutomationAce8 is AutomationCompatibleInterface {
      * @notice Function to send a sendRequest with source8New() to FunctionsConsumer.
      */
     function sendRequestNewGame() external onlyGameContract {
-        functionsConsumer.sendRequest(
-            ISourceCodesAce(gamesHub.helpers(keccak256("SOURCE_CODES_ACE")))
-                .sourceNew8(),
-            bytes32(""),
-            encryptedSecretsReference,
-            new string[](0),
-            new bytes[](0),
-            subscriptionId,
-            callbackGasLimit
-        );
+        IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
+            .sendRequest(
+                ISourceCodesAce(gamesHub.helpers(keccak256("SOURCE_CODES_ACE")))
+                    .sourceNew8(),
+                FunctionsRequest.Location.Remote,
+                encryptedSecretsReference,
+                new string[](0),
+                new bytes[](0),
+                subscriptionId,
+                callbackGasLimit
+            );
     }
 }

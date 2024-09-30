@@ -26,9 +26,23 @@ async function main() {
       ethers.utils.id("ACE8_AUTOMATION"),
       true
     );
+  
+    console.log(`Setting Functions8 contract address to GamesHub...`);
+    await gamesHub.setGameContact(
+      networkData.FUNCTIONS_ACE8,
+      ethers.utils.id("FUNCTIONS_ACE8"),
+      true
+    );
   } else {
     console.log(
       `AutomationAce8 already deployed at ${networkData.ACE8_AUTOMATION}`
+    );
+  
+    console.log(`Setting Functions8 contract address to GamesHub...`);
+    await gamesHub.setGameContact(
+      networkData.FUNCTIONS_ACE8,
+      ethers.utils.id("FUNCTIONS_ACE8"),
+      true
     );
   }
 
@@ -54,13 +68,6 @@ async function main() {
   } else {
     console.log(
       `LogAutomationAce8 already deployed at ${networkData.ACE8_LOGAUTOMATION}`
-    );
-
-    console.log(`Setting Functions8 contract address to GamesHub...`);
-    await gamesHub.setGameContact(
-      networkData.FUNCTIONS_ACE8,
-      ethers.utils.id("FUNCTIONS_ACE8"),
-      true
     );
   }
 
