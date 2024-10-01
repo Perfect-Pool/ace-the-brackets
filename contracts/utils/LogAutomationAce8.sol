@@ -12,6 +12,10 @@ struct Log {
     bytes data; // Data of the log
 }
 
+interface IFunctionsConsumer {
+    function emitUpdateGame(uint8 updatePhase, uint256 gameDataIndex) external;
+}
+
 interface ILogAutomation {
     function checkLog(
         Log calldata log,
@@ -28,6 +32,8 @@ interface IGamesHub {
     ) external view returns (bool);
 
     function games(bytes32) external view returns (address);
+
+    function helpers(bytes32) external view returns (address);
 }
 
 interface IAceTheBrackets8 {
@@ -57,7 +63,13 @@ interface IAceTheBrackets8 {
 }
 
 contract LogAutomationAce8 is ILogAutomation {
+    event UpdateDataStored(uint256 indexed index);
+    event UpdateExecuted(uint256 indexed gameId);
+
     IGamesHub public gamesHub;
+
+    mapping(uint256 => bytes) private updateData;
+    uint256 private updateDataIndex;
 
     /**
      * @dev Constructor function
@@ -69,66 +81,79 @@ contract LogAutomationAce8 is ILogAutomation {
 
     function checkLog(
         Log calldata log,
-        bytes memory checkData
-    ) external view returns (bool upkeepNeeded, bytes memory performData) {
+        bytes memory
+    ) external pure returns (bool upkeepNeeded, bytes memory performData) {
         upkeepNeeded = true;
-
-        if (checkData.length == 0) {
-            // new game
-            performData = abi.encode(true, log.data);
-        } else {
-            // update game
-            (
-                uint256 gameId,
-                uint256[8] memory pricesBegin,
-                uint256[8] memory prices,
-                uint256[8] memory tokensIds
-            ) = logDataToGameUpdate(log.data);
-
-            performData = abi.encode(
-                false,
-                abi.encode(
-                    gameId,
-                    pricesBegin,
-                    prices,
-                    tokensIds
-                )
-            );
-        }
+        performData = abi.encode(
+            bytes32ToUint8(log.topics[1]),
+            bytes32ToUint256(log.topics[2])
+        );
     }
 
     function performUpkeep(bytes calldata performData) external override {
-        (bool isNewGame, bytes memory data) = abi.decode(
+        (uint8 updatePhase, uint256 gameDataIndex) = abi.decode(
             performData,
-            (bool, bytes)
+            (uint8, uint256)
         );
 
         IAceTheBrackets8 aceTheBrackets8 = IAceTheBrackets8(
             gamesHub.games(keccak256("ACE8_TEST"))
         );
 
-        if (isNewGame) {
-            aceTheBrackets8.createGame(data);
-        } else {
+        if (updatePhase == 0) {
+            updateData[updateDataIndex] = parseMarketDataNew(
+                string(updateData[gameDataIndex])
+            );
+            emit UpdateDataStored(updateDataIndex);
+            updateDataIndex++;
+
+            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
+                .emitUpdateGame(1, updateDataIndex);
+        } else if (updatePhase == 1) {
+            aceTheBrackets8.createGame(updateData[gameDataIndex]);
+        } else if (updatePhase == 2) {
             (
                 uint256 gameId,
                 uint256[8] memory pricesBegin,
                 uint256[8] memory prices,
                 uint256[8] memory tokensIds
-            ) = abi.decode(data, (uint256, uint256[8], uint256[8], uint256[8]));
+            ) = logDataToGameUpdate(updateData[gameDataIndex]);
 
             (
                 uint256[8] memory winners,
                 uint256[8] memory pricesWinners
             ) = determineWinners(tokensIds, pricesBegin, prices);
 
-            aceTheBrackets8.advanceGame(
+            updateData[updateDataIndex] = abi.encode(
                 gameId,
-                block.timestamp,
                 abi.encode(prices),
                 abi.encode(pricesWinners),
                 abi.encode(winners)
             );
+            emit UpdateDataStored(updateDataIndex);
+            updateDataIndex++;
+
+            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
+                .emitUpdateGame(3, updateDataIndex);
+        } else {
+            (
+                uint256 gameId,
+                bytes memory prices,
+                bytes memory pricesWinners,
+                bytes memory winners
+            ) = abi.decode(
+                    updateData[gameDataIndex],
+                    (uint256, bytes, bytes, bytes)
+                );
+
+            aceTheBrackets8.advanceGame(
+                gameId,
+                block.timestamp,
+                prices,
+                pricesWinners,
+                winners
+            );
+            emit UpdateExecuted(gameId);
         }
     }
 
@@ -184,6 +209,17 @@ contract LogAutomationAce8 is ILogAutomation {
             prices,
             aceTheBrackets8.getTokensIds(abi.encode(tokenSymbols))
         );
+    }
+
+    /**
+     * @dev Store the updated data, returning the index
+     * @param data The data to store
+     * @return The index of the stored data
+     */
+    function storeUpdateData(bytes memory data) external returns (uint256) {
+        updateData[updateDataIndex] = data;
+        emit UpdateDataStored(updateDataIndex);
+        return updateDataIndex++;
     }
 
     /**
@@ -259,5 +295,75 @@ contract LogAutomationAce8 is ILogAutomation {
         }
 
         return (winners, pricesWinners);
+    }
+
+    function bytes32ToUint256(bytes32 b) private pure returns (uint256) {
+        return uint256(b);
+    }
+
+    function bytes32ToUint8(bytes32 b) private pure returns (uint8) {
+        return uint8(uint256(b));
+    }
+
+    /**
+     * @notice Parse market data string and return two arrays
+     * @param _marketData String in the format "10603,IMX;20947,SUI;4948,CKB;8119,SFP;23254,CORE;3640,LPT;1518,MKR;28321,POL"
+     * @return bytes Encoded Array of numeric values and Array of coin symbols
+     */
+    function parseMarketDataNew(
+        string memory _marketData
+    ) public pure returns (bytes memory) {
+        bytes memory data = bytes(_marketData);
+        uint256[8] memory numericValues;
+        string[8] memory coinSymbols;
+
+        uint256 startIndex = 0;
+        uint256 endIndex;
+        uint256 commaIndex;
+
+        for (uint256 i = 0; i < 8; i++) {
+            for (endIndex = startIndex; endIndex < data.length; endIndex++) {
+                if (data[endIndex] == 0x2c) {
+                    // ',' character
+                    commaIndex = endIndex;
+                } else if (
+                    data[endIndex] == 0x3b || endIndex == data.length - 1
+                ) {
+                    // ';' character or end of string
+                    break;
+                }
+            }
+            numericValues[i] = parseUint(data, startIndex, commaIndex);
+            coinSymbols[i] = substring(data, commaIndex + 1, endIndex);
+            startIndex = endIndex + 1;
+        }
+
+        return abi.encode(numericValues, coinSymbols);
+    }
+
+    // Optimized helper function to parse uint256 from bytes
+    function parseUint(
+        bytes memory data,
+        uint256 start,
+        uint256 end
+    ) private pure returns (uint256) {
+        uint256 result = 0;
+        for (uint256 i = start; i < end; i++) {
+            result = result * 10 + uint8(data[i]) - 48;
+        }
+        return result;
+    }
+
+    // Optimized helper function to extract a substring from bytes
+    function substring(
+        bytes memory data,
+        uint256 start,
+        uint256 end
+    ) private pure returns (string memory) {
+        bytes memory result = new bytes(end - start);
+        for (uint256 i = 0; i < end - start; i++) {
+            result[i] = data[start + i];
+        }
+        return string(result);
     }
 }

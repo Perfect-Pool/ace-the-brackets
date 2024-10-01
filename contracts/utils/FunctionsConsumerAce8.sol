@@ -13,6 +13,10 @@ interface IAutomationAce {
     ) external;
 }
 
+interface ILogAutomationAce {
+    function storeUpdateData(bytes memory data) external returns (uint256);
+}
+
 interface IGamesHub {
     function checkRole(
         bytes32 role,
@@ -24,43 +28,13 @@ interface IGamesHub {
     function helpers(bytes32) external view returns (address);
 }
 
-interface IAceTheBrackets8 {
-    function getRoundFullData(
-        uint256 gameIndex,
-        uint8 round
-    ) external view returns (bytes memory);
-
-    function getTokensIds(
-        bytes memory _symbols
-    ) external view returns (uint256[8] memory);
-}
-
-interface IAce8Proxy {
-    function performGames(
-        bytes calldata _dataNewGame,
-        bytes calldata _dataUpdate,
-        uint256 _lastTimeStamp
-    ) external;
-
-    function getActiveGames() external view returns (uint256[] memory);
-
-    function getGameStatus(
-        uint256 gameIndex
-    ) external view returns (uint8 status);
-}
-
 /**
  * @title Chainlink Functions example on-demand consumer contract example
  */
 contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
     using FunctionsRequest for FunctionsRequest.Request;
 
-    event CreateNewGame(
-        bytes dataNewGame
-    );
-    event UpdateGame(
-        bytes updateGame
-    );
+    event UpdateGame(uint8 indexed updatePhase, uint256 indexed gameDataIndex);
 
     bytes32 public donId; // DON ID for the Functions DON to which the requests are sent
     IGamesHub public gamesHub;
@@ -85,6 +59,14 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
         require(
             gamesHub.checkRole(keccak256("ADMIN"), msg.sender),
             "Restricted to administrators"
+        );
+        _;
+    }
+
+    modifier onlyAutomation() {
+        require(
+            msg.sender == gamesHub.helpers(keccak256("ACE8_AUTOMATION")),
+            "Restricted to automation"
         );
         _;
     }
@@ -185,82 +167,37 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
     ) internal override {
         s_lastError = err;
         s_executedRequestId = requestId;
+        ILogAutomationAce logAutomationAce = ILogAutomationAce(
+            gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION"))
+        );
 
         if (err.length == 0) {
-            if(gamesIds[requestId] == 0) {
-                (uint256[8] memory numericValues, string[8] memory coinSymbols) = parseMarketDataNew(
-                    string(response)
+            if (gamesIds[requestId] == 0) {
+                emit UpdateGame(
+                    0,
+                    logAutomationAce.storeUpdateData(response)
                 );
-                emit CreateNewGame(abi.encode(numericValues, coinSymbols));
-            }else{
+            } else {
                 uint256 gameId = gamesIds[requestId];
                 uint256[8] memory prices = abi.decode(response, (uint256[8]));
 
-                emit UpdateGame(abi.encode(gameId, prices));
+                emit UpdateGame(
+                    2,
+                    logAutomationAce.storeUpdateData(abi.encode(gameId, prices))
+                );
             }
         }
     }
 
     /**
-     * @notice Parse market data string and return two arrays
-     * @param _marketData String in the format "10603,IMX;20947,SUI;4948,CKB;8119,SFP;23254,CORE;3640,LPT;1518,MKR;28321,POL"
-     * @return uint256[8] Array of numeric values
-     * @return string[8] Array of coin symbols
+     * @notice Emit a UpdateGame event receiving a uint8 and uint256
+     * @param updatePhase uint8
+     * @param gameDataIndex uint256
      */
-    function parseMarketDataNew(
-        string memory _marketData
-    ) public pure returns (uint256[8] memory, string[8] memory) {
-        bytes memory data = bytes(_marketData);
-        uint256[8] memory numericValues;
-        string[8] memory coinSymbols;
-
-        uint256 startIndex = 0;
-        uint256 endIndex;
-        uint256 commaIndex;
-
-        for (uint256 i = 0; i < 8; i++) {
-            for (endIndex = startIndex; endIndex < data.length; endIndex++) {
-                if (data[endIndex] == 0x2c) {
-                    // ',' character
-                    commaIndex = endIndex;
-                } else if (
-                    data[endIndex] == 0x3b || endIndex == data.length - 1
-                ) {
-                    // ';' character or end of string
-                    break;
-                }
-            }
-            numericValues[i] = parseUint(data, startIndex, commaIndex);
-            coinSymbols[i] = substring(data, commaIndex + 1, endIndex);
-            startIndex = endIndex + 1;
-        }
-
-        return (numericValues, coinSymbols);
-    }
-
-    // Optimized helper function to parse uint256 from bytes
-    function parseUint(
-        bytes memory data,
-        uint256 start,
-        uint256 end
-    ) private pure returns (uint256) {
-        uint256 result = 0;
-        for (uint256 i = start; i < end; i++) {
-            result = result * 10 + uint8(data[i]) - 48;
-        }
-        return result;
-    }
-
-    // Optimized helper function to extract a substring from bytes
-    function substring(
-        bytes memory data,
-        uint256 start,
-        uint256 end
-    ) private pure returns (string memory) {
-        bytes memory result = new bytes(end - start);
-        for (uint256 i = 0; i < end - start; i++) {
-            result[i] = data[start + i];
-        }
-        return string(result);
+    function emitUpdateGame(uint8 updatePhase, uint256 gameDataIndex)
+        external
+        onlyAutomation
+    {
+        emit UpdateGame(updatePhase, gameDataIndex);
     }
 }
