@@ -65,8 +65,8 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
 
     modifier onlyAutomation() {
         require(
-            msg.sender == gamesHub.helpers(keccak256("ACE8_AUTOMATION")),
-            "Restricted to automation"
+            msg.sender == gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION")),
+            "Restricted to log automation"
         );
         _;
     }
