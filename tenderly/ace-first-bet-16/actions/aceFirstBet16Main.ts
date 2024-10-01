@@ -23,24 +23,24 @@ interface LogPayload {
 }
 
 async function sendErrorLog(message: string, context: Context): Promise<void> {
-  const url = await context.secrets.get("sentry.test.url");
-  const apikey = await context.secrets.get("sentry.test.key");
+  const url = await context.secrets.get("sentry.main.url");
+  const apikey = await context.secrets.get("sentry.main.key");
 
   const headers = {
-    "Content-Type": "application/json",
-    "X-API-Key": apikey,
+      'Content-Type': 'application/json',
+      'X-API-Key': apikey
   };
 
   const payload: LogPayload = {
-    message,
-    level: "error",
+      message,
+      level: 'error'
   };
 
   try {
-    await axios.post(url, payload, { headers });
-    console.log("Error log sent successfully");
+      await axios.post(url, payload, { headers });
+      console.log('Error log sent successfully');
   } catch (error) {
-    console.error("Failed to send error log:", error);
+      console.error('Failed to send error log:', error);
   }
 }
 
@@ -118,19 +118,38 @@ const encodeUpdateData = (game_id: number): string => {
   );
 };
 
-export const aceFirstBet16: ActionFn = async (
+
+async function getGasPrice(provider: ethers.providers.Provider, context: Context)
+    : Promise<ethers.BigNumber> {
+    try {
+        const gasPrice = await provider.getGasPrice();
+        return gasPrice.mul(120).div(100);
+    } catch (error) {
+        console.error("Error on getting gas price");
+        await sendErrorLog('Failed to get gas price on consolation prize automation', context);
+        if (error instanceof Error) {
+            const errorString = error.toString();
+            await context.storage.putStr('errorConsolationMain', errorString);
+        } else {
+            await context.storage.putStr('errorConsolationMain', 'An unknown error occurred at getting gas price');
+        }
+        throw error;
+    }
+}
+
+export const aceFirstBet16Main: ActionFn = async (
   context: Context,
   event: Event
 ) => {
   const transactionEvent = event as TransactionEvent;
 
   const privateKey = await context.secrets.get("project.addressPrivateKey");
-  const rpcUrl = await context.secrets.get("baseSepolia.rpcUrl");
+  const rpcUrl = await context.secrets.get("base.rpcUrl");
   const ACE_CONTRACT_ADDRESS = await context.secrets.get(
-    "baseSepolia.aceTheBrackets16.contract"
+    "base.aceTheBrackets16.contract"
   );
   const TICKET_CONTRACT = await context.secrets.get(
-    "baseSepolia.aceTicket16.contract"
+    "base.aceTicket16.contract"
   );
 
   const aceAbi = [
@@ -291,6 +310,8 @@ export const aceFirstBet16: ActionFn = async (
     return;
   }
 
+  const gasPrice = await getGasPrice(provider, context);
+
   try {
     const tx = await aceContract.performGames(
       "0x",
@@ -298,6 +319,7 @@ export const aceFirstBet16: ActionFn = async (
       lastTimeStamp,
       {
         gasLimit: gasLimit,
+        gasPrice: gasPrice,
       }
     );
 

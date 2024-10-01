@@ -68,8 +68,8 @@ contract LogAutomationAce8 is ILogAutomation {
 
     IGamesHub public gamesHub;
 
-    mapping(uint256 => bytes) private updateData;
-    uint256 private updateDataIndex;
+    mapping(uint256 => bytes) public updateData;
+    uint256 public updateDataIndex;
 
     /**
      * @dev Constructor function
@@ -105,10 +105,10 @@ contract LogAutomationAce8 is ILogAutomation {
                 string(updateData[gameDataIndex])
             );
             emit UpdateDataStored(updateDataIndex);
-            updateDataIndex++;
 
             IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
                 .emitUpdateGame(1, updateDataIndex);
+            updateDataIndex++;
         } else if (updatePhase == 1) {
             aceTheBrackets8.createGame(updateData[gameDataIndex]);
         } else if (updatePhase == 2) {
@@ -131,10 +131,10 @@ contract LogAutomationAce8 is ILogAutomation {
                 abi.encode(winners)
             );
             emit UpdateDataStored(updateDataIndex);
-            updateDataIndex++;
 
             IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
                 .emitUpdateGame(3, updateDataIndex);
+            updateDataIndex++;
         } else {
             (
                 uint256 gameId,

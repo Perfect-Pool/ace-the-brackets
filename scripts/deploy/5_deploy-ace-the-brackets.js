@@ -43,34 +43,6 @@ async function main() {
     console.log(`AceTheBrackets8 already deployed at ${networkData.ACE8}`);
   }
 
-  if (networkData.ACE8_TEST === "") {
-    console.log(`Deploying AceTheBrackets8...`);
-    const AceTheBrackets8 = await ethers.getContractFactory("AceTheBrackets8");
-    const aceTheBrackets = await AceTheBrackets8.deploy(
-      networkData.GAMES_HUB,
-      networkData.Executor,
-      networkData.LAST_GAME8
-    );
-    await aceTheBrackets.deployed();
-
-    console.log(`AceTheBrackets8 deployed at ${aceTheBrackets.address}`);
-    networkData.ACE8_TEST = aceTheBrackets.address;
-    fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
-
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-
-    console.log(`Setting AceTheBrackets8 address to GamesHub...`);
-    await GamesHub.setGameContact(
-      aceTheBrackets.address,
-      ethers.utils.id("ACE8_TEST"),
-      false
-    );
-
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-  } else {
-    console.log(`AceTheBrackets8 already deployed at ${networkData.ACE8_TEST}`);
-  }
-
   if (networkData.ACE8_PROXY === "") {
     console.log(`Deploying Ace8Proxy...`);
     const Ace8Proxy = await ethers.getContractFactory("Ace8Proxy");

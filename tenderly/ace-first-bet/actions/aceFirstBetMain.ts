@@ -45,8 +45,6 @@ async function sendErrorLog(message: string, context: Context): Promise<void> {
     }
 }
 
-
-
 async function getGasPrice(provider: ethers.providers.Provider, context: Context)
     : Promise<ethers.BigNumber> {
     try {

@@ -1,0 +1,20 @@
+account_id: "perfectpool"
+actions:
+  perfectpool/perfectpool:
+    runtime: v2
+    sources: actions
+    specs:
+      prizeIteration16Main:
+        description: "Event trigger to consolation prize"
+        function: consolationPrize16Main:consolationPrize16Main
+        trigger:
+          type: transaction
+          transaction:
+            status: mined
+            filters:
+              - network: 84532
+                eventEmitted:
+                  contract:
+                    address: 0x70A254c8201adbD88d88D17937d5e8aBb8B8095F
+                  name: IterateGameData
+project_slug: "perfectpool"

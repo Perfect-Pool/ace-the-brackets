@@ -62,7 +62,7 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
 
     modifier onlyAutomation() {
         require(
-            gamesHub.checkRole(keccak256("ACE8_LOGAUTOMATION"), msg.sender),
+            gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION")) == msg.sender,
             "ACE-02"
         );
         _;

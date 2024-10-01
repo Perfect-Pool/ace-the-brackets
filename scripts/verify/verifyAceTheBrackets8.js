@@ -22,18 +22,6 @@ async function main() {
     contract: "contracts/games/AceTheBrackets8.sol:AceTheBrackets8",
   });
 
-  console.log("Verifying AceTheBrackets8 testing at address", contracts[networkName]["ACE8_TEST"]);
-
-  await hre.run("verify:verify", {
-    address: contracts[networkName]["ACE8_TEST"],
-    constructorArguments: [
-      contracts[networkName].GAMES_HUB,
-      contracts[networkName].Executor,
-      contracts[networkName].LAST_GAME8
-    ],
-    contract: "contracts/games/AceTheBrackets8.sol:AceTheBrackets8",
-  });
-
   const addressProxy = contracts[networkName]["ACE8_PROXY"];
   if (!addressProxy) {
     console.error("Ace8Proxy address not found in contracts.json");
