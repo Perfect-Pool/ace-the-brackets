@@ -182,7 +182,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
                 uint256[8] memory prices = abi.decode(response, (uint256[8]));
 
                 emit UpdateGame(
-                    2,
+                    1,
                     logAutomationAce.storeUpdateData(abi.encode(gameId, prices))
                 );
             }

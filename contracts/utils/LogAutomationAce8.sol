@@ -82,18 +82,42 @@ contract LogAutomationAce8 is ILogAutomation {
     function checkLog(
         Log calldata log,
         bytes memory
-    ) external pure returns (bool upkeepNeeded, bytes memory performData) {
+    ) external view returns (bool upkeepNeeded, bytes memory performData) {
         upkeepNeeded = true;
-        performData = abi.encode(
-            bytes32ToUint8(log.topics[1]),
-            bytes32ToUint256(log.topics[2])
-        );
+        uint8 updatePhase = bytes32ToUint8(log.topics[1]);
+        uint256 dataId = bytes32ToUint256(log.topics[2]);
+        bytes memory _updateData;
+
+        if (updatePhase == 0) {
+            _updateData = parseMarketDataNew(string(updateData[dataId]));
+        } else if (updatePhase == 1) {
+            (
+                uint256 gameId,
+                uint256[8] memory pricesBegin,
+                uint256[8] memory prices,
+                uint256[8] memory tokensIds
+            ) = logDataToGameUpdate(updateData[dataId]);
+
+            (
+                uint256[8] memory winners,
+                uint256[8] memory pricesWinners
+            ) = determineWinners(tokensIds, pricesBegin, prices);
+
+            _updateData = abi.encode(
+                gameId,
+                abi.encode(prices),
+                abi.encode(pricesWinners),
+                abi.encode(winners)
+            );
+        }
+
+        performData = abi.encode(updatePhase, _updateData);
     }
 
     function performUpkeep(bytes calldata performData) external override {
-        (uint8 updatePhase, uint256 gameDataIndex) = abi.decode(
+        (uint8 updatePhase, bytes memory _updateData) = abi.decode(
             performData,
-            (uint8, uint256)
+            (uint8, bytes)
         );
 
         IAceTheBrackets8 aceTheBrackets8 = IAceTheBrackets8(
@@ -101,50 +125,14 @@ contract LogAutomationAce8 is ILogAutomation {
         );
 
         if (updatePhase == 0) {
-            updateData[updateDataIndex] = parseMarketDataNew(
-                string(updateData[gameDataIndex])
-            );
-            emit UpdateDataStored(updateDataIndex);
-
-            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
-                .emitUpdateGame(1, updateDataIndex);
-            updateDataIndex++;
+            aceTheBrackets8.createGame(_updateData);
         } else if (updatePhase == 1) {
-            aceTheBrackets8.createGame(updateData[gameDataIndex]);
-        } else if (updatePhase == 2) {
-            (
-                uint256 gameId,
-                uint256[8] memory pricesBegin,
-                uint256[8] memory prices,
-                uint256[8] memory tokensIds
-            ) = logDataToGameUpdate(updateData[gameDataIndex]);
-
-            (
-                uint256[8] memory winners,
-                uint256[8] memory pricesWinners
-            ) = determineWinners(tokensIds, pricesBegin, prices);
-
-            updateData[updateDataIndex] = abi.encode(
-                gameId,
-                abi.encode(prices),
-                abi.encode(pricesWinners),
-                abi.encode(winners)
-            );
-            emit UpdateDataStored(updateDataIndex);
-
-            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
-                .emitUpdateGame(3, updateDataIndex);
-            updateDataIndex++;
-        } else {
             (
                 uint256 gameId,
                 bytes memory prices,
                 bytes memory pricesWinners,
                 bytes memory winners
-            ) = abi.decode(
-                    updateData[gameDataIndex],
-                    (uint256, bytes, bytes, bytes)
-                );
+            ) = abi.decode(_updateData, (uint256, bytes, bytes, bytes));
 
             aceTheBrackets8.advanceGame(
                 gameId,
