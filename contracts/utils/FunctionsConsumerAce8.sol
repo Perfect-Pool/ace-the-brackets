@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/v1_0_0/libraries/FunctionsRequest.sol";
+import "../interfaces/IGamesHub.sol";
 
 interface IAutomationAce {
     function initialize(
@@ -15,17 +16,6 @@ interface IAutomationAce {
 
 interface ILogAutomationAce {
     function storeUpdateData(bytes memory data) external returns (uint256);
-}
-
-interface IGamesHub {
-    function checkRole(
-        bytes32 role,
-        address account
-    ) external view returns (bool);
-
-    function games(bytes32) external view returns (address);
-
-    function helpers(bytes32) external view returns (address);
 }
 
 /**
@@ -174,7 +164,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
         if (err.length == 0) {
             if (gamesIds[requestId] == 0) {
                 emit UpdateGame(
-                    0,
+                    1,
                     logAutomationAce.storeUpdateData(response)
                 );
             } else {
@@ -182,7 +172,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
                 uint256[8] memory prices = abi.decode(response, (uint256[8]));
 
                 emit UpdateGame(
-                    1,
+                    2,
                     logAutomationAce.storeUpdateData(abi.encode(gameId, prices))
                 );
             }

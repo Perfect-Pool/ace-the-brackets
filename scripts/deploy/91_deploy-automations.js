@@ -26,7 +26,7 @@ async function main() {
       ethers.utils.id("ACE8_AUTOMATION"),
       true
     );
-  
+
     console.log(`Setting Functions8 contract address to GamesHub...`);
     await gamesHub.setGameContact(
       networkData.FUNCTIONS_ACE8,
@@ -37,7 +37,7 @@ async function main() {
     console.log(
       `AutomationAce8 already deployed at ${networkData.ACE8_AUTOMATION}`
     );
-  
+
     console.log(`Setting Functions8 contract address to GamesHub...`);
     await gamesHub.setGameContact(
       networkData.FUNCTIONS_ACE8,
@@ -68,6 +68,33 @@ async function main() {
   } else {
     console.log(
       `LogAutomationAce8 already deployed at ${networkData.ACE8_LOGAUTOMATION}`
+    );
+  }
+
+  if (networkData.ACE8ENTRY_LOGAUTOMATION === "") {
+    console.log(`Deploying LogAutomationAce8Entry...`);
+    const LogAutomationAce8Entry = await ethers.getContractFactory(
+      "LogAutomationAce8Entry"
+    );
+    const logAutomationAce8Entry = await LogAutomationAce8Entry.deploy(
+      networkData.GAMES_HUB
+    );
+    await logAutomationAce8Entry.deployed();
+
+    console.log(
+      `LogAutomationAce8Entry deployed at ${logAutomationAce8Entry.address}`
+    );
+    networkData.ACE8ENTRY_LOGAUTOMATION = logAutomationAce8Entry.address;
+
+    console.log(`Setting contract address to GamesHub...`);
+    await gamesHub.setGameContact(
+      logAutomationAce8Entry.address,
+      ethers.utils.id("ACE8ENTRY_LOGAUTOMATION"),
+      true
+    );
+  } else {
+    console.log(
+      `LogAutomationAce8Entry already deployed at ${networkData.ACE8ENTRY_LOGAUTOMATION}`
     );
   }
 

@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/v1_0_0/libraries/FunctionsRequest.sol";
 import "../interfaces/IGamesHub.sol";
 import "../interfaces/IAceTicket8.sol";
 import "../interfaces/IAceTheBrackets8.sol";
 
 interface IFunctionsConsumer {
-    function sendRequestNewGame() external;
+    function emitUpdateGame(uint8 updatePhase, uint256 gameDataIndex) external;
 }
 
 contract AceTheBrackets8 is IAceTheBrackets8 {
@@ -54,16 +53,8 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
     /** MODIFIERS **/
     modifier onlyGameContract() {
         require(
-            gamesHub.games(keccak256("ACE8_PROXY")) == msg.sender,
+            gamesHub.games(keccak256("BRACKETS_PROXY")) == msg.sender,
             "ACE-01"
-        );
-        _;
-    }
-
-    modifier onlyAutomation() {
-        require(
-            gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION")) == msg.sender,
-            "ACE-02"
         );
         _;
     }
@@ -153,7 +144,7 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
      * @dev Function to create a new game
      * @param _dataNewGame Data for the new game
      */
-    function createGame(bytes calldata _dataNewGame) external onlyAutomation {
+    function createGame(bytes calldata _dataNewGame) external onlyGameContract {
         (uint256[8] memory _cmcIds, string[8] memory _symbols) = abi.decode(
             _dataNewGame,
             (uint256[8], string[8])
@@ -195,7 +186,7 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
         bytes memory _prices,
         bytes memory _pricesWinners,
         bytes memory _winners
-    ) external onlyAutomation {
+    ) external onlyGameContract {
         uint8 currentRound = games[gameIndex].currentRound;
         if (currentRound > 2) removeGame(gameIndex);
 
@@ -236,18 +227,17 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
                 abi.encodePacked(gameIndex, getFinalResult(gameIndex))
             );
 
-            IAceTicket8(gamesHub.helpers(keccak256("NFT_ACE8"))).setGamePot(
+            IAceTicket8(gamesHub.helpers(keccak256("ACE_TICKET"))).setGamePot(
                 gameIndex,
                 gameCode
             );
 
             gameIdToCode[gameIndex] = gameCode;
 
-            if (createNewGames) {
-                IFunctionsConsumer(
-                    gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
-                ).sendRequestNewGame();
-            }
+            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))).emitUpdateGame(
+                0,
+                gameIndex
+            );
         } else {
             if (
                 (currentRound == 0 && winnersArray[4] != 0) ||

@@ -36,6 +36,22 @@ async function main() {
         contract: "contracts/utils/LogAutomationAce8.sol:LogAutomationAce8"
     });
 
+    const addressLogEntry = contracts[networkName]["LogAutomationAce8Entry"];
+    if (!addressLogEntry) {
+        console.error("LogAutomationAce8Entry address not found in contracts.json");
+        process.exit(1);
+    }
+
+    console.log("Verifying LogAutomationAce8Entry at address", addressLogEntry);
+
+    await hre.run("verify:verify", {
+        address: addressLogEntry,
+        constructorArguments: [
+            contracts[networkName].GAMES_HUB
+        ],
+        contract: "contracts/utils/LogAutomationAce8Entry.sol:LogAutomationAce8Entry"
+    });
+
     const addressCodes =  contracts[networkName]["SOURCE_CODES_ACE"];
     if (!addressCodes) {
         console.error("SourceCodesAce address not found in contracts.json");

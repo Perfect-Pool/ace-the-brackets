@@ -32,11 +32,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
     // Events
     event FunctionsConsumerSet(address indexed functionsConsumer);
     event PerformUpkeep(uint256 gameId, bool newGame);
-    event Initialized(
-        bytes encryptedSecretsReference,
-        uint64 subscriptionId,
-        uint32 callbackGasLimit
-    );
+    event Initialized(uint64 subscriptionId, uint32 callbackGasLimit);
 
     // State variables for Chainlink Automation
     uint256 public s_updateInterval;
@@ -52,6 +48,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
     address public upkeepAddress;
     address public executionAddress;
     IGamesHub public gamesHub;
+    address public forwarder;
 
     /**
      * @dev Constructor function
@@ -63,14 +60,25 @@ contract AutomationAce8 is AutomationCompatibleInterface {
 
     /** MODIFIERS **/
     modifier onlyAdministrator() {
-        require(gamesHub.checkRole(keccak256("ADMIN"), msg.sender), "ACEP-01");
+        require(
+            gamesHub.checkRole(keccak256("ADMIN"), msg.sender),
+            "Restricted to administrators"
+        );
         _;
     }
 
-    modifier onlyGameContract() {
+    modifier onlyLogContract() {
         require(
-            gamesHub.games(keccak256("ACE8_TEST")) == msg.sender,
-            "ACEP-02"
+            gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION")) == msg.sender,
+            "Restricted to log contract"
+        );
+        _;
+    }
+
+    modifier onlyForwarder() {
+        require(
+            forwarder == address(0) || msg.sender == forwarder,
+            "Restricted to forwarder"
         );
         _;
     }
@@ -95,7 +103,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         returns (bool upkeepNeeded, bytes memory performData)
     {
         IAceTheBrackets8 ace8 = IAceTheBrackets8(
-            gamesHub.games(keccak256("ACE8_TEST"))
+            gamesHub.games(keccak256("ACE8"))
         );
 
         uint256[] memory activeGames = ace8.getActiveGames();
@@ -107,7 +115,6 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         uint256 endTime;
         uint256 startTime;
         string[8] memory teamNames;
-        uint256[8] memory teamsIds;
 
         if (currentRound > 3) {
             return (false, "");
@@ -118,8 +125,8 @@ contract AutomationAce8 is AutomationCompatibleInterface {
             );
 
             //subtracts 10 seconds from the start time to prevent block.timestamp delay
-            startTime = startTime - 10;
-            if (block.timestamp < startTime) {
+            startTime = startTime == 0 ? 0 : startTime - 10;
+            if (startTime == 0 || block.timestamp < startTime) {
                 return (false, "");
             }
         } else {
@@ -129,36 +136,34 @@ contract AutomationAce8 is AutomationCompatibleInterface {
             );
         }
 
-        endTime = endTime - 10;
-        if (block.timestamp < endTime) {
+        endTime = endTime == 0 ? 0 : endTime - 10;
+        if (endTime == 0 || block.timestamp < endTime) {
             return (false, "");
         }
 
-        teamsIds = ace8.getTokensIds(abi.encode(teamNames));
+        uint256[8] memory teamsIds = ace8.getTokensIds(abi.encode(teamNames));
 
         return (
             true,
             abi.encode(
-                string(
-                    abi.encodePacked(
-                        teamsIds[0].toString(),
-                        ",",
-                        teamsIds[1].toString(),
-                        ",",
-                        teamsIds[2].toString(),
-                        ",",
-                        teamsIds[3].toString(),
-                        ",",
-                        teamsIds[4].toString(),
-                        ",",
-                        teamsIds[5].toString(),
-                        ",",
-                        teamsIds[6].toString(),
-                        ",",
-                        teamsIds[7].toString()
-                    )
-                ),
-                activeGames[0]
+                activeGames[0],
+                abi.encodePacked(
+                    teamsIds[0].toString(),
+                    ",",
+                    teamsIds[1].toString(),
+                    ",",
+                    teamsIds[2].toString(),
+                    ",",
+                    teamsIds[3].toString(),
+                    ",",
+                    teamsIds[4].toString(),
+                    ",",
+                    teamsIds[5].toString(),
+                    ",",
+                    teamsIds[6].toString(),
+                    ",",
+                    teamsIds[7].toString()
+                )
             )
         );
     }
@@ -169,7 +174,12 @@ contract AutomationAce8 is AutomationCompatibleInterface {
      * The function's argument is unused in this example, but there is an option to have Automation pass custom data
      * returned by checkUpkeep (See Chainlink Automation documentation)
      */
-    function performUpkeep(bytes calldata performData) external override {
+    function performUpkeep(
+        bytes calldata performData
+    ) external override onlyForwarder {
+        if (forwarder == address(0)) {
+            forwarder = msg.sender;
+        }
         ISourceCodesAce sourceCodes = ISourceCodesAce(
             gamesHub.helpers(keccak256("SOURCE_CODES_ACE"))
         );
@@ -193,15 +203,15 @@ contract AutomationAce8 is AutomationCompatibleInterface {
             return;
         }
 
-        (string memory listIds, uint256 gameId) = abi.decode(
+        (uint256 gameId, bytes memory listIds) = abi.decode(
             performData,
-            (string, uint256)
+            (uint256, bytes)
         );
 
         string[] memory args = new string[](1);
         bytes[] memory bytesArgs = new bytes[](1);
 
-        args[0] = listIds;
+        args[0] = string(listIds);
         bytesArgs[0] = abi.encode(gameId);
 
         IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
@@ -241,17 +251,13 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         subscriptionId = _subscriptionId;
         callbackGasLimit = _callbackGasLimit;
 
-        emit Initialized(
-            _encryptedSecretsReference,
-            _subscriptionId,
-            _callbackGasLimit
-        );
+        emit Initialized(_subscriptionId, _callbackGasLimit);
     }
 
     /**
      * @notice Function to send a sendRequest with source8New() to FunctionsConsumer.
      */
-    function sendRequestNewGame() external onlyGameContract {
+    function sendRequestNewGame() external onlyLogContract {
         IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
             .sendRequest(
                 ISourceCodesAce(gamesHub.helpers(keccak256("SOURCE_CODES_ACE")))
