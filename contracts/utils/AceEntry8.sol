@@ -69,7 +69,7 @@ contract AceEntry8 is ERC721, ReentrancyGuard {
 
     uint256 public jackpot;
     uint256 public price;
-    uint256 public iterationSize = 100;
+    uint256 public iterationSize = 50;
     uint8 public consolationPerc = 100; //10%
     uint8 public protocolFee = 100; //10%
     address public executionAddress;
@@ -112,7 +112,7 @@ contract AceEntry8 is ERC721, ReentrancyGuard {
         executionAddress = _executionAddress;
         token = IERC20(_token);
 
-        _nextTokenId = 59;
+        _nextTokenId = 290;
         jackpot = 0;
         price = 5 * 10 ** token.decimals();
     }

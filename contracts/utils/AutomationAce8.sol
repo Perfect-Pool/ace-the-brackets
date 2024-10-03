@@ -177,9 +177,9 @@ contract AutomationAce8 is AutomationCompatibleInterface {
     function performUpkeep(
         bytes calldata performData
     ) external override onlyForwarder {
-        if (forwarder == address(0)) {
-            forwarder = msg.sender;
-        }
+        // if (forwarder == address(0)) {
+        //     forwarder = msg.sender;
+        // }
         ISourceCodesAce sourceCodes = ISourceCodesAce(
             gamesHub.helpers(keccak256("SOURCE_CODES_ACE"))
         );

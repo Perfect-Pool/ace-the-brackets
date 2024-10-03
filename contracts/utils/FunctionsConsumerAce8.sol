@@ -22,7 +22,7 @@ interface IGamesHub {
         bytes32 role,
         address account
     ) external view returns (bool);
-    
+
     function games(bytes32) external view returns (address);
 
     function helpers(bytes32) external view returns (address);
@@ -63,9 +63,12 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
         _;
     }
 
-    modifier onlyAutomation() {
+    modifier onlyProject() {
         require(
-            msg.sender == gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION")),
+            msg.sender == gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION")) ||
+                msg.sender ==
+                gamesHub.helpers(keccak256("ACE8ENTRY_LOGAUTOMATION")) ||
+                msg.sender == gamesHub.helpers(keccak256("ACE8")),
             "Restricted to log automation"
         );
         _;
@@ -173,10 +176,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
 
         if (err.length == 0) {
             if (gamesIds[requestId] == 0) {
-                emit UpdateGame(
-                    1,
-                    logAutomationAce.storeUpdateData(response)
-                );
+                emit UpdateGame(1, logAutomationAce.storeUpdateData(response));
             } else {
                 uint256 gameId = gamesIds[requestId];
                 uint256[8] memory prices = abi.decode(response, (uint256[8]));
@@ -194,10 +194,10 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
      * @param updatePhase uint8
      * @param gameDataIndex uint256
      */
-    function emitUpdateGame(uint8 updatePhase, uint256 gameDataIndex)
-        external
-        onlyAutomation
-    {
+    function emitUpdateGame(
+        uint8 updatePhase,
+        uint256 gameDataIndex
+    ) external onlyProject {
         emit UpdateGame(updatePhase, gameDataIndex);
     }
 }

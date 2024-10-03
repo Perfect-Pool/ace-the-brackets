@@ -3,13 +3,12 @@ pragma solidity ^0.8.19;
 
 import "../interfaces/IGamesHub.sol";
 import "../interfaces/IAceTicket8.sol";
-import "../interfaces/IAceTheBrackets8.sol";
 
-interface IFunctionsConsumer {
+interface IFunctionsConsumerAce8 {
     function emitUpdateGame(uint8 updatePhase, uint256 gameDataIndex) external;
 }
 
-contract AceTheBrackets8 is IAceTheBrackets8 {
+contract AceTheBrackets8 {
     /** STRUCTS **/
     struct Round {
         uint256[8] tokens;
@@ -234,10 +233,9 @@ contract AceTheBrackets8 is IAceTheBrackets8 {
 
             gameIdToCode[gameIndex] = gameCode;
 
-            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))).emitUpdateGame(
-                0,
-                gameIndex
-            );
+            IFunctionsConsumerAce8(
+                gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+            ).emitUpdateGame(0, gameIndex);
         } else {
             if (
                 (currentRound == 0 && winnersArray[4] != 0) ||

@@ -36,7 +36,7 @@ async function main() {
         contract: "contracts/utils/LogAutomationAce8.sol:LogAutomationAce8"
     });
 
-    const addressLogEntry = contracts[networkName]["LogAutomationAce8Entry"];
+    const addressLogEntry = contracts[networkName]["ACE8ENTRY_LOGAUTOMATION"];
     if (!addressLogEntry) {
         console.error("LogAutomationAce8Entry address not found in contracts.json");
         process.exit(1);

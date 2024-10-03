@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import "../interfaces/IGamesHub.sol";
+import "../interfaces/IAceTheBrackets8.sol";
 
 struct Log {
     uint256 index; // Index of the log in the block
@@ -23,18 +24,6 @@ interface ILogAutomation {
     function performUpkeep(bytes calldata performData) external;
 }
 
-interface IAce8Proxy {
-    function performGames(
-        bytes calldata _dataNewGame,
-        bytes calldata _dataUpdate,
-        uint256 _lastTimeStamp
-    ) external;
-
-    function getGameFullData(
-        uint256 _gameId
-    ) external view returns (bytes memory);
-}
-
 interface IAceTicket8 {
     function iterateGameTokenIds(
         uint256 _gameId,
@@ -43,8 +32,12 @@ interface IAceTicket8 {
     ) external;
 }
 
+interface IFunctionsConsumerAce8 {
+    function emitUpdateGame(uint8 updatePhase, uint256 gameDataIndex) external;
+}
+
 contract LogAutomationAce8Entry is ILogAutomation {
-    event GameTimeStarted(uint256 timeStamp);
+    event GameTimeStartRequested(uint256 gameId);
     event IterateExecuted(
         uint256 gameId,
         uint256 iterateStart,
@@ -93,7 +86,7 @@ contract LogAutomationAce8Entry is ILogAutomation {
         if (eventType == ISBET_EVENT) {
             updatePhase = 0;
             uint256 gameId = bytes32ToUint256(log.topics[1]);
-            IAce8Proxy ace8Proxy = IAce8Proxy(
+            IAceTheBrackets8 ace8Proxy = IAceTheBrackets8(
                 gamesHub.helpers(keccak256("ACE8_PROXY"))
             );
 
@@ -111,15 +104,10 @@ contract LogAutomationAce8Entry is ILogAutomation {
                     bool
                 )
             );
-            if (gameStart == 0) {
-                return (false, emptyBytes);
+            if (gameStart > 0) {
+                return (false, "");
             }
-            _updateData = abi.encode(
-                [gameId, 0, 0, 0],
-                [emptyBytes, emptyBytes, emptyBytes, emptyBytes],
-                [emptyBytes, emptyBytes, emptyBytes, emptyBytes],
-                [emptyBytes, emptyBytes, emptyBytes, emptyBytes]
-            );
+            _updateData = abi.encode(gameId);
         } else if (eventType == ISPRIZE_EVENT) {
             updatePhase = 1;
             _updateData = log.data;
@@ -131,9 +119,9 @@ contract LogAutomationAce8Entry is ILogAutomation {
     function performUpkeep(
         bytes calldata performData
     ) external override onlyForwarder {
-        if (forwarder == address(0)) {
-            forwarder = msg.sender;
-        }
+        // if (forwarder == address(0)) {
+        //     forwarder = msg.sender;
+        // }
 
         (uint8 updatePhase, bytes memory _updateData) = abi.decode(
             performData,
@@ -141,13 +129,11 @@ contract LogAutomationAce8Entry is ILogAutomation {
         );
 
         if (updatePhase == 0) {
-            uint256 timeStamp = (block.timestamp / 120) * 120;
-            IAce8Proxy(gamesHub.games(keccak256("ACE8_PROXY"))).performGames(
-                "",
-                _updateData,
-                timeStamp
-            );
-            emit GameTimeStarted(timeStamp);
+            uint256 gameId = abi.decode(_updateData, (uint256));
+            IFunctionsConsumerAce8(
+                gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+            ).emitUpdateGame(3, gameId);
+            emit GameTimeStartRequested(gameId);
         } else {
             (uint256 gameId, uint256 iterateStart, uint256 iterateEnd) = abi
                 .decode(_updateData, (uint256, uint256, uint256));

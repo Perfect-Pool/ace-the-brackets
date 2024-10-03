@@ -6,7 +6,7 @@ actions:
     specs:
       aceTheBrackets16Main:
         description: "Advance Games for AceTheBrackets"
-        function: aceTheBrackets16Main:aceTheBrackets16Main
+        function: advanceGames16Main:advanceGames16Main
         trigger:
           type: periodic
           periodic:
