@@ -52,7 +52,7 @@ contract AceTheBrackets8 {
     /** MODIFIERS **/
     modifier onlyGameContract() {
         require(
-            gamesHub.games(keccak256("BRACKETS_PROXY")) == msg.sender,
+            gamesHub.games(keccak256("ACE8_PROXY")) == msg.sender,
             "ACE-01"
         );
         _;
