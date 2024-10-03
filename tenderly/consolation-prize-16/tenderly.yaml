@@ -12,7 +12,7 @@ actions:
           transaction:
             status: mined
             filters:
-              - network: 84532
+              - network: 8453
                 eventEmitted:
                   contract:
                     address: 0x70A254c8201adbD88d88D17937d5e8aBb8B8095F

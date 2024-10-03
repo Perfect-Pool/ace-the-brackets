@@ -103,7 +103,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         returns (bool upkeepNeeded, bytes memory performData)
     {
         IAceTheBrackets8 ace8 = IAceTheBrackets8(
-            gamesHub.games(keccak256("ACE8"))
+            gamesHub.games(keccak256("ACE8_PROXY"))
         );
 
         uint256[] memory activeGames = ace8.getActiveGames();
