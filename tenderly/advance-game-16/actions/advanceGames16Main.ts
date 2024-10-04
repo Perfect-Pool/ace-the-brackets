@@ -488,7 +488,7 @@ export const advanceGames16Main: ActionFn = async (
 
   console.log("Time from Timestamp: ", new Date(lastTimeStamp * 1000).toISOString());
 
-  const privateKey = await context.secrets.get("project.addressPrivateKey");
+  const privateKey = await context.secrets.get("project.address2PrivateKey");
   const rpcUrl = await context.secrets.get("base.rpcUrl");
   const CONTRACT_ADDRESS = await context.secrets.get(
     "base.aceTheBrackets16.contract"

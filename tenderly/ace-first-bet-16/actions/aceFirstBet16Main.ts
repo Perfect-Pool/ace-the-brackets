@@ -143,7 +143,7 @@ export const aceFirstBet16Main: ActionFn = async (
 ) => {
   const transactionEvent = event as TransactionEvent;
 
-  const privateKey = await context.secrets.get("project.addressPrivateKey");
+  const privateKey = await context.secrets.get("project.address2PrivateKey");
   const rpcUrl = await context.secrets.get("base.rpcUrl");
   const ACE_CONTRACT_ADDRESS = await context.secrets.get(
     "base.aceTheBrackets16.contract"

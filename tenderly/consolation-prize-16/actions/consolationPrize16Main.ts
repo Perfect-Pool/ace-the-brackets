@@ -58,7 +58,7 @@ async function getGasPrice(provider: ethers.providers.Provider, context: Context
 export const consolationPrize16Main: ActionFn = async (context: Context, event: Event) => {
     const transactionEvent = event as TransactionEvent;
 
-    const privateKey = await context.secrets.get("project.addressPrivateKey");
+    const privateKey = await context.secrets.get("project.address2PrivateKey");
     const rpcUrl = await context.secrets.get("base.rpcUrl");
     const CONTRACT_ADDRESS = await context.secrets.get("base.aceTicket16.contract");
     const abiText = await context.secrets.get("aceTicket.abi");
