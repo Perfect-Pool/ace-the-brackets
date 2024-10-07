@@ -5,14 +5,14 @@ import "../interfaces/IGamesHub.sol";
 import "../interfaces/IAceTheBrackets8.sol";
 
 struct Log {
-    uint256 index; // Index of the log in the block
-    uint256 timestamp; // Timestamp of the block containing the log
-    bytes32 txHash; // Hash of the transaction containing the log
-    uint256 blockNumber; // Number of the block containing the log
-    bytes32 blockHash; // Hash of the block containing the log
-    address source; // Address of the contract that emitted the log
-    bytes32[] topics; // Indexed topics of the log
-    bytes data; // Data of the log
+    uint256 index;
+    uint256 timestamp;
+    bytes32 txHash;
+    uint256 blockNumber;
+    bytes32 blockHash;
+    address source;
+    bytes32[] topics;
+    bytes data;
 }
 
 interface ILogAutomation {
@@ -44,11 +44,6 @@ contract LogAutomationAce8Entry is ILogAutomation {
         uint256 iterateEnd
     );
 
-    bytes32 public constant ISBET_EVENT =
-        0x1793ba998e9a843da8d17fbc98fc43bc4121583acf9b7509005bdeaba03891a7;
-    bytes32 public constant ISPRIZE_EVENT =
-        0xae71d4ebf2d066790f15124a158f211d7b88d29cac736ade8f968f106e63e028;
-
     IGamesHub public gamesHub;
 
     bytes private emptyBytes;
@@ -77,43 +72,14 @@ contract LogAutomationAce8Entry is ILogAutomation {
     function checkLog(
         Log calldata log,
         bytes memory
-    ) external view returns (bool upkeepNeeded, bytes memory performData) {
+    )
+        external
+        pure
+        override
+        returns (bool upkeepNeeded, bytes memory performData)
+    {
+        performData = log.data;
         upkeepNeeded = true;
-        bytes32 eventType = log.topics[0];
-        uint8 updatePhase;
-        bytes memory _updateData;
-
-        if (eventType == ISBET_EVENT) {
-            updatePhase = 0;
-            uint256 gameId = bytes32ToUint256(log.topics[2]);
-            IAceTheBrackets8 ace8Proxy = IAceTheBrackets8(
-                gamesHub.helpers(keccak256("ACE8_PROXY"))
-            );
-
-            (, , , , , , uint256 gameStart, , ) = abi.decode(
-                ace8Proxy.getGameFullData(gameId),
-                (
-                    bytes,
-                    bytes,
-                    bytes,
-                    string,
-                    uint256,
-                    uint8,
-                    uint256,
-                    uint256,
-                    bool
-                )
-            );
-            if (gameStart > 0) {
-                return (false, "");
-            }
-            _updateData = abi.encode(gameId);
-        } else if (eventType == ISPRIZE_EVENT) {
-            updatePhase = 1;
-            _updateData = log.data;
-        }
-
-        performData = abi.encode(updatePhase, _updateData);
     }
 
     function performUpkeep(
@@ -122,29 +88,13 @@ contract LogAutomationAce8Entry is ILogAutomation {
         // if (forwarder == address(0)) {
         //     forwarder = msg.sender;
         // }
-
-        (uint8 updatePhase, bytes memory _updateData) = abi.decode(
+        (uint256 gameId, uint256 iterateStart, uint256 iterateEnd) = abi.decode(
             performData,
-            (uint8, bytes)
+            (uint256, uint256, uint256)
         );
 
-        if (updatePhase == 0) {
-            uint256 gameId = abi.decode(_updateData, (uint256));
-            IFunctionsConsumerAce8(
-                gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
-            ).emitUpdateGame(3, gameId);
-            emit GameTimeStartRequested(gameId);
-        } else {
-            (uint256 gameId, uint256 iterateStart, uint256 iterateEnd) = abi
-                .decode(_updateData, (uint256, uint256, uint256));
-
-            IAceTicket8(gamesHub.helpers(keccak256("NFT_ACE8")))
-                .iterateGameTokenIds(gameId, iterateStart, iterateEnd);
-            emit IterateExecuted(gameId, iterateStart, iterateEnd);
-        }
-    }
-
-    function bytes32ToUint256(bytes32 b) private pure returns (uint256) {
-        return uint256(b);
+        IAceTicket8(gamesHub.helpers(keccak256("NFT_ACE8")))
+            .iterateGameTokenIds(gameId, iterateStart, iterateEnd);
+        emit IterateExecuted(gameId, iterateStart, iterateEnd);
     }
 }

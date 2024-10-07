@@ -17,6 +17,14 @@ interface IFunctionsConsumer {
         uint64 subscriptionId,
         uint32 callbackGasLimit
     ) external;
+
+    function emitUpdateGame(uint8 updatePhase, uint256 gameDataIndex) external;
+}
+
+interface IAce8Entry {
+    function getGamePlayers(
+        uint256 gameId
+    ) external view returns (uint256[] memory);
 }
 
 interface ISourceCodesAce {
@@ -138,7 +146,14 @@ contract AutomationAce8 is AutomationCompatibleInterface {
             //subtracts 10 seconds from the start time to prevent block.timestamp delay
             startTime = startTime == 0 ? 0 : startTime - 10;
             if (startTime == 0 || block.timestamp < startTime) {
-                return (false, "");
+                if (
+                    IAce8Entry(gamesHub.helpers(keccak256("ACE8_ENTRY")))
+                        .getGamePlayers(activeGames[0])
+                        .length == 0
+                ) {
+                    return (false, "");
+                }
+                return (true, abi.encode(activeGames[0], ""));
             }
         } else if (currentRound == 2) {
             (, roundData, , , , , , , ) = abi.decode(
@@ -253,6 +268,11 @@ contract AutomationAce8 is AutomationCompatibleInterface {
             performData,
             (uint256, bytes)
         );
+
+        if(listIds.length == 0) {
+            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
+                .emitUpdateGame(3, gameId);
+        }
 
         string[] memory args = new string[](1);
         args[0] = string(listIds);
