@@ -85,7 +85,7 @@ contract LogAutomationAce8Entry is ILogAutomation {
 
         if (eventType == ISBET_EVENT) {
             updatePhase = 0;
-            uint256 gameId = bytes32ToUint256(log.topics[1]);
+            uint256 gameId = bytes32ToUint256(log.topics[2]);
             IAceTheBrackets8 ace8Proxy = IAceTheBrackets8(
                 gamesHub.helpers(keccak256("ACE8_PROXY"))
             );
