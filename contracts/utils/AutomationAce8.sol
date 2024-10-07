@@ -44,6 +44,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
 
     // State variables for Chainlink Automation
     uint256 public s_lastUpkeepTimeStamp;
+    uint256 public s_upkeepInterval = 600;
     uint256 public s_upkeepCounter;
 
     bytes private encryptedSecretsReference;
@@ -60,6 +61,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
      */
     constructor(address _gamesHubAddress) {
         gamesHub = IGamesHub(_gamesHubAddress);
+        s_lastUpkeepTimeStamp = block.timestamp - s_upkeepInterval;
     }
 
     /** MODIFIERS **/
@@ -106,6 +108,9 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         override
         returns (bool upkeepNeeded, bytes memory performData)
     {
+        if (block.timestamp < (s_lastUpkeepTimeStamp + s_upkeepInterval)) {
+            return (false, "");
+        }
         IAceTheBrackets8 ace8 = IAceTheBrackets8(
             gamesHub.games(keccak256("ACE8_PROXY"))
         );
@@ -145,15 +150,16 @@ contract AutomationAce8 is AutomationCompatibleInterface {
 
             //subtracts 10 seconds from the start time to prevent block.timestamp delay
             startTime = startTime == 0 ? 0 : startTime - 10;
-            if (startTime == 0 || block.timestamp < startTime) {
+            if (startTime == 0) {
                 if (
-                    IAce8Entry(gamesHub.helpers(keccak256("ACE8_ENTRY")))
+                    IAce8Entry(gamesHub.helpers(keccak256("NFT_ACE8")))
                         .getGamePlayers(activeGames[0])
                         .length == 0
                 ) {
-                    return (false, "");
+                    return (true, abi.encode(activeGames[0], ""));
                 }
-                return (true, abi.encode(activeGames[0], ""));
+            } else if (block.timestamp < startTime) {
+                return (false, "");
             }
         } else if (currentRound == 2) {
             (, roundData, , , , , , , ) = abi.decode(
@@ -269,7 +275,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
             (uint256, bytes)
         );
 
-        if(listIds.length == 0) {
+        if (listIds.length == 0) {
             IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
                 .emitUpdateGame(3, gameId);
         }
