@@ -35,23 +35,20 @@ contract AutomationAce8 is AutomationCompatibleInterface {
     event Initialized(uint64 subscriptionId, uint32 callbackGasLimit);
 
     // State variables for Chainlink Automation
-    uint256 public s_updateInterval;
     uint256 public s_lastUpkeepTimeStamp;
     uint256 public s_upkeepCounter;
-    uint256 public s_requestCounter;
-    uint256 public s_responseCounter;
 
     bytes private encryptedSecretsReference;
     uint64 private subscriptionId;
     uint32 public callbackGasLimit;
 
     address public upkeepAddress;
-    address public executionAddress;
     IGamesHub public gamesHub;
     address public forwarder;
 
     /**
-     * @dev Constructor function
+     * @dev Constructor function, that sets the address of the games hub and the update interval of 10 min.
+     * MUST be registered on Chainlink as Custom Logic automation.
      * @param _gamesHubAddress Address of the games hub
      */
     constructor(address _gamesHubAddress) {
@@ -97,121 +94,125 @@ contract AutomationAce8 is AutomationCompatibleInterface {
     function checkUpkeep(
         bytes memory
     )
-        public
+        external
         view
         override
         returns (bool upkeepNeeded, bytes memory performData)
     {
-        upkeepNeeded = false;
         IAceTheBrackets8 ace8 = IAceTheBrackets8(
             gamesHub.games(keccak256("ACE8_PROXY"))
         );
 
         uint256[] memory activeGames = ace8.getActiveGames();
         if (activeGames.length == 0) {
-            upkeepNeeded = true;
-        } else {
-            uint8 currentRound = ace8.getGameStatus(activeGames[0]);
-            uint256 endTime;
-            uint256 startTime;
-            string[8] memory teamNames;
-            bytes memory roundData;
-
-            if ((currentRound == 0) || (currentRound == 1)) {
-                (roundData, , , , , , , , ) = abi.decode(
-                    ace8.getGameFullData(activeGames[0]),
-                    (
-                        bytes,
-                        bytes,
-                        bytes,
-                        string,
-                        uint256,
-                        uint8,
-                        uint256,
-                        uint256,
-                        bool
-                    )
-                );
-                (teamNames, , , startTime, endTime) = abi.decode(
-                    roundData,
-                    (string[8], uint256[8], uint256[8], uint256, uint256)
-                );
-
-                //subtracts 10 seconds from the start time to prevent block.timestamp delay
-                startTime = startTime == 0 ? 0 : startTime - 10;
-                if (startTime > 0 && block.timestamp >= startTime) {
-                    upkeepNeeded = true;
-                }
-            } else if (currentRound == 2) {
-                (, roundData, , , , , , , ) = abi.decode(
-                    ace8.getGameFullData(activeGames[0]),
-                    (
-                        bytes,
-                        bytes,
-                        bytes,
-                        string,
-                        uint256,
-                        uint8,
-                        uint256,
-                        uint256,
-                        bool
-                    )
-                );
-                (teamNames, , , , endTime) = abi.decode(
-                    roundData,
-                    (string[8], uint256[8], uint256[8], uint256, uint256)
-                );
-                upkeepNeeded = true;
-            } else if (currentRound == 3) {
-                (, , roundData, , , , , , ) = abi.decode(
-                    ace8.getGameFullData(activeGames[0]),
-                    (
-                        bytes,
-                        bytes,
-                        bytes,
-                        string,
-                        uint256,
-                        uint8,
-                        uint256,
-                        uint256,
-                        bool
-                    )
-                );
-                (teamNames, , , , endTime) = abi.decode(
-                    roundData,
-                    (string[8], uint256[8], uint256[8], uint256, uint256)
-                );
-                upkeepNeeded = true;
-            }
-
-            endTime = endTime == 0 ? 0 : endTime - 10;
-            if (upkeepNeeded && endTime > 0 && block.timestamp >= endTime) {
-                uint256[8] memory teamsIds = ace8.getTokensIds(
-                    abi.encode(teamNames)
-                );
-
-                performData = abi.encode(
-                    activeGames[0],
-                    abi.encodePacked(
-                        teamsIds[0].toString(),
-                        ",",
-                        teamsIds[1].toString(),
-                        ",",
-                        teamsIds[2].toString(),
-                        ",",
-                        teamsIds[3].toString(),
-                        ",",
-                        teamsIds[4].toString(),
-                        ",",
-                        teamsIds[5].toString(),
-                        ",",
-                        teamsIds[6].toString(),
-                        ",",
-                        teamsIds[7].toString()
-                    )
-                );
-            }
+            return (true, "");
         }
+
+        uint8 currentRound = ace8.getGameStatus(activeGames[0]);
+        uint256 endTime;
+        uint256 startTime;
+        string[8] memory teamNames;
+        bytes memory roundData;
+
+        if (currentRound > 3) {
+            return (false, "");
+        } else if ((currentRound == 0) || (currentRound == 1)) {
+            (roundData, , , , , , , , ) = abi.decode(
+                ace8.getGameFullData(activeGames[0]),
+                (
+                    bytes,
+                    bytes,
+                    bytes,
+                    string,
+                    uint256,
+                    uint8,
+                    uint256,
+                    uint256,
+                    bool
+                )
+            );
+            (teamNames, , , startTime, endTime) = abi.decode(
+                roundData,
+                (string[8], uint256[8], uint256[8], uint256, uint256)
+            );
+
+            //subtracts 10 seconds from the start time to prevent block.timestamp delay
+            startTime = startTime == 0 ? 0 : startTime - 10;
+            if (startTime == 0 || block.timestamp < startTime) {
+                return (false, "");
+            }
+        } else if (currentRound == 2) {
+            (, roundData, , , , , , , ) = abi.decode(
+                ace8.getGameFullData(activeGames[0]),
+                (
+                    bytes,
+                    bytes,
+                    bytes,
+                    string,
+                    uint256,
+                    uint8,
+                    uint256,
+                    uint256,
+                    bool
+                )
+            );
+            (teamNames, , , , endTime) = abi.decode(
+                roundData,
+                (string[8], uint256[8], uint256[8], uint256, uint256)
+            );
+            upkeepNeeded = true;
+        } else if (currentRound == 3) {
+            (, , roundData, , , , , , ) = abi.decode(
+                ace8.getGameFullData(activeGames[0]),
+                (
+                    bytes,
+                    bytes,
+                    bytes,
+                    string,
+                    uint256,
+                    uint8,
+                    uint256,
+                    uint256,
+                    bool
+                )
+            );
+            (teamNames, , , , endTime) = abi.decode(
+                roundData,
+                (string[8], uint256[8], uint256[8], uint256, uint256)
+            );
+            upkeepNeeded = true;
+        }
+
+        endTime = endTime == 0 ? 0 : endTime - 10;
+        if (endTime == 0 || block.timestamp < endTime) {
+            return (false, "");
+        }
+
+        uint256[8] memory teamsIds = ace8.getTokensIds(abi.encode(teamNames));
+
+        return (
+            true,
+            abi.encode(
+                activeGames[0],
+                abi.encodePacked(
+                    teamsIds[0].toString(),
+                    ",",
+                    teamsIds[1].toString(),
+                    ",",
+                    teamsIds[2].toString(),
+                    ",",
+                    teamsIds[3].toString(),
+                    ",",
+                    teamsIds[4].toString(),
+                    ",",
+                    teamsIds[5].toString(),
+                    ",",
+                    teamsIds[6].toString(),
+                    ",",
+                    teamsIds[7].toString()
+                )
+            )
+        );
     }
 
     /**

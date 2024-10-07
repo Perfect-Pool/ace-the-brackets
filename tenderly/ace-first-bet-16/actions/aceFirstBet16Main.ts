@@ -304,9 +304,11 @@ export const aceFirstBet16Main: ActionFn = async (
   } catch (error: any) {
     console.error("Failed to perform games.");
     await sendErrorLog(
-      `Failed to perform games on ACE: ${error?.message?.split(" [")[0]}`,
+      `Failed to perform games on ACE16: ${error?.message?.split(" [")[0]}`,
       context
     );
+    await context.storage.putStr('ACE16ErrorData', updateGamesCalldata);
+    await context.storage.putStr('ACE16ErrorTimestamp', lastTimeStamp.toString());
     return;
   }
 
