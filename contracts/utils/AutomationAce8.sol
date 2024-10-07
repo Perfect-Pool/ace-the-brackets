@@ -41,8 +41,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
     bytes private encryptedSecretsReference;
     uint64 private subscriptionId;
     uint32 public callbackGasLimit;
-
-    address public upkeepAddress;
+    
     IGamesHub public gamesHub;
     address public forwarder;
 
