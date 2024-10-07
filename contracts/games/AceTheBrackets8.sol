@@ -235,7 +235,7 @@ contract AceTheBrackets8 {
 
             IFunctionsConsumerAce8(
                 gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
-            ).emitUpdateGame(0, gameIndex);
+            ).emitUpdateGame(0, 0);
         } else {
             if (
                 (currentRound == 0 && winnersArray[4] != 0) ||

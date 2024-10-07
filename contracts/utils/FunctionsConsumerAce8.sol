@@ -13,17 +13,11 @@ interface IAutomationAce {
     ) external;
 }
 
-interface ILogAutomationAce {
-    function storeUpdateData(bytes memory data) external returns (uint256);
-}
-
 interface IGamesHub {
     function checkRole(
         bytes32 role,
         address account
     ) external view returns (bool);
-
-    function games(bytes32) external view returns (address);
 
     function helpers(bytes32) external view returns (address);
 }
@@ -40,10 +34,12 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
     IGamesHub public gamesHub;
 
     bytes32 public s_lastRequestId;
-    bytes public s_lastResponse;
     bytes public s_lastError;
     bytes32 public s_executedRequestId;
-    mapping(bytes32 => uint256) private gamesIds;
+    mapping(bytes32 => uint8) private updatePhase;
+
+    mapping(uint256 => bytes) public updateData;
+    uint256 public updateDataIndex;
 
     bool private _setInitialData = true;
 
@@ -100,7 +96,6 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
      * @param secretsLocation Location of secrets (only Location.Remote & Location.DONHosted are supported)
      * @param encryptedSecretsReference Reference pointing to encrypted secrets
      * @param args String arguments passed into the source code and accessible via the global variable `args`
-     * @param bytesArgs Bytes arguments passed into the source code and accessible via the global variable `bytesArgs` as hex strings
      * @param subscriptionId Subscription ID used to pay for request (FunctionsConsumer contract address must first be added to the subscription)
      * @param callbackGasLimit Maximum amount of gas used to call the inherited `handleOracleFulfillment` method
      */
@@ -109,7 +104,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
         FunctionsRequest.Location secretsLocation,
         bytes calldata encryptedSecretsReference,
         string[] calldata args,
-        bytes[] calldata bytesArgs,
+        bytes[] calldata,
         uint64 subscriptionId,
         uint32 callbackGasLimit
     ) external {
@@ -137,9 +132,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
             donId
         );
 
-        gamesIds[s_lastRequestId] = bytesArgs.length > 0
-            ? abi.decode(bytesArgs[0], (uint256))
-            : 0;
+        updatePhase[s_lastRequestId] = args.length == 0 ? 1 : 2;
 
         if (_setInitialData) {
             IAutomationAce(gamesHub.helpers(keccak256("ACE8_AUTOMATION")))
@@ -168,36 +161,36 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
         bytes memory response,
         bytes memory err
     ) internal override {
-        s_lastError = err;
         s_executedRequestId = requestId;
-        ILogAutomationAce logAutomationAce = ILogAutomationAce(
-            gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION"))
-        );
 
         if (err.length == 0) {
-            if (gamesIds[requestId] == 0) {
-                emit UpdateGame(1, logAutomationAce.storeUpdateData(response));
-            } else {
-                uint256 gameId = gamesIds[requestId];
-                uint256[8] memory prices = abi.decode(response, (uint256[8]));
-
-                emit UpdateGame(
-                    2,
-                    logAutomationAce.storeUpdateData(abi.encode(gameId, prices))
-                );
-            }
+            emit UpdateGame(updatePhase[requestId], storeUpdateData(response));
         }
+
+        s_lastError = err;
+    }
+
+    /**
+     * @dev Store the updated data, returning the index
+     * @param data The data to store
+     * @return The index of the stored data
+     */
+    function storeUpdateData(bytes memory data) internal returns (uint256) {
+        updateData[updateDataIndex] = data;
+        uint256 returnIndex = updateDataIndex;
+        updateDataIndex++;
+        return returnIndex;
     }
 
     /**
      * @notice Emit a UpdateGame event receiving a uint8 and uint256
-     * @param updatePhase uint8
+     * @param _updatePhase uint8
      * @param gameDataIndex uint256
      */
     function emitUpdateGame(
-        uint8 updatePhase,
+        uint8 _updatePhase,
         uint256 gameDataIndex
     ) external onlyProject {
-        emit UpdateGame(updatePhase, gameDataIndex);
+        emit UpdateGame(_updatePhase, gameDataIndex);
     }
 }

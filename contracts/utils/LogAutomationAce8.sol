@@ -28,6 +28,10 @@ interface IAutomationAce8 {
     function sendRequestNewGame() external;
 }
 
+interface IFunctionsConsumer {
+    function updateData(uint256 _gameId) external view returns (bytes memory);
+}
+
 contract LogAutomationAce8 is ILogAutomation {
     event UpdateDataStored(uint256 indexed index);
     event UpdateExecuted(uint256 indexed gameId);
@@ -37,8 +41,6 @@ contract LogAutomationAce8 is ILogAutomation {
 
     IGamesHub public gamesHub;
 
-    mapping(uint256 => bytes) public updateData;
-    uint256 public updateDataIndex;
     bytes private emptyBytes;
 
     address public forwarder;
@@ -62,14 +64,6 @@ contract LogAutomationAce8 is ILogAutomation {
         _;
     }
 
-    modifier onlyFunctionsConsumer() {
-        require(
-            msg.sender == gamesHub.helpers(keccak256("FUNCTIONS_ACE8")),
-            "Restricted to FunctionsConsumer"
-        );
-        _;
-    }
-
     function checkLog(
         Log calldata log,
         bytes memory
@@ -81,7 +75,11 @@ contract LogAutomationAce8 is ILogAutomation {
         if (updatePhase == 1) {
             performData = abi.encode(
                 updatePhase,
-                parseMarketDataNew(updateData[dataId])
+                parseMarketDataNew(
+                    IFunctionsConsumer(
+                        gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                    ).updateData(dataId)
+                )
             );
         } else if (updatePhase == 2) {
             (
@@ -89,7 +87,11 @@ contract LogAutomationAce8 is ILogAutomation {
                 uint256[8] memory pricesBegin,
                 uint256[8] memory prices,
                 uint256[8] memory tokensIds
-            ) = logDataToGameUpdate(updateData[dataId]);
+            ) = logDataToGameUpdate(
+                    IFunctionsConsumer(
+                        gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                    ).updateData(dataId)
+                );
 
             (
                 uint256[8] memory winners,
@@ -187,18 +189,17 @@ contract LogAutomationAce8 is ILogAutomation {
             uint256[8] memory
         )
     {
-        (uint256 gameId, uint256[8] memory prices) = abi.decode(
-            logData,
-            (uint256, uint256[8])
-        );
+        uint256[8] memory prices = abi.decode(logData, (uint256[8]));
 
         IAceTheBrackets8 aceTheBrackets8 = IAceTheBrackets8(
             gamesHub.games(keccak256("ACE8_PROXY"))
         );
 
+        uint256[] memory gameIds = aceTheBrackets8.getActiveGames();
+
         bytes memory roundFullData = aceTheBrackets8.getRoundFullData(
-            gameId,
-            aceTheBrackets8.getGameStatus(gameId)
+            gameIds[0],
+            aceTheBrackets8.getGameStatus(gameIds[0])
         );
 
         (
@@ -213,26 +214,11 @@ contract LogAutomationAce8 is ILogAutomation {
             );
 
         return (
-            gameId,
+            gameIds[0],
             pricesBegin,
             prices,
             aceTheBrackets8.getTokensIds(abi.encode(tokenSymbols))
         );
-    }
-
-    /**
-     * @dev Store the updated data, returning the index
-     * @param data The data to store
-     * @return The index of the stored data
-     */
-    function storeUpdateData(
-        bytes memory data
-    ) external onlyFunctionsConsumer returns (uint256) {
-        updateData[updateDataIndex] = data;
-        emit UpdateDataStored(updateDataIndex);
-        uint256 returnIndex = updateDataIndex;
-        updateDataIndex++;
-        return returnIndex;
     }
 
     /**

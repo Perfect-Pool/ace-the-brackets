@@ -41,7 +41,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
     bytes private encryptedSecretsReference;
     uint64 private subscriptionId;
     uint32 public callbackGasLimit;
-    
+
     IGamesHub public gamesHub;
     address public forwarder;
 
@@ -255,10 +255,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         );
 
         string[] memory args = new string[](1);
-        bytes[] memory bytesArgs = new bytes[](1);
-
         args[0] = string(listIds);
-        bytesArgs[0] = abi.encode(gameId);
 
         IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
             .sendRequest(
@@ -266,7 +263,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
                 FunctionsRequest.Location.Remote,
                 encryptedSecretsReference,
                 args,
-                bytesArgs,
+                new bytes[](0),
                 subscriptionId,
                 callbackGasLimit
             );
