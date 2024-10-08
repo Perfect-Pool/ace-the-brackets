@@ -64,8 +64,9 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
             msg.sender == gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION")) ||
                 msg.sender ==
                 gamesHub.helpers(keccak256("ACE8ENTRY_LOGAUTOMATION")) ||
-                msg.sender == gamesHub.helpers(keccak256("ACE8")),
-            "Restricted to log automation"
+                msg.sender == gamesHub.helpers(keccak256("ACE8")) ||
+                msg.sender == gamesHub.helpers(keccak256("ACE8_AUTOMATION")),
+            "Restricted to Project's contracts"
         );
         _;
     }
