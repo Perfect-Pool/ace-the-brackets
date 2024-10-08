@@ -108,7 +108,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         override
         returns (bool upkeepNeeded, bytes memory performData)
     {
-        if (block.timestamp < (s_lastUpkeepTimeStamp + s_upkeepInterval)) {
+        if (block.timestamp < s_lastUpkeepTimeStamp) {
             return (false, "");
         }
         IAceTheBrackets8 ace8 = IAceTheBrackets8(
@@ -150,14 +150,14 @@ contract AutomationAce8 is AutomationCompatibleInterface {
 
             //subtracts 10 seconds from the start time to prevent block.timestamp delay
             startTime = startTime == 0 ? 0 : startTime - 10;
-            if (startTime == 0) {
-                if (
-                    IAce8Entry(gamesHub.helpers(keccak256("NFT_ACE8")))
-                        .getGamePlayers(activeGames[0])
-                        .length == 0
-                ) {
-                    return (true, abi.encode(activeGames[0], ""));
-                }
+            if (
+                startTime == 0 &&
+                IAce8Entry(gamesHub.helpers(keccak256("NFT_ACE8")))
+                    .getGamePlayers(activeGames[0])
+                    .length >
+                0
+            ) {
+                return (true, abi.encode(activeGames[0], ""));
             } else if (block.timestamp < startTime) {
                 return (false, "");
             }
