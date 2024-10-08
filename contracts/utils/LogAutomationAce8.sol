@@ -72,7 +72,9 @@ contract LogAutomationAce8 is ILogAutomation {
         uint8 updatePhase = bytes32ToUint8(log.topics[1]);
         uint256 dataId = bytes32ToUint256(log.topics[2]);
 
-        if (updatePhase == 1) {
+        if (updatePhase == 0) {
+            performData = abi.encode(updatePhase, "");
+        } else if (updatePhase == 1) {
             performData = abi.encode(
                 updatePhase,
                 parseMarketDataNew(
@@ -117,6 +119,8 @@ contract LogAutomationAce8 is ILogAutomation {
                     [emptyBytes, emptyBytes, emptyBytes, emptyBytes]
                 )
             );
+        } else {
+            upkeepNeeded = false;
         }
     }
 

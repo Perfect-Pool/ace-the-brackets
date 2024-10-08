@@ -278,6 +278,8 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         if (listIds.length == 0) {
             IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
                 .emitUpdateGame(3, gameId);
+            emit PerformUpkeep(gameId, false);
+            return;
         }
 
         string[] memory args = new string[](1);
