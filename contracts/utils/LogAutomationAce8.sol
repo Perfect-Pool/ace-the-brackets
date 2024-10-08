@@ -73,8 +73,10 @@ contract LogAutomationAce8 is ILogAutomation {
         uint256 dataId = bytes32ToUint256(log.topics[2]);
 
         if (updatePhase == 0) {
+            //New game requested
             performData = abi.encode(updatePhase, "");
         } else if (updatePhase == 1) {
+            //New game executed
             performData = abi.encode(
                 updatePhase,
                 parseMarketDataNew(
@@ -84,6 +86,7 @@ contract LogAutomationAce8 is ILogAutomation {
                 )
             );
         } else if (updatePhase == 2) {
+            //Advance Rounds
             (
                 uint256 gameId,
                 uint256[8] memory pricesBegin,
@@ -110,6 +113,7 @@ contract LogAutomationAce8 is ILogAutomation {
                 )
             );
         } else if (updatePhase == 3) {
+            //Activate game timer
             performData = abi.encode(
                 updatePhase,
                 abi.encode(
@@ -121,6 +125,64 @@ contract LogAutomationAce8 is ILogAutomation {
             );
         } else {
             upkeepNeeded = false;
+        }
+    }
+
+    function testCheckLog(
+        uint8 updatePhase,
+        uint256 dataId
+    ) external view returns (bytes memory performData) {
+        if (updatePhase == 0) {
+            //New game requested
+            performData = abi.encode(updatePhase, "");
+        } else if (updatePhase == 1) {
+            //New game executed
+            performData = abi.encode(
+                updatePhase,
+                parseMarketDataNew(
+                    IFunctionsConsumer(
+                        gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                    ).updateData(dataId)
+                )
+            );
+        } else if (updatePhase == 2) {
+            //Advance Rounds
+            (
+                uint256 gameId,
+                uint256[8] memory pricesBegin,
+                uint256[8] memory prices,
+                uint256[8] memory tokensIds
+            ) = pricesDataToGameUpdate(
+                    IFunctionsConsumer(
+                        gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                    ).updateData(dataId)
+                );
+
+            (
+                uint256[8] memory winners,
+                uint256[8] memory pricesWinners
+            ) = determineWinners(tokensIds, pricesBegin, prices);
+
+            performData = abi.encode(
+                updatePhase,
+                abi.encode(
+                    gameId,
+                    abi.encode(prices),
+                    abi.encode(pricesWinners),
+                    abi.encode(winners)
+                )
+            );
+        } else if (updatePhase == 3) {
+            //Activate game timer
+            performData = abi.encode(
+                updatePhase,
+                abi.encode(
+                    [dataId, 0, 0, 0],
+                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes],
+                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes],
+                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes]
+                )
+            );
         }
     }
 
@@ -184,45 +246,40 @@ contract LogAutomationAce8 is ILogAutomation {
     function pricesDataToGameUpdate(
         bytes memory pricesData
     )
-        private
+        public
         view
         returns (
-            uint256,
-            uint256[8] memory,
-            uint256[8] memory,
-            uint256[8] memory
+            uint256 gameId,
+            uint256[8] memory pricesBegin,
+            uint256[8] memory prices,
+            uint256[8] memory tokensIds
         )
     {
-        uint256[8] memory prices = parseMarketDataUpdate(pricesData);
+        prices = parseMarketDataUpdate(pricesData);
 
         IAceTheBrackets8 aceTheBrackets8 = IAceTheBrackets8(
-            gamesHub.games(keccak256("ACE8_PROXY"))
+            gamesHub.games(keccak256("ACE8"))
         );
 
         uint256[] memory gameIds = aceTheBrackets8.getActiveGames();
-
-        bytes memory roundFullData = aceTheBrackets8.getRoundFullData(
-            gameIds[0],
-            aceTheBrackets8.getGameStatus(gameIds[0])
-        );
+        gameId = gameIds[0];
 
         (
             string[8] memory tokenSymbols,
-            uint256[8] memory pricesBegin,
+            uint256[8] memory _pricesBegin,
             ,
             ,
 
         ) = abi.decode(
-                roundFullData,
+                aceTheBrackets8.getRoundFullData(
+                    gameId,
+                    aceTheBrackets8.getGameStatus(gameId)
+                ),
                 (string[8], uint256[8], uint256[8], uint256, uint256)
             );
-
-        return (
-            gameIds[0],
-            pricesBegin,
-            prices,
-            aceTheBrackets8.getTokensIds(abi.encode(tokenSymbols))
-        );
+        
+        pricesBegin = _pricesBegin;
+        tokensIds = aceTheBrackets8.getTokensIds(abi.encode(tokenSymbols));
     }
 
     /**
@@ -234,12 +291,13 @@ contract LogAutomationAce8 is ILogAutomation {
     function calculatePriceVariation(
         uint256 priceBegin,
         uint256 priceEnd
-    ) private pure returns (int256) {
+    ) public pure returns (int256) {
         if (priceBegin == priceEnd) {
             return 0;
         }
+        int256 _priceBegin = priceBegin == 0 ? int256(1) : int256(priceBegin);
         int256 variation = int256(priceEnd) - int256(priceBegin);
-        return (variation * 1e18) / int256(priceBegin);
+        return (variation * 1e18) / _priceBegin;
     }
 
     /**
@@ -255,7 +313,7 @@ contract LogAutomationAce8 is ILogAutomation {
         uint256[8] memory pricesBegin,
         uint256[8] memory pricesEnd
     )
-        private
+        public
         view
         returns (uint256[8] memory winners, uint256[8] memory pricesWinners)
     {
