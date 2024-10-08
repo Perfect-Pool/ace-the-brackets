@@ -108,15 +108,15 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         override
         returns (bool upkeepNeeded, bytes memory performData)
     {
-        if (block.timestamp < (s_lastUpkeepTimeStamp + s_upkeepInterval)) {
-            return (false, abi.encodePacked("TIME"));
-        }
         IAceTheBrackets8 ace8 = IAceTheBrackets8(
             gamesHub.games(keccak256("ACE8_PROXY"))
         );
 
         uint256[] memory activeGames = ace8.getActiveGames();
         if (activeGames.length == 0) {
+            if (block.timestamp < (s_lastUpkeepTimeStamp + s_upkeepInterval)) {
+                return (false, abi.encodePacked("TIME"));
+            }
             return (true, "");
         }
 
@@ -125,11 +125,12 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         uint256 startTime;
         string[8] memory teamNames;
         bytes memory roundData;
+        bool active = true;
 
         if (currentRound > 3) {
             return (false, "");
         } else if ((currentRound == 0) || (currentRound == 1)) {
-            (roundData, , , , , , , , ) = abi.decode(
+            (roundData, , , , , , , , active) = abi.decode(
                 ace8.getGameFullData(activeGames[0]),
                 (
                     bytes,
@@ -157,9 +158,10 @@ contract AutomationAce8 is AutomationCompatibleInterface {
                         .length > 0
                 ) {
                     return (true, abi.encode(activeGames[0], ""));
-                } else if (block.timestamp < startTime) {
-                    return (false, abi.encodePacked("S"));
                 }
+                return (false, abi.encodePacked("0"));
+            } else if (block.timestamp < startTime) {
+                return (false, abi.encodePacked("S"));
             }
         } else if (currentRound == 2) {
             (, roundData, , , , , , , ) = abi.decode(
@@ -203,9 +205,15 @@ contract AutomationAce8 is AutomationCompatibleInterface {
             upkeepNeeded = true;
         }
 
-        endTime = endTime == 0 ? 0 : endTime - 10;
-        if (endTime == 0 || block.timestamp < endTime) {
-            return (false, abi.encodePacked("ED"));
+        if (active) {
+            endTime = endTime == 0 ? 0 : endTime - 10;
+            if (endTime == 0 || block.timestamp < endTime) {
+                return (false, abi.encodePacked("ED"));
+            }
+        }
+
+        if (block.timestamp < (s_lastUpkeepTimeStamp + s_upkeepInterval)) {
+            return (false, abi.encodePacked("TIME"));
         }
 
         uint256[8] memory teamsIds = ace8.getTokensIds(abi.encode(teamNames));

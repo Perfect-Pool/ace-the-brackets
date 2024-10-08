@@ -19,6 +19,8 @@ interface IGamesHub {
         address account
     ) external view returns (bool);
 
+    function games(bytes32) external view returns (address);
+
     function helpers(bytes32) external view returns (address);
 }
 
@@ -64,7 +66,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
             msg.sender == gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION")) ||
                 msg.sender ==
                 gamesHub.helpers(keccak256("ACE8ENTRY_LOGAUTOMATION")) ||
-                msg.sender == gamesHub.helpers(keccak256("ACE8")) ||
+                msg.sender == gamesHub.games(keccak256("ACE8")) ||
                 msg.sender == gamesHub.helpers(keccak256("ACE8_AUTOMATION")),
             "Restricted to Project's contracts"
         );
