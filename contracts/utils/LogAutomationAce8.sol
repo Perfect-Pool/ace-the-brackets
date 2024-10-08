@@ -249,37 +249,40 @@ contract LogAutomationAce8 is ILogAutomation {
         public
         view
         returns (
-            uint256 gameId,
-            uint256[8] memory pricesBegin,
-            uint256[8] memory prices,
-            uint256[8] memory tokensIds
+            uint256,
+            uint256[8] memory,
+            uint256[8] memory,
+            uint256[8] memory
         )
     {
-        prices = parseMarketDataUpdate(pricesData);
+        uint256[8] memory prices = parseMarketDataUpdate(pricesData);
 
         IAceTheBrackets8 aceTheBrackets8 = IAceTheBrackets8(
             gamesHub.games(keccak256("ACE8"))
         );
 
         uint256[] memory gameIds = aceTheBrackets8.getActiveGames();
-        gameId = gameIds[0];
+        uint8 status = aceTheBrackets8.getGameStatus(gameIds[0]);
 
         (
             string[8] memory tokenSymbols,
-            uint256[8] memory _pricesBegin,
+            uint256[8] memory pricesBegin,
             ,
             ,
 
         ) = abi.decode(
                 aceTheBrackets8.getRoundFullData(
-                    gameId,
-                    aceTheBrackets8.getGameStatus(gameId)
+                    gameIds[0],
+                    status == 0 ? 0 : status - 1
                 ),
                 (string[8], uint256[8], uint256[8], uint256, uint256)
             );
-        
-        pricesBegin = _pricesBegin;
-        tokensIds = aceTheBrackets8.getTokensIds(abi.encode(tokenSymbols));
+        return (
+            gameIds[0],
+            pricesBegin,
+            prices,
+            aceTheBrackets8.getTokensIds(abi.encode(tokenSymbols))
+        );
     }
 
     /**

@@ -226,7 +226,7 @@ contract AceTheBrackets8 {
                 abi.encodePacked(gameIndex, getFinalResult(gameIndex))
             );
 
-            IAceTicket8(gamesHub.helpers(keccak256("ACE_TICKET"))).setGamePot(
+            IAceTicket8(gamesHub.helpers(keccak256("NFT_ACE8"))).setGamePot(
                 gameIndex,
                 gameCode
             );
