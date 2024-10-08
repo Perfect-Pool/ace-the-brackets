@@ -39,14 +39,5 @@ while (prices.length < 8) {
   prices.push(0);
 }
 
-const buffer = new ArrayBuffer(prices.length * 32),
-  view = new DataView(buffer);
-
-prices.forEach((price, index) => {
-  const encodedPrice = Functions.encodeUint256(price);
-  for (let i = 0; i < 32; i++) {
-    view.setUint8(index * 32 + i, encodedPrice[i]);
-  }
-});
-
-return buffer;
+const pricesString = prices.join(",");
+return Functions.encodeString(pricesString);

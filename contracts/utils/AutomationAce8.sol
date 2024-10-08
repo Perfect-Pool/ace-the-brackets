@@ -108,8 +108,8 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         override
         returns (bool upkeepNeeded, bytes memory performData)
     {
-        if (block.timestamp < s_lastUpkeepTimeStamp) {
-            return (false, "");
+        if (block.timestamp < (s_lastUpkeepTimeStamp + s_upkeepInterval)) {
+            return (false, abi.encodePacked("TIME"));
         }
         IAceTheBrackets8 ace8 = IAceTheBrackets8(
             gamesHub.games(keccak256("ACE8_PROXY"))
@@ -150,16 +150,16 @@ contract AutomationAce8 is AutomationCompatibleInterface {
 
             //subtracts 10 seconds from the start time to prevent block.timestamp delay
             startTime = startTime == 0 ? 0 : startTime - 10;
-            if (
-                startTime == 0 &&
-                IAce8Entry(gamesHub.helpers(keccak256("NFT_ACE8")))
-                    .getGamePlayers(activeGames[0])
-                    .length >
-                0
-            ) {
-                return (true, abi.encode(activeGames[0], ""));
-            } else if (block.timestamp < startTime) {
-                return (false, "");
+            if (startTime == 0) {
+                if (
+                    IAce8Entry(gamesHub.helpers(keccak256("NFT_ACE8")))
+                        .getGamePlayers(activeGames[0])
+                        .length > 0
+                ) {
+                    return (true, abi.encode(activeGames[0], ""));
+                } else if (block.timestamp < startTime) {
+                    return (false, abi.encodePacked("S"));
+                }
             }
         } else if (currentRound == 2) {
             (, roundData, , , , , , , ) = abi.decode(
@@ -205,7 +205,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
 
         endTime = endTime == 0 ? 0 : endTime - 10;
         if (endTime == 0 || block.timestamp < endTime) {
-            return (false, "");
+            return (false, abi.encodePacked("ED"));
         }
 
         uint256[8] memory teamsIds = ace8.getTokensIds(abi.encode(teamNames));

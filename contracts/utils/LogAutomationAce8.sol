@@ -89,7 +89,7 @@ contract LogAutomationAce8 is ILogAutomation {
                 uint256[8] memory pricesBegin,
                 uint256[8] memory prices,
                 uint256[8] memory tokensIds
-            ) = logDataToGameUpdate(
+            ) = pricesDataToGameUpdate(
                     IFunctionsConsumer(
                         gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
                     ).updateData(dataId)
@@ -174,15 +174,15 @@ contract LogAutomationAce8 is ILogAutomation {
 
     /**
      * @dev Prepares the data for updating the game
-     * @param logData The log data
+     * @param pricesData The log data
      * @return gameId The ID of the game
      * @return pricesBegin The previous prices to compare
      * @return prices The new prices to compare
      * @return tokensIds The IDs of the tokens
      */
 
-    function logDataToGameUpdate(
-        bytes memory logData
+    function pricesDataToGameUpdate(
+        bytes memory pricesData
     )
         private
         view
@@ -193,7 +193,7 @@ contract LogAutomationAce8 is ILogAutomation {
             uint256[8] memory
         )
     {
-        uint256[8] memory prices = abi.decode(logData, (uint256[8]));
+        uint256[8] memory prices = parseMarketDataUpdate(pricesData);
 
         IAceTheBrackets8 aceTheBrackets8 = IAceTheBrackets8(
             gamesHub.games(keccak256("ACE8_PROXY"))
@@ -350,6 +350,38 @@ contract LogAutomationAce8 is ILogAutomation {
         }
 
         return abi.encode(numericValues, coinSymbols);
+    }
+
+    /**
+     * @notice Parse market data update string and return an array of prices
+     * @param _marketData Bytes from string in the format "10603,20947,4948,8119,23254,3640,1518,28321"
+     * @return pricesEnd Array of 8 uint256 values representing the updated prices
+     */
+    function parseMarketDataUpdate(
+        bytes memory _marketData
+    ) public pure returns (uint256[8] memory pricesEnd) {
+        uint256 startIndex = 0;
+        uint256 endIndex;
+
+        for (uint256 i = 0; i < 8; i++) {
+            for (
+                endIndex = startIndex;
+                endIndex < _marketData.length;
+                endIndex++
+            ) {
+                if (
+                    _marketData[endIndex] == 0x2c ||
+                    endIndex == _marketData.length - 1
+                ) {
+                    // ',' character or end of string
+                    break;
+                }
+            }
+            pricesEnd[i] = parseUint(_marketData, startIndex, endIndex);
+            startIndex = endIndex + 1;
+        }
+
+        return pricesEnd;
     }
 
     // Optimized helper function to parse uint256 from bytes
