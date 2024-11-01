@@ -17,7 +17,7 @@ async function main() {
         constructorArguments: [
             contracts[networkName].GAMES_HUB
         ],
-        contract: "contracts/utils/AutomationAce8.sol:AutomationAce8"
+        contract: "contracts/automations/AutomationAce8.sol:AutomationAce8"
     });
 
     const addressLog = contracts[networkName]["ACE8_LOGAUTOMATION"];
@@ -33,7 +33,7 @@ async function main() {
         constructorArguments: [
             contracts[networkName].GAMES_HUB
         ],
-        contract: "contracts/utils/LogAutomationAce8.sol:LogAutomationAce8"
+        contract: "contracts/automations/LogAutomationAce8.sol:LogAutomationAce8"
     });
 
     const addressLogEntry = contracts[networkName]["ACE8ENTRY_LOGAUTOMATION"];
@@ -49,7 +49,7 @@ async function main() {
         constructorArguments: [
             contracts[networkName].GAMES_HUB
         ],
-        contract: "contracts/utils/LogAutomationAce8Entry.sol:LogAutomationAce8Entry"
+        contract: "contracts/automations/LogAutomationAce8Entry.sol:LogAutomationAce8Entry"
     });
 
     const addressCodes =  contracts[networkName]["SOURCE_CODES_ACE"];
@@ -62,7 +62,7 @@ async function main() {
 
     await hre.run("verify:verify", {
         address: addressCodes,
-        contract: "contracts/utils/SourceCodesAce.sol:SourceCodesAce"
+        contract: "contracts/automations/SourceCodesAce.sol:SourceCodesAce"
     });
 }
 
