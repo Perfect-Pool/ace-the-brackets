@@ -115,11 +115,17 @@ contract AutomationLogTop100 is ILogAutomation {
             gamesHub.helpers(keccak256("COINS100"))
         );
         uint8 currentIndex = coins100Store.lastStoredIndex();
+        if (currentIndex != 0) {
+            currentIndex = currentIndex + 1;
+        }
 
         // Store each coin
         for (uint8 i = 0; i < coins.length; i++) {
             uint8 index = currentIndex + i;
             coins100Store.storeCoin(index, coins[i]);
+            if (index == 99) {
+                break;
+            }
         }
 
         IAutomationTop100 automationTop100 = IAutomationTop100(
