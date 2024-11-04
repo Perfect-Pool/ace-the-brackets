@@ -71,7 +71,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
                 msg.sender == gamesHub.helpers(keccak256("ACE16_AUTOMATION")) ||
                 msg.sender == gamesHub.games(keccak256("ACE16")) ||
                 msg.sender == gamesHub.helpers(keccak256("AUTOMATION_TOP100")),
-            "Restricted to Project's contracts"
+            "Restricted to Project contracts"
         );
         _;
     }

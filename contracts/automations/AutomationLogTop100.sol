@@ -41,6 +41,8 @@ interface IAutomationTop100 {
         string calldata source,
         string[] calldata args
     ) external;
+
+    function setIndexIterator(uint256 newIndexIterator) external;
 }
 
 interface IFunctionsConsumer {
@@ -85,31 +87,12 @@ contract AutomationLogTop100 is ILogAutomation {
         returns (bool upkeepNeeded, bytes memory performData)
     {
         // Check if updatePhaseIndex = 5 (Top100)
-        uint8 updatePhaseIndex = uint8(uint256(log.topics[1]));
+        uint8 updatePhaseIndex = bytes32ToUint8(log.topics[1]);
         if (updatePhaseIndex != 5) return (false, "");
 
         // Get gameDataIndex from the event
-        uint256 gameDataIndex = uint256(log.topics[2]);
+        uint256 gameDataIndex = bytes32ToUint256(log.topics[2]);
 
-        // Get stored data from FunctionsConsumer
-        bytes memory marketData = IFunctionsConsumer(
-            gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
-        ).updateData(gameDataIndex);
-
-        // Parse market data
-        (
-            uint256 lastIndex,
-            ICoins100Store.CoinData[] memory coins
-        ) = parseCoinsReturn(marketData);
-
-        // Encode data for performUpkeep
-        performData = abi.encode(lastIndex, coins);
-        upkeepNeeded = true;
-    }
-
-    function testCheckLog(
-        uint256 gameDataIndex
-    ) external view returns (bool upkeepNeeded, bytes memory performData) {
         // Get stored data from FunctionsConsumer
         bytes memory marketData = IFunctionsConsumer(
             gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
@@ -129,9 +112,9 @@ contract AutomationLogTop100 is ILogAutomation {
     function performUpkeep(
         bytes calldata performData
     ) external override onlyForwarder {
-        if (forwarder == address(0)) {
-            forwarder = msg.sender;
-        }
+        // if (forwarder == address(0)) {
+        //     forwarder = msg.sender;
+        // }
 
         // Decode performData
         (uint256 lastIndex, ICoins100Store.CoinData[] memory coins) = abi
@@ -149,23 +132,16 @@ contract AutomationLogTop100 is ILogAutomation {
             coins100Store.storeCoin(index, coins[i]);
         }
 
+        currentIndex = coins100Store.lastStoredIndex();
+        IAutomationTop100 automationTop100 = IAutomationTop100(
+            gamesHub.helpers(keccak256("AUTOMATION_TOP100"))
+        );
+
         // If we haven't stored all 100 coins yet, request more
-        if (currentIndex != 0) {
-            IAutomationTop100 automationTop100 = IAutomationTop100(
-                gamesHub.helpers(keccak256("AUTOMATION_TOP100"))
-            );
-
-            string[] memory args = new string[](3);
-
-            args[0] = "T";
-            args[1] = lastIndex.toString();
-            args[2] = (100 - currentIndex).toString();
-
-            automationTop100.sendRequest(
-                ISourceCodesAce(gamesHub.helpers(keccak256("SOURCE_CODES_ACE")))
-                    .sourceTop100(),
-                args
-            );
+        if (currentIndex > 0) {
+            automationTop100.setIndexIterator(lastIndex);
+        } else {
+            automationTop100.setIndexIterator(0);
         }
     }
 
@@ -268,6 +244,14 @@ contract AutomationLogTop100 is ILogAutomation {
         }
 
         return (lastIndex, coins);
+    }
+
+    function bytes32ToUint256(bytes32 b) private pure returns (uint256) {
+        return uint256(b);
+    }
+
+    function bytes32ToUint8(bytes32 b) private pure returns (uint8) {
+        return uint8(uint256(b));
     }
 
     // Optimized helper function to parse uint256 from bytes

@@ -8,6 +8,8 @@ import "../interfaces/IGamesHub.sol";
 
 interface ICoins100Store {
     function lastStoredIndex() external view returns (uint8);
+
+    function resetLastIndex() external;
 }
 
 interface ISourceCodesAce {
@@ -37,11 +39,12 @@ contract AutomationTop100 is AutomationCompatibleInterface {
     event FunctionsConsumerSet(address indexed functionsConsumer);
     event PerformUpkeep(uint256 gameId, bool newGame);
     event Initialized(uint64 subscriptionId, uint32 callbackGasLimit);
+    event IndexIteratorChanged(uint256 newIndexIterator);
 
     /** STATE VARIABLES **/
     // State variables for Chainlink Automation
     uint256 public s_lastUpkeepTimeStamp;
-    uint256 public s_upkeepInterval = 300; //604800; // 1 semana em segundos
+    uint256 public s_upkeepInterval = 604800; // 1 semana em segundos
     uint256 public s_upkeepCounter;
 
     bytes public encryptedSecretsReference; //private
@@ -50,6 +53,8 @@ contract AutomationTop100 is AutomationCompatibleInterface {
 
     IGamesHub public gamesHub;
     address public forwarder;
+    uint256 public indexIteration = 0;
+    uint256 public cooldown = 60;
 
     /**
      * @dev Constructor function, that sets the address of the games hub and the update interval of 1 week.
@@ -122,7 +127,8 @@ contract AutomationTop100 is AutomationCompatibleInterface {
         returns (bool upkeepNeeded, bytes memory performData)
     {
         upkeepNeeded =
-            (block.timestamp - s_lastUpkeepTimeStamp) > s_upkeepInterval;
+            (block.timestamp - s_lastUpkeepTimeStamp) >
+            (indexIteration == 0 ? s_upkeepInterval : cooldown);
         performData = new bytes(0);
     }
 
@@ -137,14 +143,18 @@ contract AutomationTop100 is AutomationCompatibleInterface {
         s_lastUpkeepTimeStamp = block.timestamp;
         s_upkeepCounter++;
 
-        uint8 lastIndex = ICoins100Store(
+        ICoins100Store coinStore = ICoins100Store(
             gamesHub.helpers(keccak256("COINS100"))
-        ).lastStoredIndex();
+        );
+
+        if(indexIteration == 0) coinStore.resetLastIndex();
+
+        uint8 lastIndex = coinStore.lastStoredIndex();
         uint256 itLasts = 100 - lastIndex;
 
         string[] memory args = new string[](3);
         args[0] = "T";
-        args[1] = "0";
+        args[1] = indexIteration.toString();
         args[2] = itLasts.toString();
 
         IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
@@ -158,6 +168,7 @@ contract AutomationTop100 is AutomationCompatibleInterface {
                 subscriptionId,
                 callbackGasLimit
             );
+        indexIteration++;
     }
 
     /**
@@ -200,6 +211,17 @@ contract AutomationTop100 is AutomationCompatibleInterface {
                 subscriptionId,
                 callbackGasLimit
             );
+    }
+
+    /**
+     * @notice Function to set the indexIterator
+     * @param newIndexIterator New index iterator
+     */
+    function setIndexIterator(
+        uint256 newIndexIterator
+    ) external onlyLogContract {
+        indexIteration = newIndexIterator;
+        emit IndexIteratorChanged(newIndexIterator);
     }
 
     /**

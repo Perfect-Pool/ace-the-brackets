@@ -35,7 +35,8 @@ contract Coins100Store {
 
     modifier onlyAutomation() {
         require(
-            msg.sender == gamesHub.helpers(keccak256("AUTOMATIONLOG_TOP100")),
+            msg.sender == gamesHub.helpers(keccak256("AUTOMATIONLOG_TOP100")) ||
+                msg.sender == gamesHub.helpers(keccak256("AUTOMATION_TOP100")),
             "Restricted to Project's contracts"
         );
         _;
@@ -127,5 +128,10 @@ contract Coins100Store {
         }
 
         return geckoIds;
+    }
+
+    function resetLastIndex() public onlyAutomation {
+        lastStoredIndex = 0;
+        emit LastIndexUpdated(0, 0);
     }
 }
