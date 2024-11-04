@@ -62,7 +62,7 @@ try {
   const cmcCoins = cmcResponse.data.data;
 
   // Process coins starting from lastIndex
-  for (let i = lastIndex; i < cmcCoins.length && finalCoins.length < 10 && itLasts > 0; i++) {
+  for (let i = lastIndex; i < cmcCoins.length && finalCoins.length < 7 && itLasts > 0; i++) {
     const cmcCoin = cmcCoins[i];
     
     // Skip stablecoins

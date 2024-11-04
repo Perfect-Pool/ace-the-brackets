@@ -37,20 +37,11 @@ interface ICoins100Store {
 }
 
 interface IAutomationTop100 {
-    function sendRequest(
-        string calldata source,
-        string[] calldata args
-    ) external;
-
     function setIndexIterator(uint256 newIndexIterator) external;
 }
 
 interface IFunctionsConsumer {
     function updateData(uint256) external view returns (bytes memory);
-}
-
-interface ISourceCodesAce {
-    function sourceTop100() external view returns (string memory);
 }
 
 contract AutomationLogTop100 is ILogAutomation {
@@ -93,16 +84,15 @@ contract AutomationLogTop100 is ILogAutomation {
         // Get gameDataIndex from the event
         uint256 gameDataIndex = bytes32ToUint256(log.topics[2]);
 
-        // Get stored data from FunctionsConsumer
-        bytes memory marketData = IFunctionsConsumer(
-            gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
-        ).updateData(gameDataIndex);
-
         // Parse market data
         (
             uint256 lastIndex,
             ICoins100Store.CoinData[] memory coins
-        ) = parseCoinsReturn(marketData);
+        ) = parseCoinsReturn(
+                IFunctionsConsumer(
+                    gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                ).updateData(gameDataIndex)
+            );
 
         // Encode data for performUpkeep
         performData = abi.encode(lastIndex, coins);
@@ -112,9 +102,9 @@ contract AutomationLogTop100 is ILogAutomation {
     function performUpkeep(
         bytes calldata performData
     ) external override onlyForwarder {
-        // if (forwarder == address(0)) {
-        //     forwarder = msg.sender;
-        // }
+        if (forwarder == address(0)) {
+            forwarder = msg.sender;
+        }
 
         // Decode performData
         (uint256 lastIndex, ICoins100Store.CoinData[] memory coins) = abi
@@ -127,18 +117,17 @@ contract AutomationLogTop100 is ILogAutomation {
         uint8 currentIndex = coins100Store.lastStoredIndex();
 
         // Store each coin
-        for (uint256 i = 0; i < coins.length; i++) {
-            uint8 index = currentIndex + uint8(i) + 1;
+        for (uint8 i = 0; i < coins.length; i++) {
+            uint8 index = currentIndex + i;
             coins100Store.storeCoin(index, coins[i]);
         }
 
-        currentIndex = coins100Store.lastStoredIndex();
         IAutomationTop100 automationTop100 = IAutomationTop100(
             gamesHub.helpers(keccak256("AUTOMATION_TOP100"))
         );
 
         // If we haven't stored all 100 coins yet, request more
-        if (currentIndex > 0) {
+        if (coins100Store.lastStoredIndex() > 0) {
             automationTop100.setIndexIterator(lastIndex);
         } else {
             automationTop100.setIndexIterator(0);
