@@ -1,49 +1,57 @@
-if (secrets.cmcApiKey === "") {
+if (secrets.cmcApiKey === "" || secrets.geckoApiKey === "") {
   throw Error("API keys not set");
 }
 
 // Validate and get arguments
-let lastIndex = parseInt(args[0]) || 0;
-let itLasts = parseInt(args[1]) || 0;
+let lastIndex = parseInt(args[1]) || 0;
+let itLasts = parseInt(args[2]) || 0;
 
+// If no more iterations needed, return zero
 if (itLasts === 0) {
-  return Functions.encodeString("");
+  return Functions.encodeUint256(0);
 }
 
 try {
-  // Request top 260 from both APIs in parallel
-  const [cmcResponse, geckoResponse] = await Promise.all([
+  // Request top 200 from both APIs in parallel
+  const [cmcResponse, geckoResponse1, geckoResponse2] = await Promise.all([
     Functions.makeHttpRequest({
       url: `https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest`,
       headers: { "X-CMC_PRO_API_KEY": secrets.cmcApiKey },
-      params: { start: 1, limit: 260, sort: "market_cap" },
+      params: { start: 1, limit: 200, sort: "market_cap" },
     }),
     Functions.makeHttpRequest({
       url: `https://api.coingecko.com/api/v3/coins/markets`,
       params: {
         vs_currency: 'usd',
         order: 'market_cap_desc',
-        per_page: 260,
         page: 1,
-        sparkline: false,
+        ...(secrets.geckoApiKey ? { x_cg_demo_api_key: secrets.geckoApiKey } : {})
+      }
+    }),
+    Functions.makeHttpRequest({
+      url: `https://api.coingecko.com/api/v3/coins/markets`,
+      params: {
+        vs_currency: 'usd',
+        order: 'market_cap_desc',
+        page: 2,
         ...(secrets.geckoApiKey ? { x_cg_demo_api_key: secrets.geckoApiKey } : {})
       }
     })
   ]);
 
   if (!cmcResponse || !cmcResponse.data || !cmcResponse.data.data) {
-    console.log("Invalid CMC response");
-    return Functions.encodeString("");
+    throw Error("Invalid CMC response");
   }
 
-  if (!geckoResponse || !geckoResponse.data) {
-    console.log("Invalid Gecko response");
-    return Functions.encodeString("");
+  if (!geckoResponse1 || !geckoResponse1.data) {
+    throw Error("Invalid Gecko response");
   }
+
+  const geckoResponse = geckoResponse1.data.concat(geckoResponse2.data);
 
   // Create map of gecko coins by symbol for faster lookup
   const geckoCoins = new Map();
-  geckoResponse.data.forEach(coin => {
+  geckoResponse.forEach(coin => {
     geckoCoins.set(coin.symbol.toLowerCase(), {
       id: coin.id,
       name: coin.name.toLowerCase()
@@ -87,6 +95,5 @@ try {
   return Functions.encodeString(returnString);
 
 } catch (error) {
-  console.log("Error details:", error);
-  return Functions.encodeString("");
+  throw error;
 }

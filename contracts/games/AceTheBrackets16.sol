@@ -5,6 +5,10 @@ import "../interfaces/IGamesHub.sol";
 import "../interfaces/IAceTicket16.sol";
 import "../interfaces/IAceTheBrackets16.sol";
 
+interface IFunctionsConsumer {
+    function emitUpdateGame(uint8 updatePhase, uint256 gameDataIndex) external;
+}
+
 contract AceTheBrackets16 {
     /** STRUCTS **/
     struct Round {
@@ -231,6 +235,10 @@ contract AceTheBrackets16 {
             );
 
             gameIdToCode[gameIndex] = gameCode;
+
+            IFunctionsConsumer(
+                gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+            ).emitUpdateGame(7, 0);
         } else {
             if (
                 (currentRound == 0 && winnersArray[8] != 0) ||

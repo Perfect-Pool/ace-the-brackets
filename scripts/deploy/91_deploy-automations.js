@@ -46,6 +46,8 @@ async function main() {
     );
   }
 
+  fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
+
   if (networkData.ACE8_LOGAUTOMATION === "") {
     console.log(`Deploying LogAutomationAce8...`);
     const LogAutomationAce8 = await ethers.getContractFactory(
@@ -70,6 +72,8 @@ async function main() {
       `LogAutomationAce8 already deployed at ${networkData.ACE8_LOGAUTOMATION}`
     );
   }
+
+  fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
 
   if (networkData.ACE8ENTRY_LOGAUTOMATION === "") {
     console.log(`Deploying LogAutomationAce8Entry...`);
@@ -98,6 +102,8 @@ async function main() {
     );
   }
 
+  fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
+
   // SOURCE_CODES_ACE // SourceCodesAce.sol
   if (networkData.SOURCE_CODES_ACE === "") {
     console.log(`Deploying SourceCodesAce...`);
@@ -117,6 +123,86 @@ async function main() {
   } else {
     console.log(
       `SourceCodesAce already deployed at ${networkData.SOURCE_CODES_ACE}`
+    );
+  }
+
+  fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
+
+  //COINS100
+  if (networkData.COINS100 === "") {
+    console.log(`Deploying Coins100Store...`);
+    const Coins100Store = await ethers.getContractFactory("Coins100Store");
+    const coins100Store = await Coins100Store.deploy(networkData.GAMES_HUB);
+    await coins100Store.deployed();
+
+    console.log(`Coins100Store deployed at ${coins100Store.address}`);
+    networkData.COINS100 = coins100Store.address;
+
+    console.log(`Setting contract address to GamesHub...`);
+    await gamesHub.setGameContact(
+      coins100Store.address,
+      ethers.utils.id("COINS100"),
+      true
+    );
+  } else {
+    console.log(`Coins100Store already deployed at ${networkData.COINS100}`);
+  }
+
+  fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
+
+  //AUTOMATION_TOP100 | AutomationTop100.sol
+  if (networkData.AUTOMATION_TOP100 === "") {
+    console.log(`Deploying AutomationTop100...`);
+    const AutomationTop100 = await ethers.getContractFactory(
+      "AutomationTop100"
+    );
+    const automationTop100 = await AutomationTop100.deploy(
+      networkData.GAMES_HUB
+    );
+    await automationTop100.deployed();
+
+    console.log(`AutomationTop100 deployed at ${automationTop100.address}`);
+    networkData.AUTOMATION_TOP100 = automationTop100.address;
+
+    console.log(`Setting contract address to GamesHub...`);
+    await gamesHub.setGameContact(
+      automationTop100.address,
+      ethers.utils.id("AUTOMATION_TOP100"),
+      true
+    );
+  } else {
+    console.log(
+      `AutomationTop100 already deployed at ${networkData.AUTOMATION_TOP100}`
+    );
+  }
+
+  fs.writeFileSync(variablesPath, JSON.stringify(data, null, 2));
+
+  //AUTOMATIONLOG_TOP100 | AutomationLogTop100.sol
+  if (networkData.AUTOMATIONLOG_TOP100 === "") {
+    console.log(`Deploying AutomationLogTop100...`);
+    const AutomationLogTop100 = await ethers.getContractFactory(
+      "AutomationLogTop100"
+    );
+    const automationLogTop100 = await AutomationLogTop100.deploy(
+      networkData.GAMES_HUB
+    );
+    await automationLogTop100.deployed();
+
+    console.log(
+      `AutomationLogTop100 deployed at ${automationLogTop100.address}`
+    );
+    networkData.AUTOMATIONLOG_TOP100 = automationLogTop100.address;
+
+    console.log(`Setting contract address to GamesHub...`);
+    await gamesHub.setGameContact(
+      automationLogTop100.address,
+      ethers.utils.id("AUTOMATIONLOG_TOP100"),
+      true
+    );
+  } else {
+    console.log(
+      `AutomationLogTop100 already deployed at ${networkData.AUTOMATIONLOG_TOP100}`
     );
   }
 

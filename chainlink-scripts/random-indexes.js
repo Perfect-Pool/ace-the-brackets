@@ -1,4 +1,4 @@
-const size = parseInt(args[0]);
+const size = parseInt(args[1]);
 if (!size || size <= 0) {
   throw Error("Invalid size argument");
 }

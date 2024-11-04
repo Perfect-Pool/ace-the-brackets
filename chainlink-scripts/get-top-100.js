@@ -3,8 +3,8 @@ if (secrets.cmcApiKey === "" || secrets.geckoApiKey === "") {
 }
 
 // Validate and get arguments
-let lastIndex = parseInt(args[0]) || 0;
-let itLasts = parseInt(args[1]) || 0;
+let lastIndex = parseInt(args[1]) || 0;
+let itLasts = parseInt(args[2]) || 0;
 
 if (itLasts === 0) {
   return Functions.encodeString("");
@@ -32,13 +32,11 @@ try {
   ]);
 
   if (!cmcResponse || !cmcResponse.data || !cmcResponse.data.data) {
-    console.log("Invalid CMC response");
-    return Functions.encodeString("");
+    throw Error("Invalid CMC response");
   }
 
   if (!geckoResponse || !geckoResponse.data) {
-    console.log("Invalid Gecko response");
-    return Functions.encodeString("");
+    throw Error("Invalid Gecko response");
   }
 
   // Create map of gecko coins by symbol for faster lookup
@@ -87,6 +85,5 @@ try {
   return Functions.encodeString(returnString);
 
 } catch (error) {
-  console.log("Error details:", error);
-  return Functions.encodeString("");
+  throw error;
 }

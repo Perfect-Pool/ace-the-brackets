@@ -1,14 +1,16 @@
-const [cmcIds, geckoIdsString] = args;
+const [qty, cmcIds, geckoIdsString] = args;
 if (secrets.cmcApiKey === "") {
-  throw Error("CMC API key not set");
+  throw Error(`ACE${qty}: CMC API key not set`);
 }
 
+const quantity = parseInt(qty);
+
 // Filter out empty and zero IDs from CMC
-const cmcIdArray = cmcIds.split(",").filter(id => id !== "0" && id !== "");
+const cmcIdArray = cmcIds.split(",").filter((id) => id !== "0" && id !== "");
 const cmcIdsString = cmcIdArray.join(",");
 
 // Get Gecko IDs (they are already strings like "bitcoin", "ethereum")
-const geckoIdArray = geckoIdsString.split(",").filter(id => id !== "");
+const geckoIdArray = geckoIdsString.split(",").filter((id) => id !== "");
 
 try {
   // Try CoinMarketCap first
@@ -16,9 +18,9 @@ try {
     url: `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest`,
     headers: { "X-CMC_PRO_API_KEY": secrets.cmcApiKey },
     params: {
-      convert: 'USD',
-      id: cmcIdsString
-    }
+      convert: "USD",
+      id: cmcIdsString,
+    },
   });
 
   const cmcResponse = await coinMarketCapRequest;
@@ -30,7 +32,7 @@ try {
       idToSymbol[data[key].id] = key;
     }
 
-    let prices = cmcIdArray.map(id => {
+    let prices = cmcIdArray.map((id) => {
       const symbol = idToSymbol[id];
       if (data[symbol] && data[symbol].quote && data[symbol].quote.USD) {
         return Math.round(data[symbol].quote.USD.price * 10 ** 8) === 0
@@ -40,7 +42,7 @@ try {
       return 0;
     });
 
-    while (prices.length < 16) {
+    while (prices.length < quantity) {
       prices.push(0);
     }
 
@@ -52,14 +54,16 @@ try {
     url: `https://api.coingecko.com/api/v3/simple/price`,
     params: {
       ids: geckoIdArray.join(","),
-      vs_currencies: 'usd',
-      ...(secrets.geckoApiKey ? { x_cg_demo_api_key: secrets.geckoApiKey } : {})
-    }
+      vs_currencies: "usd",
+      ...(secrets.geckoApiKey
+        ? { x_cg_demo_api_key: secrets.geckoApiKey }
+        : {}),
+    },
   });
 
   const geckoResponse = await geckoRequest;
   if (geckoResponse.data) {
-    let prices = geckoIdArray.map(geckoId => {
+    let prices = geckoIdArray.map((geckoId) => {
       if (geckoResponse.data[geckoId] && geckoResponse.data[geckoId].usd) {
         return Math.round(geckoResponse.data[geckoId].usd * 10 ** 8) === 0
           ? 1
@@ -68,7 +72,7 @@ try {
       return 0;
     });
 
-    while (prices.length < 16) {
+    while (prices.length < quantity) {
       prices.push(0);
     }
 
@@ -76,7 +80,6 @@ try {
   }
 
   throw Error("Both CMC and CoinGecko requests failed");
-
 } catch (error) {
   throw error;
 }

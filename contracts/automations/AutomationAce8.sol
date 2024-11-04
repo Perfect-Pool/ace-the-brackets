@@ -7,17 +7,13 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "../interfaces/IGamesHub.sol";
 import "../interfaces/IAceTheBrackets8.sol";
 
-interface IFunctionsConsumer {
-    function sendRequest(
-        string calldata source,
-        FunctionsRequest.Location secretsLocation,
-        bytes calldata encryptedSecretsReference,
-        string[] calldata args,
-        bytes[] calldata bytesArgs,
-        uint64 subscriptionId,
-        uint32 callbackGasLimit
-    ) external;
+interface ICoins100Store {
+    function coinGeckoIDs8(
+        string[8] memory _symbols
+    ) external view returns (string[8] memory);
+}
 
+interface IFunctionsConsumer {
     function emitUpdateGame(uint8 updatePhase, uint256 gameDataIndex) external;
 }
 
@@ -28,9 +24,15 @@ interface IAce8Entry {
 }
 
 interface ISourceCodesAce {
-    function source8() external view returns (string memory);
+    function updateGame() external view returns (string memory);
+    function newGame() external view returns (string memory);
+}
 
-    function sourceNew8() external view returns (string memory);
+interface IAutomationTop100 {
+    function sendRequest(
+        string calldata source,
+        string[] calldata args
+    ) external;
 }
 
 contract AutomationAce8 is AutomationCompatibleInterface {
@@ -44,7 +46,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
 
     // State variables for Chainlink Automation
     uint256 public s_lastUpkeepTimeStamp;
-    uint256 public s_upkeepInterval = 600;
+    uint256 public s_upkeepInterval = 500;
     uint256 public s_upkeepCounter;
 
     bytes private encryptedSecretsReference;
@@ -215,8 +217,11 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         if (block.timestamp < (s_lastUpkeepTimeStamp + s_upkeepInterval)) {
             return (false, abi.encodePacked("TIME"));
         }
-
-        uint256[8] memory teamsIds = ace8.getTokensIds(abi.encode(teamNames));
+        bytes memory _teamNamesBytes = abi.encode(teamNames);
+        uint256[8] memory teamsIds = ace8.getTokensIds(_teamNamesBytes);
+        string[8] memory teamsIdsCG = ICoins100Store(
+            gamesHub.helpers(keccak256("COINS100"))
+        ).coinGeckoIDs8(teamNames);
 
         return (
             true,
@@ -238,6 +243,23 @@ contract AutomationAce8 is AutomationCompatibleInterface {
                     teamsIds[6].toString(),
                     ",",
                     teamsIds[7].toString()
+                ),
+                abi.encodePacked(
+                    teamsIdsCG[0],
+                    ",",
+                    teamsIdsCG[1],
+                    ",",
+                    teamsIdsCG[2],
+                    ",",
+                    teamsIdsCG[3],
+                    ",",
+                    teamsIdsCG[4],
+                    ",",
+                    teamsIdsCG[5],
+                    ",",
+                    teamsIdsCG[6],
+                    ",",
+                    teamsIdsCG[7]
                 )
             )
         );
@@ -252,9 +274,9 @@ contract AutomationAce8 is AutomationCompatibleInterface {
     function performUpkeep(
         bytes calldata performData
     ) external override onlyForwarder {
-        // if (forwarder == address(0)) {
-        //     forwarder = msg.sender;
-        // }
+        if (forwarder == address(0)) {
+            forwarder = msg.sender;
+        }
         ISourceCodesAce sourceCodes = ISourceCodesAce(
             gamesHub.helpers(keccak256("SOURCE_CODES_ACE"))
         );
@@ -262,47 +284,34 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         s_lastUpkeepTimeStamp = block.timestamp;
         s_upkeepCounter = s_upkeepCounter + 1;
 
+        string[] memory args = new string[](3);
+
         if (performData.length == 0) {
-            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
-                .sendRequest(
-                    sourceCodes.sourceNew8(),
-                    FunctionsRequest.Location.Remote,
-                    encryptedSecretsReference,
-                    new string[](0),
-                    new bytes[](0),
-                    subscriptionId,
-                    callbackGasLimit
-                );
+            args[0] = "N";
+            args[1] = "8";
+            IAutomationTop100(gamesHub.helpers(keccak256("AUTOMATION_TOP100")))
+                .sendRequest(sourceCodes.newGame(), args);
 
             emit PerformUpkeep(0, true);
             return;
         }
 
-        (uint256 gameId, bytes memory listIds) = abi.decode(
-            performData,
-            (uint256, bytes)
-        );
+        (uint256 gameId, bytes memory listIds, bytes memory geckoIds) = abi
+            .decode(performData, (uint256, bytes, bytes));
 
         if (listIds.length == 0) {
             IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
-                .emitUpdateGame(3, gameId);
+                .emitUpdateGame(6, gameId);
             emit PerformUpkeep(gameId, false);
             return;
         }
 
-        string[] memory args = new string[](1);
-        args[0] = string(listIds);
+        args[0] = "8";
+        args[1] = string(listIds);
+        args[2] = string(geckoIds);
 
-        IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
-            .sendRequest(
-                sourceCodes.source8(),
-                FunctionsRequest.Location.Remote,
-                encryptedSecretsReference,
-                args,
-                new bytes[](0),
-                subscriptionId,
-                callbackGasLimit
-            );
+        IAutomationTop100(gamesHub.helpers(keccak256("AUTOMATION_TOP100")))
+            .sendRequest(sourceCodes.updateGame(), args);
 
         emit PerformUpkeep(gameId, false);
     }
@@ -331,22 +340,5 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         callbackGasLimit = _callbackGasLimit;
 
         emit Initialized(_subscriptionId, _callbackGasLimit);
-    }
-
-    /**
-     * @notice Function to send a sendRequest with source8New() to FunctionsConsumer.
-     */
-    function sendRequestNewGame() external onlyLogContract {
-        IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
-            .sendRequest(
-                ISourceCodesAce(gamesHub.helpers(keccak256("SOURCE_CODES_ACE")))
-                    .sourceNew8(),
-                FunctionsRequest.Location.Remote,
-                encryptedSecretsReference,
-                new string[](0),
-                new bytes[](0),
-                subscriptionId,
-                callbackGasLimit
-            );
     }
 }

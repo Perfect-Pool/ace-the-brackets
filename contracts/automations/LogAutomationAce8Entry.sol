@@ -32,10 +32,6 @@ interface IAceTicket8 {
     ) external;
 }
 
-interface IFunctionsConsumerAce8 {
-    function emitUpdateGame(uint8 updatePhase, uint256 gameDataIndex) external;
-}
-
 contract LogAutomationAce8Entry is ILogAutomation {
     event GameTimeStartRequested(uint256 gameId);
     event IterateExecuted(
@@ -85,9 +81,9 @@ contract LogAutomationAce8Entry is ILogAutomation {
     function performUpkeep(
         bytes calldata performData
     ) external override onlyForwarder {
-        // if (forwarder == address(0)) {
-        //     forwarder = msg.sender;
-        // }
+        if (forwarder == address(0)) {
+            forwarder = msg.sender;
+        }
         (uint256 gameId, uint256 iterateStart, uint256 iterateEnd) = abi.decode(
             performData,
             (uint256, uint256, uint256)

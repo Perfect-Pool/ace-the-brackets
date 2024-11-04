@@ -24,12 +24,16 @@ interface ILogAutomation {
     function performUpkeep(bytes calldata performData) external;
 }
 
-interface IAutomationAce8 {
+interface IAutomationTop100 {
     function sendRequestNewGame() external;
 }
 
 interface IFunctionsConsumer {
     function updateData(uint256 _gameId) external view returns (bytes memory);
+}
+
+interface ICoins100Store {
+    function prepareNewGame8(uint8[8] memory coinIndexes) external view returns (bytes memory);
 }
 
 contract LogAutomationAce8 is ILogAutomation {
@@ -79,10 +83,12 @@ contract LogAutomationAce8 is ILogAutomation {
             //New game executed
             performData = abi.encode(
                 updatePhase,
-                parseMarketDataNew(
-                    IFunctionsConsumer(
-                        gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
-                    ).updateData(dataId)
+                ICoins100Store(gamesHub.helpers(keccak256("COINS100"))).prepareNewGame8(
+                    parseUint8Array(
+                        IFunctionsConsumer(
+                            gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                        ).updateData(dataId)
+                    )
                 )
             );
         } else if (updatePhase == 2) {
@@ -112,7 +118,7 @@ contract LogAutomationAce8 is ILogAutomation {
                     abi.encode(winners)
                 )
             );
-        } else if (updatePhase == 3) {
+        } else if (updatePhase == 6) {
             //Activate game timer
             performData = abi.encode(
                 updatePhase,
@@ -128,77 +134,19 @@ contract LogAutomationAce8 is ILogAutomation {
         }
     }
 
-    function testCheckLog(
-        uint8 updatePhase,
-        uint256 dataId
-    ) external view returns (bytes memory performData) {
-        if (updatePhase == 0) {
-            //New game requested
-            performData = abi.encode(updatePhase, "");
-        } else if (updatePhase == 1) {
-            //New game executed
-            performData = abi.encode(
-                updatePhase,
-                parseMarketDataNew(
-                    IFunctionsConsumer(
-                        gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
-                    ).updateData(dataId)
-                )
-            );
-        } else if (updatePhase == 2) {
-            //Advance Rounds
-            (
-                uint256 gameId,
-                uint256[8] memory pricesBegin,
-                uint256[8] memory prices,
-                uint256[8] memory tokensIds
-            ) = pricesDataToGameUpdate(
-                    IFunctionsConsumer(
-                        gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
-                    ).updateData(dataId)
-                );
-
-            (
-                uint256[8] memory winners,
-                uint256[8] memory pricesWinners
-            ) = determineWinners(tokensIds, pricesBegin, prices);
-
-            performData = abi.encode(
-                updatePhase,
-                abi.encode(
-                    gameId,
-                    abi.encode(prices),
-                    abi.encode(pricesWinners),
-                    abi.encode(winners)
-                )
-            );
-        } else if (updatePhase == 3) {
-            //Activate game timer
-            performData = abi.encode(
-                updatePhase,
-                abi.encode(
-                    [dataId, 0, 0, 0],
-                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes],
-                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes],
-                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes]
-                )
-            );
-        }
-    }
-
     function performUpkeep(
         bytes calldata performData
     ) external override onlyForwarder {
-        // if (forwarder == address(0)) {
-        //     forwarder = msg.sender;
-        // }
+        if (forwarder == address(0)) {
+            forwarder = msg.sender;
+        }
         (uint8 updatePhase, bytes memory _updateData) = abi.decode(
             performData,
             (uint8, bytes)
         );
 
         if (updatePhase == 0) {
-            IAutomationAce8(gamesHub.helpers(keccak256("ACE8_AUTOMATION")))
+            IAutomationTop100(gamesHub.helpers(keccak256("AUTOMATION_TOP100")))
                 .sendRequestNewGame();
             emit NewGameRequested();
         } else if (updatePhase == 1) {
@@ -226,7 +174,7 @@ contract LogAutomationAce8 is ILogAutomation {
                     timeStamp
                 );
             emit UpdateExecuted(gameId);
-        } else if (updatePhase == 3) {
+        } else if (updatePhase == 6) {
             uint256 timeStamp = (block.timestamp / 120) * 120;
             IAceTheBrackets8(gamesHub.games(keccak256("ACE8_PROXY")))
                 .performGames("", _updateData, timeStamp);
@@ -255,7 +203,7 @@ contract LogAutomationAce8 is ILogAutomation {
             uint256[8] memory
         )
     {
-        uint256[8] memory prices = parseMarketDataUpdate(pricesData);
+        uint256[8] memory prices = parseUint256Array(pricesData);
 
         IAceTheBrackets8 aceTheBrackets8 = IAceTheBrackets8(
             gamesHub.games(keccak256("ACE8"))
@@ -374,52 +322,12 @@ contract LogAutomationAce8 is ILogAutomation {
     }
 
     /**
-     * @notice Parse market data string and return two arrays
-     * @param _marketData Bytes from string in the format "10603,IMX;20947,SUI;4948,CKB;8119,SFP;23254,CORE;3640,LPT;1518,MKR;28321,POL"
-     * @return bytes Encoded Array of numeric values and Array of coin symbols
+     * @notice Parse a string array and return an array of uint256
+     * @param stringArray Bytes from string in the format "10603,20947,4948,8119,23254,3640,1518,28321"
+     * @return pricesEnd Array of 8 uint256 values
      */
-    function parseMarketDataNew(
-        bytes memory _marketData
-    ) public pure returns (bytes memory) {
-        uint256[8] memory numericValues;
-        string[8] memory coinSymbols;
-
-        uint256 startIndex = 0;
-        uint256 endIndex;
-        uint256 commaIndex;
-
-        for (uint256 i = 0; i < 8; i++) {
-            for (
-                endIndex = startIndex;
-                endIndex < _marketData.length;
-                endIndex++
-            ) {
-                if (_marketData[endIndex] == 0x2c) {
-                    // ',' character
-                    commaIndex = endIndex;
-                } else if (
-                    _marketData[endIndex] == 0x3b ||
-                    endIndex == _marketData.length - 1
-                ) {
-                    // ';' character or end of string
-                    break;
-                }
-            }
-            numericValues[i] = parseUint(_marketData, startIndex, commaIndex);
-            coinSymbols[i] = substring(_marketData, commaIndex + 1, endIndex);
-            startIndex = endIndex + 1;
-        }
-
-        return abi.encode(numericValues, coinSymbols);
-    }
-
-    /**
-     * @notice Parse market data update string and return an array of prices
-     * @param _marketData Bytes from string in the format "10603,20947,4948,8119,23254,3640,1518,28321"
-     * @return pricesEnd Array of 8 uint256 values representing the updated prices
-     */
-    function parseMarketDataUpdate(
-        bytes memory _marketData
+    function parseUint256Array(
+        bytes memory stringArray
     ) public pure returns (uint256[8] memory pricesEnd) {
         uint256 startIndex = 0;
         uint256 endIndex;
@@ -427,22 +335,56 @@ contract LogAutomationAce8 is ILogAutomation {
         for (uint256 i = 0; i < 8; i++) {
             for (
                 endIndex = startIndex;
-                endIndex < _marketData.length;
+                endIndex < stringArray.length;
                 endIndex++
             ) {
                 if (
-                    _marketData[endIndex] == 0x2c ||
-                    endIndex == _marketData.length - 1
+                    stringArray[endIndex] == 0x2c ||
+                    endIndex == stringArray.length - 1
                 ) {
                     // ',' character or end of string
                     break;
                 }
             }
-            pricesEnd[i] = parseUint(_marketData, startIndex, endIndex);
+            pricesEnd[i] = parseUint(stringArray, startIndex, endIndex);
             startIndex = endIndex + 1;
         }
 
         return pricesEnd;
+    }
+
+    /**
+     * @notice Parse a string array and return an array of uint8
+     * @param stringArray Bytes from string in the format "10,20,4,8,23,3,1,28"
+     * @return values Array of 8 uint8 values
+     */
+    function parseUint8Array(
+        bytes memory stringArray
+    ) public pure returns (uint8[8] memory values) {
+        uint256 startIndex = 0;
+        uint256 endIndex;
+
+        for (uint256 i = 0; i < 8; i++) {
+            for (
+                endIndex = startIndex;
+                endIndex < stringArray.length;
+                endIndex++
+            ) {
+                if (
+                    stringArray[endIndex] == 0x2c ||
+                    endIndex == stringArray.length - 1
+                ) {
+                    // ',' character or end of string
+                    break;
+                }
+            }
+            uint256 value = parseUint(stringArray, startIndex, endIndex);
+            require(value <= type(uint8).max, "Value exceeds uint8 max");
+            values[i] = uint8(value);
+            startIndex = endIndex + 1;
+        }
+
+        return values;
     }
 
     // Optimized helper function to parse uint256 from bytes

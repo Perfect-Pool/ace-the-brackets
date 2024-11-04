@@ -64,10 +64,13 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
     modifier onlyProject() {
         require(
             msg.sender == gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION")) ||
-                msg.sender ==
-                gamesHub.helpers(keccak256("ACE8ENTRY_LOGAUTOMATION")) ||
                 msg.sender == gamesHub.games(keccak256("ACE8")) ||
-                msg.sender == gamesHub.helpers(keccak256("ACE8_AUTOMATION")),
+                msg.sender == gamesHub.helpers(keccak256("ACE8_AUTOMATION")) ||
+                msg.sender ==
+                gamesHub.helpers(keccak256("ACE16_LOGAUTOMATION")) ||
+                msg.sender == gamesHub.helpers(keccak256("ACE16_AUTOMATION")) ||
+                msg.sender == gamesHub.games(keccak256("ACE16")) ||
+                msg.sender == gamesHub.helpers(keccak256("AUTOMATION_TOP100")),
             "Restricted to Project's contracts"
         );
         _;
@@ -112,10 +115,42 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
         uint32 callbackGasLimit
     ) external {
         require(
-            msg.sender == gamesHub.helpers(keccak256("ACE8_AUTOMATION")) ||
+                msg.sender == gamesHub.helpers(keccak256("AUTOMATION_TOP100")) ||
                 gamesHub.checkRole(keccak256("ADMIN"), msg.sender),
             "Sender not allowed to send request"
         );
+
+        uint8 updatePhaseIndex;
+        if (args.length > 0) {
+            if (
+                keccak256(abi.encodePacked(args[0])) ==
+                keccak256(abi.encodePacked("N8"))
+            ) {
+                updatePhaseIndex = 1;
+            } else if (
+                keccak256(abi.encodePacked(args[0])) ==
+                keccak256(abi.encodePacked("8"))
+            ) {
+                updatePhaseIndex = 2;
+            } else if (
+                keccak256(abi.encodePacked(args[0])) ==
+                keccak256(abi.encodePacked("N16"))
+            ) {
+                updatePhaseIndex = 3;
+            } else if (
+                keccak256(abi.encodePacked(args[0])) ==
+                keccak256(abi.encodePacked("16"))
+            ) {
+                updatePhaseIndex = 4;
+            } else if (
+                keccak256(abi.encodePacked(args[0])) ==
+                keccak256(abi.encodePacked("T"))
+            ) {
+                updatePhaseIndex = 5;
+            } else {
+                revert("Invalid phase");
+            }
+        }
 
         FunctionsRequest.Request memory req;
         req.initializeRequest(
@@ -135,15 +170,15 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
             donId
         );
 
-        updatePhase[s_lastRequestId] = args.length == 0 ? 1 : 2;
+        updatePhase[s_lastRequestId] = updatePhaseIndex;
 
         if (_setInitialData) {
-            IAutomationAce(gamesHub.helpers(keccak256("ACE8_AUTOMATION")))
-                .initialize(
-                    encryptedSecretsReference,
-                    subscriptionId,
-                    callbackGasLimit
-                );
+            IAutomationAce(gamesHub.helpers(keccak256("AUTOMATION_TOP100")))
+                    .initialize(
+                        encryptedSecretsReference,
+                        subscriptionId,
+                        callbackGasLimit
+                    );
             _setInitialData = false;
         }
     }
@@ -165,9 +200,10 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
         bytes memory err
     ) internal override {
         s_executedRequestId = requestId;
+        uint8 updatePhaseIndex = updatePhase[requestId];
 
-        if (err.length == 0) {
-            emit UpdateGame(updatePhase[requestId], storeUpdateData(response));
+        if (err.length == 0 && response.length != 0 && updatePhaseIndex != 0) {
+            emit UpdateGame(updatePhaseIndex, storeUpdateData(response));
         }
 
         s_lastError = err;
