@@ -202,7 +202,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
         s_executedRequestId = requestId;
         uint8 updatePhaseIndex = updatePhase[requestId];
 
-        if (err.length == 0 && response.length != 0 && updatePhaseIndex != 0) {
+        if (err.length == 0 && response.length != 0) {
             emit UpdateGame(updatePhaseIndex, storeUpdateData(response));
         }
 

@@ -91,7 +91,6 @@ try {
         `${coin.cmc_id},${coin.gecko_id},${coin.symbol}`
       ).join(';')}`
     : "";
-
   return Functions.encodeString(returnString);
 
 } catch (error) {

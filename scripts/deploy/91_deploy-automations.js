@@ -11,6 +11,13 @@ async function main() {
   let gamesHub = await ethers.getContractAt("GamesHub", networkData.GAMES_HUB);
   console.log(`GamesHub loaded at ${gamesHub.address}`);
 
+  console.log(`Setting Functions8 contract address to GamesHub...`);
+  await gamesHub.setGameContact(
+    networkData.FUNCTIONS_ACE8,
+    ethers.utils.id("FUNCTIONS_ACE8"),
+    true
+  );
+
   if (networkData.ACE8_AUTOMATION === "") {
     console.log(`Deploying AutomationAce8...`);
     const AutomationAce8 = await ethers.getContractFactory("AutomationAce8");
@@ -26,23 +33,9 @@ async function main() {
       ethers.utils.id("ACE8_AUTOMATION"),
       true
     );
-
-    console.log(`Setting Functions8 contract address to GamesHub...`);
-    await gamesHub.setGameContact(
-      networkData.FUNCTIONS_ACE8,
-      ethers.utils.id("FUNCTIONS_ACE8"),
-      true
-    );
   } else {
     console.log(
       `AutomationAce8 already deployed at ${networkData.ACE8_AUTOMATION}`
-    );
-
-    console.log(`Setting Functions8 contract address to GamesHub...`);
-    await gamesHub.setGameContact(
-      networkData.FUNCTIONS_ACE8,
-      ethers.utils.id("FUNCTIONS_ACE8"),
-      true
     );
   }
 

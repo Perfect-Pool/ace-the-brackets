@@ -53,6 +53,7 @@ interface ISourceCodesAce {
 
 contract AutomationLogTop100 is ILogAutomation {
     using Strings for uint256;
+    using Strings for uint8;
 
     IGamesHub public gamesHub;
     address public forwarder;
@@ -83,9 +84,6 @@ contract AutomationLogTop100 is ILogAutomation {
         override
         returns (bool upkeepNeeded, bytes memory performData)
     {
-        // Verify if it's an UpdateGame event with updatePhaseIndex = 5
-        if (log.topics.length < 3) return (false, "");
-
         // Check if updatePhaseIndex = 5 (Top100)
         uint8 updatePhaseIndex = uint8(uint256(log.topics[1]));
         if (updatePhaseIndex != 5) return (false, "");
@@ -93,6 +91,25 @@ contract AutomationLogTop100 is ILogAutomation {
         // Get gameDataIndex from the event
         uint256 gameDataIndex = uint256(log.topics[2]);
 
+        // Get stored data from FunctionsConsumer
+        bytes memory marketData = IFunctionsConsumer(
+            gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+        ).updateData(gameDataIndex);
+
+        // Parse market data
+        (
+            uint256 lastIndex,
+            ICoins100Store.CoinData[] memory coins
+        ) = parseCoinsReturn(marketData);
+
+        // Encode data for performUpkeep
+        performData = abi.encode(lastIndex, coins);
+        upkeepNeeded = true;
+    }
+
+    function testCheckLog(
+        uint256 gameDataIndex
+    ) external view returns (bool upkeepNeeded, bytes memory performData) {
         // Get stored data from FunctionsConsumer
         bytes memory marketData = IFunctionsConsumer(
             gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
@@ -133,15 +150,16 @@ contract AutomationLogTop100 is ILogAutomation {
         }
 
         // If we haven't stored all 100 coins yet, request more
-        if (currentIndex + coins.length < 99) {
+        if (currentIndex != 0) {
             IAutomationTop100 automationTop100 = IAutomationTop100(
                 gamesHub.helpers(keccak256("AUTOMATION_TOP100"))
             );
 
             string[] memory args = new string[](3);
+
             args[0] = "T";
             args[1] = lastIndex.toString();
-            args[2] = (99 - (currentIndex + coins.length)).toString();
+            args[2] = (100 - currentIndex).toString();
 
             automationTop100.sendRequest(
                 ISourceCodesAce(gamesHub.helpers(keccak256("SOURCE_CODES_ACE")))

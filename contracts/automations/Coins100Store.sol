@@ -11,6 +11,15 @@ contract Coins100Store {
     }
     IGamesHub public gamesHub;
 
+    // Events
+    event CoinStored(
+        uint8 indexed index,
+        uint256 indexed cmcId,
+        bytes symbol,
+        bytes geckoId
+    );
+    event LastIndexUpdated(uint8 indexed oldIndex, uint8 indexed newIndex);
+
     /**
      * @dev Constructor function
      * @param _gamesHubAddress Address of the games hub
@@ -42,10 +51,17 @@ contract Coins100Store {
         coinDataBySymbol[coin.symbol] = coin;
         top100ChosenCoins[index] = coin.cmcId;
 
+        emit CoinStored(index, coin.cmcId, coin.symbol, coin.geckoId);
+
+        uint8 oldIndex = lastStoredIndex;
         if (index == 99) {
             lastStoredIndex = 0;
         } else if (index > lastStoredIndex) {
             lastStoredIndex = index;
+        }
+
+        if (oldIndex != lastStoredIndex) {
+            emit LastIndexUpdated(oldIndex, lastStoredIndex);
         }
     }
 

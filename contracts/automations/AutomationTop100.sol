@@ -31,19 +31,21 @@ interface IFunctionsConsumer {
 contract AutomationTop100 is AutomationCompatibleInterface {
     using FunctionsRequest for FunctionsRequest.Request;
     using Strings for uint256;
+    using Strings for uint8;
 
-    // Events
+    /** EVENTS **/
     event FunctionsConsumerSet(address indexed functionsConsumer);
     event PerformUpkeep(uint256 gameId, bool newGame);
     event Initialized(uint64 subscriptionId, uint32 callbackGasLimit);
 
+    /** STATE VARIABLES **/
     // State variables for Chainlink Automation
     uint256 public s_lastUpkeepTimeStamp;
-    uint256 public s_upkeepInterval = 604800; // 1 semana em segundos
+    uint256 public s_upkeepInterval = 300; //604800; // 1 semana em segundos
     uint256 public s_upkeepCounter;
 
-    bytes private encryptedSecretsReference;
-    uint64 private subscriptionId;
+    bytes public encryptedSecretsReference; //private
+    uint64 public subscriptionId; //private
     uint32 public callbackGasLimit;
 
     IGamesHub public gamesHub;
@@ -59,6 +61,15 @@ contract AutomationTop100 is AutomationCompatibleInterface {
         s_lastUpkeepTimeStamp = block.timestamp - s_upkeepInterval;
     }
 
+    /** MODIFIERS **/
+    modifier onlyAdministrator() {
+        require(
+            gamesHub.checkRole(keccak256("ADMIN"), msg.sender),
+            "Restricted to administrators"
+        );
+        _;
+    }
+
     modifier onlyForwarder() {
         require(
             forwarder == address(0) || msg.sender == forwarder,
@@ -70,7 +81,7 @@ contract AutomationTop100 is AutomationCompatibleInterface {
     modifier onlyLogContract() {
         require(
             msg.sender == gamesHub.helpers(keccak256("AUTOMATIONLOG_TOP100")) ||
-            msg.sender == gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION")),
+                msg.sender == gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION")),
             "Restricted to log contracts"
         );
         _;
@@ -123,57 +134,30 @@ contract AutomationTop100 is AutomationCompatibleInterface {
             forwarder = msg.sender;
         }
 
-        require(
-            (block.timestamp - s_lastUpkeepTimeStamp) > s_upkeepInterval,
-            "Upkeep interval not reached"
-        );
-
         s_lastUpkeepTimeStamp = block.timestamp;
         s_upkeepCounter++;
-        ICoins100Store coins100Store = ICoins100Store(
+
+        uint8 lastIndex = ICoins100Store(
             gamesHub.helpers(keccak256("COINS100"))
-        );
-
-        uint8 lastIndex = coins100Store.lastStoredIndex();
-        uint256 itLasts = lastIndex == 0 ? 100 : 99 - lastIndex;
-
-        callFunctionsConsumer(lastIndex, itLasts);
-    }
-
-    /**
-     * @notice Called by this contract or LogAutomation contract to call FunctionsConsumer
-     * @param lastIndex Last index called
-     * @param itLasts Number of iterations until 99
-     */
-    function callFunctionsConsumer(uint256 lastIndex, uint256 itLasts) public {
-        require(
-            msg.sender == address(this) ||
-                msg.sender ==
-                gamesHub.helpers(keccak256("AUTOMATIONLOG_TOP100")),
-            "Only this contract or LogAutomation can call"
-        );
-
-        ISourceCodesAce sourceCodesAce = ISourceCodesAce(
-            gamesHub.helpers(keccak256("SOURCE_CODES_ACE"))
-        );
-        IFunctionsConsumer functionsConsumer = IFunctionsConsumer(
-            gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
-        );
+        ).lastStoredIndex();
+        uint256 itLasts = 100 - lastIndex;
 
         string[] memory args = new string[](3);
         args[0] = "T";
-        args[1] = lastIndex.toString();
+        args[1] = "0";
         args[2] = itLasts.toString();
 
-        functionsConsumer.sendRequest(
-            sourceCodesAce.sourceTop100(),
-            FunctionsRequest.Location.Remote,
-            encryptedSecretsReference,
-            args,
-            new bytes[](0),
-            subscriptionId,
-            callbackGasLimit
-        );
+        IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
+            .sendRequest(
+                ISourceCodesAce(gamesHub.helpers(keccak256("SOURCE_CODES_ACE")))
+                    .sourceTop100(),
+                FunctionsRequest.Location.Remote,
+                encryptedSecretsReference,
+                args,
+                new bytes[](0),
+                subscriptionId,
+                callbackGasLimit
+            );
     }
 
     /**
@@ -216,5 +200,13 @@ contract AutomationTop100 is AutomationCompatibleInterface {
                 subscriptionId,
                 callbackGasLimit
             );
+    }
+
+    /**
+     * @notice Function to change the time interval in seconds
+     * @param newInterval New time interval, in seconds
+     */
+    function setUpdateInterval(uint256 newInterval) external onlyAdministrator {
+        s_upkeepInterval = newInterval;
     }
 }
