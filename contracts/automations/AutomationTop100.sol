@@ -84,11 +84,14 @@ contract AutomationTop100 is AutomationCompatibleInterface {
         _;
     }
 
-    modifier onlyLogContract() {
+    modifier onlyAutoContract() {
         require(
             msg.sender == gamesHub.helpers(keccak256("AUTOMATIONLOG_TOP100")) ||
-                msg.sender == gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION")),
-            "Restricted to log contracts"
+                msg.sender == gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION"))||
+                msg.sender == gamesHub.helpers(keccak256("ACE8_AUTOMATION")) ||
+                msg.sender == gamesHub.helpers(keccak256("ACE16_LOGAUTOMATION")) ||
+                msg.sender == gamesHub.helpers(keccak256("ACE16_AUTOMATION")),
+            "Restricted to automation contracts"
         );
         _;
     }
@@ -189,7 +192,7 @@ contract AutomationTop100 is AutomationCompatibleInterface {
     function sendRequest(
         string calldata source,
         string[] calldata args
-    ) external onlyLogContract {
+    ) external onlyAutoContract {
         IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
             .sendRequest(
                 source,
@@ -205,7 +208,7 @@ contract AutomationTop100 is AutomationCompatibleInterface {
     /**
      * @notice Function to send a sendRequest with newGame() to FunctionsConsumer.
      */
-    function sendRequestNewGame() external onlyLogContract {
+    function sendRequestNewGame() external onlyAutoContract {
         string[] memory args = new string[](2);
         args[0] = "N8";
         args[1] = "8";
@@ -229,7 +232,7 @@ contract AutomationTop100 is AutomationCompatibleInterface {
      */
     function setIndexIterator(
         uint256 newIndexIterator
-    ) external onlyLogContract {
+    ) external onlyAutoContract {
         indexIteration = newIndexIterator;
         if(indexIteration == 0) {
             cooldown = s_upkeepInterval;

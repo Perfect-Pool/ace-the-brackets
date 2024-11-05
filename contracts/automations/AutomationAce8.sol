@@ -287,11 +287,8 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         string[] memory args = new string[](3);
 
         if (performData.length == 0) {
-            args[0] = "N";
-            args[1] = "8";
-            IAutomationTop100(gamesHub.helpers(keccak256("AUTOMATION_TOP100")))
-                .sendRequest(sourceCodes.newGame(), args);
-
+            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
+                .emitUpdateGame(0, 0);
             emit PerformUpkeep(0, true);
             return;
         }
