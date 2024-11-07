@@ -23,7 +23,7 @@ interface ILogAutomation {
     function performUpkeep(bytes calldata performData) external;
 }
 
-interface IAceTicket8 {
+interface IAceTicket16 {
     function iterateGameTokenIds(
         uint256 _gameId,
         uint256 _iterateStart,
@@ -31,7 +31,7 @@ interface IAceTicket8 {
     ) external;
 }
 
-contract LogAutomationAce8Entry is ILogAutomation {
+contract LogAutomationAce16Entry is ILogAutomation {
     event GameTimeStartRequested(uint256 gameId);
     event IterateExecuted(
         uint256 gameId,
@@ -84,7 +84,7 @@ contract LogAutomationAce8Entry is ILogAutomation {
             (uint256, uint256, uint256)
         );
 
-        IAceTicket8(gamesHub.helpers(keccak256("NFT_ACE8")))
+        IAceTicket16(gamesHub.helpers(keccak256("NFT_ACE16")))
             .iterateGameTokenIds(gameId, iterateStart, iterateEnd);
         emit IterateExecuted(gameId, iterateStart, iterateEnd);
     }

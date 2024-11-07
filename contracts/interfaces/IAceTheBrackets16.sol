@@ -89,4 +89,10 @@ interface IAceTheBrackets16 {
     function getFinalResult(
         uint256 gameIndex
     ) external view returns (uint256[15] memory);
+
+    function performGames(
+        bytes calldata _dataNewGame,
+        bytes calldata _dataUpdate,
+        uint256 _lastTimeStamp
+    ) external;
 }
