@@ -45,7 +45,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
 
     // State variables for Chainlink Automation
     uint256 public s_lastUpkeepTimeStamp;
-    uint256 public s_upkeepInterval = 600;
+    uint256 public s_upkeepInterval = 500;
     uint256 public s_upkeepCounter;
 
     IGamesHub public gamesHub;
