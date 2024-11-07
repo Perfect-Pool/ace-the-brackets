@@ -33,7 +33,9 @@ interface IFunctionsConsumer {
 }
 
 interface ICoins100Store {
-    function prepareNewGame8(uint8[8] memory coinIndexes) external view returns (bytes memory);
+    function prepareNewGame8(
+        uint8[8] memory coinIndexes
+    ) external view returns (bytes memory);
 }
 
 contract LogAutomationAce8 is ILogAutomation {
@@ -83,13 +85,79 @@ contract LogAutomationAce8 is ILogAutomation {
             //New game executed
             performData = abi.encode(
                 updatePhase,
-                ICoins100Store(gamesHub.helpers(keccak256("COINS100"))).prepareNewGame8(
-                    parseUint8Array(
-                        IFunctionsConsumer(
-                            gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
-                        ).updateData(dataId)
+                ICoins100Store(gamesHub.helpers(keccak256("COINS100")))
+                    .prepareNewGame8(
+                        parseUint8Array(
+                            IFunctionsConsumer(
+                                gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                            ).updateData(dataId)
+                        )
                     )
+            );
+        } else if (updatePhase == 2) {
+            //Advance Rounds
+            (
+                uint256 gameId,
+                uint256[8] memory pricesBegin,
+                uint256[8] memory prices,
+                uint256[8] memory tokensIds
+            ) = pricesDataToGameUpdate(
+                    IFunctionsConsumer(
+                        gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                    ).updateData(dataId)
+                );
+
+            (
+                uint256[8] memory winners,
+                uint256[8] memory pricesWinners
+            ) = determineWinners(tokensIds, pricesBegin, prices);
+
+            performData = abi.encode(
+                updatePhase,
+                abi.encode(
+                    gameId,
+                    abi.encode(prices),
+                    abi.encode(pricesWinners),
+                    abi.encode(winners)
                 )
+            );
+        } else if (updatePhase == 6) {
+            //Activate game timer
+            performData = abi.encode(
+                updatePhase,
+                abi.encode(
+                    [dataId, 0, 0, 0],
+                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes],
+                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes],
+                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes]
+                )
+            );
+        } else {
+            upkeepNeeded = false;
+        }
+    }
+
+    function testCheckLog(
+        uint8 updatePhase,
+        uint256 dataId
+    ) external view returns (bool upkeepNeeded, bytes memory performData) {
+        upkeepNeeded = true;
+
+        if (updatePhase == 0) {
+            //New game requested
+            performData = abi.encode(updatePhase, "");
+        } else if (updatePhase == 1) {
+            //New game executed
+            performData = abi.encode(
+                updatePhase,
+                ICoins100Store(gamesHub.helpers(keccak256("COINS100")))
+                    .prepareNewGame8(
+                        parseUint8Array(
+                            IFunctionsConsumer(
+                                gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                            ).updateData(dataId)
+                        )
+                    )
             );
         } else if (updatePhase == 2) {
             //Advance Rounds

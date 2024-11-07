@@ -42,16 +42,11 @@ contract AutomationAce8 is AutomationCompatibleInterface {
     // Events
     event FunctionsConsumerSet(address indexed functionsConsumer);
     event PerformUpkeep(uint256 gameId, bool newGame);
-    event Initialized(uint64 subscriptionId, uint32 callbackGasLimit);
 
     // State variables for Chainlink Automation
     uint256 public s_lastUpkeepTimeStamp;
-    uint256 public s_upkeepInterval = 500;
+    uint256 public s_upkeepInterval = 600;
     uint256 public s_upkeepCounter;
-
-    bytes private encryptedSecretsReference;
-    uint64 private subscriptionId;
-    uint32 public callbackGasLimit;
 
     IGamesHub public gamesHub;
     address public forwarder;
@@ -311,31 +306,5 @@ contract AutomationAce8 is AutomationCompatibleInterface {
             .sendRequest(sourceCodes.updateGame(), args);
 
         emit PerformUpkeep(gameId, false);
-    }
-
-    /**
-     * @notice Initialize the contract with the necessary data
-     * @param _encryptedSecretsReference Reference pointing to encrypted secrets
-     * @param _subscriptionId Subscription ID used to pay for request
-     * @param _callbackGasLimit Maximum amount of gas used to call the `fullfilRequest` method on the FunctionsConsumer contract
-     */
-    function initialize(
-        bytes calldata _encryptedSecretsReference,
-        uint64 _subscriptionId,
-        uint32 _callbackGasLimit
-    ) public {
-        require(
-            address(
-                IFunctionsConsumer(
-                    gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
-                )
-            ) == msg.sender,
-            "Only FunctionsConsumer can initialize"
-        );
-        encryptedSecretsReference = _encryptedSecretsReference;
-        subscriptionId = _subscriptionId;
-        callbackGasLimit = _callbackGasLimit;
-
-        emit Initialized(_subscriptionId, _callbackGasLimit);
     }
 }
