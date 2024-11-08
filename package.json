@@ -39,6 +39,7 @@
     "verify-token-faucet": "hardhat run scripts/verify/verifyTokenFaucet.js --network",
     "verify-ace": "hardhat run scripts/verify/verifyAceTheBrackets8.js --network",
     "verify-ace-automation": "hardhat run scripts/verify/verifyAceAutomation.js --network",
+    "verify-ace-automation-16": "hardhat run scripts/verify/verifyAceAutomation16.js --network",
     "verify-nft-metadata": "hardhat run scripts/verify/verifyNftMetadata.js --network",
     "verify-nft-image": "hardhat run scripts/verify/verifyNftImage.js --network",
     "verify-nft": "hardhat run scripts/verify/verifyAceTicket8.js --network",

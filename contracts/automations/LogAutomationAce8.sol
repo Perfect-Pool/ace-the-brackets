@@ -25,7 +25,7 @@ interface ILogAutomation {
 }
 
 interface IAutomationTop100 {
-    function sendRequestNewGame() external;
+    function sendRequestNewGame(string calldata arg0, string calldata arg1) external;
 }
 
 interface IFunctionsConsumer {
@@ -215,7 +215,7 @@ contract LogAutomationAce8 is ILogAutomation {
 
         if (updatePhase == 0) {
             IAutomationTop100(gamesHub.helpers(keccak256("AUTOMATION_TOP100")))
-                .sendRequestNewGame();
+                .sendRequestNewGame("N8", "8");
             emit NewGameRequested();
         } else if (updatePhase == 1) {
             IAceTheBrackets8(gamesHub.games(keccak256("ACE8_PROXY")))

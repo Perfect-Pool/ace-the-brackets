@@ -40,7 +40,7 @@ contract AutomationTop100 is AutomationCompatibleInterface {
     event PerformUpkeep(uint256 gameId, bool newGame);
     event Initialized(uint64 subscriptionId, uint32 callbackGasLimit);
     event IndexIteratorChanged(uint256 newIndexIterator);
-    event UpdateIntervalChanged(uint256 newInterval);
+    event UpdateIntervalChanged(uint256 newInterval, uint256 newCooldown);
 
     /** STATE VARIABLES **/
     // State variables for Chainlink Automation
@@ -48,8 +48,8 @@ contract AutomationTop100 is AutomationCompatibleInterface {
     uint256 public s_upkeepInterval = 604800; // 1 semana em segundos
     uint256 public s_upkeepCounter;
 
-    bytes private encryptedSecretsReference; 
-    uint64 private subscriptionId; 
+    bytes private encryptedSecretsReference;
+    uint64 private subscriptionId;
     uint32 public callbackGasLimit;
 
     IGamesHub public gamesHub;
@@ -87,9 +87,11 @@ contract AutomationTop100 is AutomationCompatibleInterface {
     modifier onlyAutoContract() {
         require(
             msg.sender == gamesHub.helpers(keccak256("AUTOMATIONLOG_TOP100")) ||
-                msg.sender == gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION"))||
+                msg.sender ==
+                gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION")) ||
                 msg.sender == gamesHub.helpers(keccak256("ACE8_AUTOMATION")) ||
-                msg.sender == gamesHub.helpers(keccak256("ACE16_LOGAUTOMATION")) ||
+                msg.sender ==
+                gamesHub.helpers(keccak256("ACE16_LOGAUTOMATION")) ||
                 msg.sender == gamesHub.helpers(keccak256("ACE16_AUTOMATION")),
             "Restricted to automation contracts"
         );
@@ -130,8 +132,7 @@ contract AutomationTop100 is AutomationCompatibleInterface {
         override
         returns (bool upkeepNeeded, bytes memory performData)
     {
-        upkeepNeeded =
-            (block.timestamp - s_lastUpkeepTimeStamp) > cooldown;
+        upkeepNeeded = (block.timestamp - s_lastUpkeepTimeStamp) > cooldown;
         performData = new bytes(0);
     }
 
@@ -146,7 +147,7 @@ contract AutomationTop100 is AutomationCompatibleInterface {
         s_lastUpkeepTimeStamp = block.timestamp;
         s_upkeepCounter++;
 
-        if(cooldown == s_upkeepInterval) {
+        if (cooldown == s_upkeepInterval) {
             cooldown = 90;
         }
 
@@ -208,10 +209,13 @@ contract AutomationTop100 is AutomationCompatibleInterface {
     /**
      * @notice Function to send a sendRequest with newGame() to FunctionsConsumer.
      */
-    function sendRequestNewGame() external onlyAutoContract {
+    function sendRequestNewGame(
+        string calldata arg0,
+        string calldata arg1
+    ) external onlyAutoContract {
         string[] memory args = new string[](2);
-        args[0] = "N8";
-        args[1] = "8";
+        args[0] = arg0;
+        args[1] = arg1;
 
         IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
             .sendRequest(
@@ -234,7 +238,7 @@ contract AutomationTop100 is AutomationCompatibleInterface {
         uint256 newIndexIterator
     ) external onlyAutoContract {
         indexIteration = newIndexIterator;
-        if(indexIteration == 0) {
+        if (indexIteration == 0) {
             cooldown = s_upkeepInterval;
         }
         emit IndexIteratorChanged(newIndexIterator);
@@ -244,10 +248,12 @@ contract AutomationTop100 is AutomationCompatibleInterface {
      * @notice Function to change the time interval in seconds
      * @param newInterval New time interval, in seconds
      */
-    function setUpdateInterval(uint256 newInterval) external onlyAdministrator {
+    function setUpdateInterval(
+        uint256 newInterval,
+        uint256 newCooldown
+    ) external onlyAdministrator {
         s_upkeepInterval = newInterval;
-        cooldown = newInterval;
-        emit UpdateIntervalChanged(newInterval);
+        cooldown = newCooldown;
+        emit UpdateIntervalChanged(newInterval, newCooldown);
     }
-
 }
