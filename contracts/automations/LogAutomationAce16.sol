@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import "../interfaces/IGamesHub.sol";
 import "../interfaces/IAceTheBrackets16.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 struct Log {
     uint256 index; // Index of the log in the block
@@ -39,6 +40,8 @@ interface ICoins100Store {
 }
 
 contract LogAutomationAce16 is ILogAutomation {
+    using Strings for uint256;
+
     event UpdateDataStored(uint256 indexed index);
     event UpdateExecuted(uint256 indexed gameId);
     event GameTimeStarted(uint256 timeStamp);
@@ -127,8 +130,20 @@ contract LogAutomationAce16 is ILogAutomation {
                 updatePhase,
                 abi.encode(
                     [dataId, 0, 0, 0, 0],
-                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes, emptyBytes],
-                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes, emptyBytes],
+                    [
+                        emptyBytes,
+                        emptyBytes,
+                        emptyBytes,
+                        emptyBytes,
+                        emptyBytes
+                    ],
+                    [
+                        emptyBytes,
+                        emptyBytes,
+                        emptyBytes,
+                        emptyBytes,
+                        emptyBytes
+                    ],
                     [emptyBytes, emptyBytes, emptyBytes, emptyBytes, emptyBytes]
                 )
             );
@@ -192,8 +207,20 @@ contract LogAutomationAce16 is ILogAutomation {
                 updatePhase,
                 abi.encode(
                     [dataId, 0, 0, 0, 0],
-                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes, emptyBytes],
-                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes, emptyBytes],
+                    [
+                        emptyBytes,
+                        emptyBytes,
+                        emptyBytes,
+                        emptyBytes,
+                        emptyBytes
+                    ],
+                    [
+                        emptyBytes,
+                        emptyBytes,
+                        emptyBytes,
+                        emptyBytes,
+                        emptyBytes
+                    ],
                     [emptyBytes, emptyBytes, emptyBytes, emptyBytes, emptyBytes]
                 )
             );
@@ -235,9 +262,27 @@ contract LogAutomationAce16 is ILogAutomation {
                     "",
                     abi.encode(
                         [gameId, 0, 0, 0, 0],
-                        [prices, emptyBytes, emptyBytes, emptyBytes, emptyBytes],
-                        [pricesWinners, emptyBytes, emptyBytes, emptyBytes, emptyBytes],
-                        [winners, emptyBytes, emptyBytes, emptyBytes, emptyBytes]
+                        [
+                            prices,
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes
+                        ],
+                        [
+                            pricesWinners,
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes
+                        ],
+                        [
+                            winners,
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes
+                        ]
                     ),
                     timeStamp
                 );
@@ -479,5 +524,105 @@ contract LogAutomationAce16 is ILogAutomation {
             result[i] = data[start + i];
         }
         return string(result);
+    }
+
+    function arrayUint256ToStringBytes1(
+        uint256[16] memory array
+    ) public pure returns (string memory) {
+        return
+            string(
+                abi.encodePacked(
+                    array[0].toString(),
+                    ",",
+                    array[1].toString(),
+                    ",",
+                    array[2].toString(),
+                    ",",
+                    array[3].toString(),
+                    ",",
+                    array[4].toString(),
+                    ",",
+                    array[5].toString(),
+                    ",",
+                    array[6].toString(),
+                    ",",
+                    array[7].toString()
+                )
+            );
+    }
+
+    function arrayUint256ToStringBytes2(
+        uint256[16] memory array
+    ) public pure returns (string memory) {
+        return
+            string(
+                abi.encodePacked(
+                    array[8].toString(),
+                    ",",
+                    array[9].toString(),
+                    ",",
+                    array[10].toString(),
+                    ",",
+                    array[11].toString(),
+                    ",",
+                    array[12].toString(),
+                    ",",
+                    array[13].toString(),
+                    ",",
+                    array[14].toString(),
+                    ",",
+                    array[15].toString()
+                )
+            );
+    }
+
+    function arrayStringsToBytes1(
+        string[16] memory array
+    ) public pure returns (string memory) {
+        return
+            string(
+                abi.encodePacked(
+                    array[0],
+                    ",",
+                    array[1],
+                    ",",
+                    array[2],
+                    ",",
+                    array[3],
+                    ",",
+                    array[4],
+                    ",",
+                    array[5],
+                    ",",
+                    array[6],
+                    ",",
+                    array[7]
+                )
+            );
+    }
+
+    function arrayStringsToBytes2(
+        string[16] memory array
+    ) public pure returns (string memory) {
+        return
+            string(
+                abi.encodePacked(
+                    array[8],
+                    ",",
+                    array[9],
+                    ",",
+                    array[10],
+                    ",",
+                    array[11],
+                    ",",
+                    array[12],
+                    ",",
+                    array[13],
+                    ",",
+                    array[14],
+                    ",",
+                    array[15]
+                )
+            );
     }
 }

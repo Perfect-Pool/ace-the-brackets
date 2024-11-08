@@ -25,6 +25,7 @@ interface IAce16Entry {
 
 interface ISourceCodesAce {
     function updateGame() external view returns (string memory);
+
     function newGame() external view returns (string memory);
 }
 
@@ -33,6 +34,24 @@ interface IAutomationTop100 {
         string calldata source,
         string[] calldata args
     ) external;
+}
+
+interface ILogAutomationAce16 {
+    function arrayUint256ToStringBytes1(
+        uint256[16] memory array
+    ) external pure returns (string memory);
+
+    function arrayUint256ToStringBytes2(
+        uint256[16] memory array
+    ) external pure returns (string memory);
+
+    function arrayStringsToBytes1(
+        string[16] memory array
+    ) external pure returns (string memory);
+
+    function arrayStringsToBytes2(
+        string[16] memory array
+    ) external pure returns (string memory);
 }
 
 contract AutomationAce16 is AutomationCompatibleInterface {
@@ -127,7 +146,7 @@ contract AutomationAce16 is AutomationCompatibleInterface {
         if (currentRound > 3) {
             return (false, "");
         } else if ((currentRound == 0) || (currentRound == 1)) {
-            (roundData, , , ,, , , , , active) = abi.decode(
+            (roundData, , , , , , , , , active) = abi.decode(
                 ace16.getGameFullData(activeGames[0]),
                 (
                     bytes,
@@ -155,14 +174,14 @@ contract AutomationAce16 is AutomationCompatibleInterface {
                         .getGamePlayers(activeGames[0])
                         .length > 0
                 ) {
-                    return (true, abi.encode(activeGames[0], ""));
+                    return (true, abi.encode(activeGames[0], "", ""));
                 }
                 return (false, abi.encodePacked("0"));
             } else if (block.timestamp < startTime) {
                 return (false, abi.encodePacked("S"));
             }
         } else if (currentRound == 2) {
-            (, roundData, , ,, , , , , ) = abi.decode(
+            (, roundData, , , , , , , , ) = abi.decode(
                 ace16.getGameFullData(activeGames[0]),
                 (
                     bytes,
@@ -183,7 +202,7 @@ contract AutomationAce16 is AutomationCompatibleInterface {
             );
             upkeepNeeded = true;
         } else if (currentRound == 3) {
-            (, , roundData,, , , , , , ) = abi.decode(
+            (, , roundData, , , , , , , ) = abi.decode(
                 ace16.getGameFullData(activeGames[0]),
                 (
                     bytes,
@@ -203,7 +222,7 @@ contract AutomationAce16 is AutomationCompatibleInterface {
                 (string[16], uint256[16], uint256[16], uint256, uint256)
             );
             upkeepNeeded = true;
-        }else if (currentRound == 4) {
+        } else if (currentRound == 4) {
             (, , , roundData, , , , , , ) = abi.decode(
                 ace16.getGameFullData(activeGames[0]),
                 (
@@ -242,75 +261,23 @@ contract AutomationAce16 is AutomationCompatibleInterface {
             gamesHub.helpers(keccak256("COINS100"))
         ).coinGeckoIDs16(teamNames);
 
+        ILogAutomationAce16 automationAce16 = ILogAutomationAce16(
+            gamesHub.helpers(keccak256("ACE16_AUTOMATION"))
+        );
+
         return (
             true,
             abi.encode(
                 activeGames[0],
                 abi.encodePacked(
-                    teamsIds[0].toString(),
+                    automationAce16.arrayUint256ToStringBytes1(teamsIds),
                     ",",
-                    teamsIds[1].toString(),
-                    ",",
-                    teamsIds[2].toString(),
-                    ",",
-                    teamsIds[3].toString(),
-                    ",",
-                    teamsIds[4].toString(),
-                    ",",
-                    teamsIds[5].toString(),
-                    ",",
-                    teamsIds[6].toString(),
-                    ",",
-                    teamsIds[7].toString(),
-                    ",",
-                    teamsIds[8].toString(),
-                    ",",
-                    teamsIds[9].toString(),
-                    ",",
-                    teamsIds[10].toString(),
-                    ",",
-                    teamsIds[11].toString(),
-                    ",",
-                    teamsIds[12].toString(),
-                    ",",
-                    teamsIds[13].toString(),
-                    ",",
-                    teamsIds[14].toString(),
-                    ",",
-                    teamsIds[15].toString()
+                    automationAce16.arrayUint256ToStringBytes2(teamsIds)
                 ),
                 abi.encodePacked(
-                    teamsIdsCG[0],
+                    automationAce16.arrayStringsToBytes2(teamsIdsCG),
                     ",",
-                    teamsIdsCG[1],
-                    ",",
-                    teamsIdsCG[2],
-                    ",",
-                    teamsIdsCG[3],
-                    ",",
-                    teamsIdsCG[4],
-                    ",",
-                    teamsIdsCG[5],
-                    ",",
-                    teamsIdsCG[6],
-                    ",",
-                    teamsIdsCG[7],
-                    ",",
-                    teamsIdsCG[8],
-                    ",",
-                    teamsIdsCG[9],
-                    ",",
-                    teamsIdsCG[10],
-                    ",",
-                    teamsIdsCG[11],
-                    ",",
-                    teamsIdsCG[12],
-                    ",",
-                    teamsIdsCG[13],
-                    ",",
-                    teamsIdsCG[14],
-                    ",",
-                    teamsIdsCG[15]
+                    automationAce16.arrayStringsToBytes2(teamsIdsCG)
                 )
             )
         );

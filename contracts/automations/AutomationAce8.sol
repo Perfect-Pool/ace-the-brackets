@@ -154,7 +154,7 @@ contract AutomationAce8 is AutomationCompatibleInterface {
                         .getGamePlayers(activeGames[0])
                         .length > 0
                 ) {
-                    return (true, abi.encode(activeGames[0], ""));
+                    return (true, abi.encode(activeGames[0], "", ""));
                 }
                 return (false, abi.encodePacked("0"));
             } else if (block.timestamp < startTime) {
