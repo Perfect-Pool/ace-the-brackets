@@ -92,7 +92,7 @@ contract LogAutomationAce16 is ILogAutomation {
                     .prepareNewGame16(
                         parseUint8Array(
                             IFunctionsConsumer(
-                                gamesHub.helpers(keccak256("FUNCTIONS_ACE16"))
+                                gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
                             ).updateData(dataId)
                         )
                     )
@@ -106,7 +106,7 @@ contract LogAutomationAce16 is ILogAutomation {
                 uint256[16] memory tokensIds
             ) = pricesDataToGameUpdate(
                     IFunctionsConsumer(
-                        gamesHub.helpers(keccak256("FUNCTIONS_ACE16"))
+                        gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
                     ).updateData(dataId)
                 );
 
@@ -169,7 +169,7 @@ contract LogAutomationAce16 is ILogAutomation {
                     .prepareNewGame16(
                         parseUint8Array(
                             IFunctionsConsumer(
-                                gamesHub.helpers(keccak256("FUNCTIONS_ACE16"))
+                                gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
                             ).updateData(dataId)
                         )
                     )
@@ -183,7 +183,7 @@ contract LogAutomationAce16 is ILogAutomation {
                 uint256[16] memory tokensIds
             ) = pricesDataToGameUpdate(
                     IFunctionsConsumer(
-                        gamesHub.helpers(keccak256("FUNCTIONS_ACE16"))
+                        gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
                     ).updateData(dataId)
                 );
 
