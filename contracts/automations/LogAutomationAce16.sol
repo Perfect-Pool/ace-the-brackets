@@ -26,7 +26,10 @@ interface ILogAutomation {
 }
 
 interface IAutomationTop100 {
-    function sendRequestNewGame(string calldata arg0, string calldata arg1) external;
+    function sendRequestNewGame(
+        string calldata arg0,
+        string calldata arg1
+    ) external;
 }
 
 interface IFunctionsConsumer {
@@ -127,25 +130,8 @@ contract LogAutomationAce16 is ILogAutomation {
         } else if (updatePhase == 8) {
             //Activate game timer
             performData = abi.encode(
-                updatePhase,
-                abi.encode(
-                    [dataId, 0, 0, 0, 0],
-                    [
-                        emptyBytes,
-                        emptyBytes,
-                        emptyBytes,
-                        emptyBytes,
-                        emptyBytes
-                    ],
-                    [
-                        emptyBytes,
-                        emptyBytes,
-                        emptyBytes,
-                        emptyBytes,
-                        emptyBytes
-                    ],
-                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes, emptyBytes]
-                )
+                4,
+                abi.encode(dataId, emptyBytes, emptyBytes, emptyBytes)
             );
         } else {
             upkeepNeeded = false;
@@ -204,25 +190,8 @@ contract LogAutomationAce16 is ILogAutomation {
         } else if (updatePhase == 8) {
             //Activate game timer
             performData = abi.encode(
-                updatePhase,
-                abi.encode(
-                    [dataId, 0, 0, 0, 0],
-                    [
-                        emptyBytes,
-                        emptyBytes,
-                        emptyBytes,
-                        emptyBytes,
-                        emptyBytes
-                    ],
-                    [
-                        emptyBytes,
-                        emptyBytes,
-                        emptyBytes,
-                        emptyBytes,
-                        emptyBytes
-                    ],
-                    [emptyBytes, emptyBytes, emptyBytes, emptyBytes, emptyBytes]
-                )
+                4,
+                abi.encode(dataId, emptyBytes, emptyBytes, emptyBytes)
             );
         } else {
             upkeepNeeded = false;
@@ -287,12 +256,7 @@ contract LogAutomationAce16 is ILogAutomation {
                     timeStamp
                 );
             emit UpdateExecuted(gameId);
-        } else if (updatePhase == 8) {
-            uint256 timeStamp = (block.timestamp / 120) * 120;
-            IAceTheBrackets16(gamesHub.games(keccak256("ACE16_PROXY")))
-                .performGames("", _updateData, timeStamp);
-            emit GameTimeStarted(timeStamp);
-        }
+        } 
     }
 
     /**
