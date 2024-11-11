@@ -353,7 +353,7 @@ contract LogAutomationAce16 is ILogAutomation {
         }
 
         // Fill the remaining positions with zeros
-        for (uint256 i = 4; i < 16; i++) {
+        for (uint256 i = 8; i < 16; i++) {
             winners[i] = 0;
             pricesWinners[i] = 0;
         }
