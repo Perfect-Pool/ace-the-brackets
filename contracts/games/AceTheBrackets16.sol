@@ -144,9 +144,7 @@ contract AceTheBrackets16 {
      * @dev Function to create a new game
      * @param _dataNewGame Data for the new game
      */
-    function createGame(
-        bytes calldata _dataNewGame
-    ) external onlyGameContract {
+    function createGame(bytes calldata _dataNewGame) external onlyGameContract {
         (uint256[16] memory _cmcIds, string[16] memory _symbols) = abi.decode(
             _dataNewGame,
             (uint256[16], string[16])
@@ -189,13 +187,14 @@ contract AceTheBrackets16 {
         bytes memory _pricesWinners,
         bytes memory _winners
     ) external onlyGameContract {
-        uint8 currentRound = games[gameIndex].currentRound;
+        Game storage game = games[gameIndex];
+        uint8 currentRound = game.currentRound;
         if (currentRound > 3) removeGame(gameIndex);
 
         uint256[16] memory pricesArray = abi.decode(_prices, (uint256[16]));
 
-        if (!games[gameIndex].activated) {
-            if (games[gameIndex].start == 0) {
+        if (!game.activated) {
+            if (game.start == 0) {
                 _updateTimestamps(gameIndex, _lastTimeStamp);
             }
 
@@ -203,8 +202,8 @@ contract AceTheBrackets16 {
                 return;
             }
 
-            games[gameIndex].activated = true;
-            games[gameIndex].rounds[0].pricesStart = pricesArray;
+            game.activated = true;
+            game.rounds[0].pricesStart = pricesArray;
             return;
         }
 
@@ -213,15 +212,21 @@ contract AceTheBrackets16 {
 
         uint8 nextRound = currentRound + 1;
 
-        games[gameIndex].rounds[currentRound].pricesEnd = pricesArray;
+        game.rounds[currentRound].pricesEnd = pricesArray;
+
+        Round memory currentRoundData = game.rounds[currentRound];
+
+        if (
+            (currentRound == 0 && currentRoundData.start < _lastTimeStamp) ||
+            (currentRound > 0 && currentRoundData.end < _lastTimeStamp)
+        ) {
+            return;
+        }
 
         if (currentRound == 3) {
-            games[gameIndex].finalPrice = abi.decode(
-                _pricesWinners,
-                (uint256[16])
-            )[0];
+            game.finalPrice = abi.decode(_pricesWinners, (uint256[16]))[0];
 
-            games[gameIndex].winner = winnersArray[0];
+            game.winner = winnersArray[0];
 
             removeGame(gameIndex);
 
@@ -236,27 +241,23 @@ contract AceTheBrackets16 {
 
             gameIdToCode[gameIndex] = gameCode;
 
-            IFunctionsConsumer(
-                gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
-            ).emitUpdateGame(7, 0);
+            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
+                .emitUpdateGame(7, 0);
         } else {
             if (
                 (currentRound == 0 && winnersArray[8] != 0) ||
                 (currentRound == 1 && winnersArray[4] != 0) ||
                 (currentRound == 2 && winnersArray[2] != 0)
             ) revert("ACE-06");
-            games[gameIndex].rounds[nextRound].tokens = abi.decode(
-                _winners,
-                (uint256[16])
-            );
+            game.rounds[nextRound].tokens = abi.decode(_winners, (uint256[16]));
 
-            games[gameIndex].rounds[nextRound].pricesStart = abi.decode(
+            game.rounds[nextRound].pricesStart = abi.decode(
                 _pricesWinners,
                 (uint256[16])
             );
         }
 
-        games[gameIndex].currentRound = nextRound;
+        game.currentRound = nextRound;
     }
 
     /**
@@ -264,8 +265,13 @@ contract AceTheBrackets16 {
      * @param _gameId The game number
      * @param _lastTimeStamp The last timestamp
      */
-    function _updateTimestamps(uint256 _gameId, uint256 _lastTimeStamp) internal {
-        uint256 timer = _lastTimeStamp - (_lastTimeStamp % betTime) + (betTime * 2);
+    function _updateTimestamps(
+        uint256 _gameId,
+        uint256 _lastTimeStamp
+    ) internal {
+        uint256 timer = _lastTimeStamp -
+            (_lastTimeStamp % betTime) +
+            (betTime * 2);
         uint256 _roundDuration = roundDuration;
 
         games[_gameId].start = timer;

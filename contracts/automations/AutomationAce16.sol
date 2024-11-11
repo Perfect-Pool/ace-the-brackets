@@ -196,7 +196,7 @@ contract AutomationAce16 is AutomationCompatibleInterface {
                     bool
                 )
             );
-            (teamNames, , , , endTime) = abi.decode(
+             (teamNames, , , , endTime) = abi.decode(
                 roundData,
                 (string[16], uint256[16], uint256[16], uint256, uint256)
             );
@@ -262,7 +262,7 @@ contract AutomationAce16 is AutomationCompatibleInterface {
         ).coinGeckoIDs16(teamNames);
 
         ILogAutomationAce16 automationAce16 = ILogAutomationAce16(
-            gamesHub.helpers(keccak256("ACE16_AUTOMATION"))
+            gamesHub.helpers(keccak256("ACE16_LOGAUTOMATION"))
         );
 
         return (

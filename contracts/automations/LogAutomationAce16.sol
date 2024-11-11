@@ -102,30 +102,20 @@ contract LogAutomationAce16 is ILogAutomation {
             );
         } else if (updatePhase == 4) {
             //Advance Rounds
-            (
-                uint256 gameId,
-                uint256[16] memory pricesBegin,
-                uint256[16] memory prices,
-                uint256[16] memory tokensIds
-            ) = pricesDataToGameUpdate(
-                    IFunctionsConsumer(
-                        gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
-                    ).updateData(dataId)
-                );
+            IAceTheBrackets16 aceTheBrackets16 = IAceTheBrackets16(
+                gamesHub.games(keccak256("ACE16"))
+            );
+            uint256[16] memory prices = parseUint256Array(
+                IFunctionsConsumer(
+                    gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                ).updateData(dataId)
+            );
 
-            (
-                uint256[16] memory winners,
-                uint256[16] memory pricesWinners
-            ) = determineWinners(tokensIds, pricesBegin, prices);
+            uint256[] memory gameIds = aceTheBrackets16.getActiveGames();
 
             performData = abi.encode(
                 updatePhase,
-                abi.encode(
-                    gameId,
-                    abi.encode(prices),
-                    abi.encode(pricesWinners),
-                    abi.encode(winners)
-                )
+                abi.encode(gameIds[0], prices)
             );
         } else if (updatePhase == 8) {
             //Activate game timer
@@ -162,30 +152,20 @@ contract LogAutomationAce16 is ILogAutomation {
             );
         } else if (updatePhase == 4) {
             //Advance Rounds
-            (
-                uint256 gameId,
-                uint256[16] memory pricesBegin,
-                uint256[16] memory prices,
-                uint256[16] memory tokensIds
-            ) = pricesDataToGameUpdate(
-                    IFunctionsConsumer(
-                        gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
-                    ).updateData(dataId)
-                );
+            IAceTheBrackets16 aceTheBrackets16 = IAceTheBrackets16(
+                gamesHub.games(keccak256("ACE16"))
+            );
+            uint256[16] memory prices = parseUint256Array(
+                IFunctionsConsumer(
+                    gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                ).updateData(dataId)
+            );
 
-            (
-                uint256[16] memory winners,
-                uint256[16] memory pricesWinners
-            ) = determineWinners(tokensIds, pricesBegin, prices);
+            uint256[] memory gameIds = aceTheBrackets16.getActiveGames();
 
             performData = abi.encode(
                 updatePhase,
-                abi.encode(
-                    gameId,
-                    abi.encode(prices),
-                    abi.encode(pricesWinners),
-                    abi.encode(winners)
-                )
+                abi.encode(gameIds[0], prices)
             );
         } else if (updatePhase == 8) {
             //Activate game timer
@@ -218,12 +198,21 @@ contract LogAutomationAce16 is ILogAutomation {
                 .performGames(_updateData, "", block.timestamp);
             emit NewGameExecuted();
         } else if (updatePhase == 4) {
+            (uint256 gameId, uint256[16] memory prices) = abi.decode(
+                _updateData,
+                (uint256, uint256[16])
+            );
+
             (
-                uint256 gameId,
-                bytes memory prices,
-                bytes memory pricesWinners,
-                bytes memory winners
-            ) = abi.decode(_updateData, (uint256, bytes, bytes, bytes));
+                uint256[16] memory pricesBegin,
+                uint256[16] memory tokensIds
+            ) = actualGameData(gameId);
+
+            (
+                uint256[16] memory winners,
+                uint256[16] memory pricesWinners
+            ) = determineWinners(tokensIds, pricesBegin, prices);
+
             uint256 timeStamp = (block.timestamp / 120) * 120;
 
             IAceTheBrackets16(gamesHub.games(keccak256("ACE16_PROXY")))
@@ -232,21 +221,21 @@ contract LogAutomationAce16 is ILogAutomation {
                     abi.encode(
                         [gameId, 0, 0, 0, 0],
                         [
-                            prices,
+                            abi.encode(prices),
                             emptyBytes,
                             emptyBytes,
                             emptyBytes,
                             emptyBytes
                         ],
                         [
-                            pricesWinners,
+                            abi.encode(pricesWinners),
                             emptyBytes,
                             emptyBytes,
                             emptyBytes,
                             emptyBytes
                         ],
                         [
-                            winners,
+                            abi.encode(winners),
                             emptyBytes,
                             emptyBytes,
                             emptyBytes,
@@ -256,38 +245,22 @@ contract LogAutomationAce16 is ILogAutomation {
                     timeStamp
                 );
             emit UpdateExecuted(gameId);
-        } 
+        }
     }
 
     /**
      * @dev Prepares the data for updating the game
-     * @param pricesData The log data
-     * @return gameId The ID of the game
-     * @return pricesBegin The previous prices to compare
-     * @return prices The new prices to compare
-     * @return tokensIds The IDs of the tokens
+     * @param gameId The index of the game
+     * @return pricesBegin The starting prices
+     * @return tokensIds The array of token IDs
      */
-
-    function pricesDataToGameUpdate(
-        bytes memory pricesData
-    )
-        public
-        view
-        returns (
-            uint256,
-            uint256[16] memory,
-            uint256[16] memory,
-            uint256[16] memory
-        )
-    {
-        uint256[16] memory prices = parseUint256Array(pricesData);
-
+    function actualGameData(
+        uint256 gameId
+    ) public view returns (uint256[16] memory, uint256[16] memory) {
         IAceTheBrackets16 aceTheBrackets16 = IAceTheBrackets16(
             gamesHub.games(keccak256("ACE16"))
         );
-
-        uint256[] memory gameIds = aceTheBrackets16.getActiveGames();
-        uint8 status = aceTheBrackets16.getGameStatus(gameIds[0]);
+        uint8 status = aceTheBrackets16.getGameStatus(gameId);
 
         (
             string[16] memory tokenSymbols,
@@ -297,15 +270,13 @@ contract LogAutomationAce16 is ILogAutomation {
 
         ) = abi.decode(
                 aceTheBrackets16.getRoundFullData(
-                    gameIds[0],
+                    gameId,
                     status == 0 ? 0 : status - 1
                 ),
                 (string[16], uint256[16], uint256[16], uint256, uint256)
             );
         return (
-            gameIds[0],
             pricesBegin,
-            prices,
             aceTheBrackets16.getTokensIds(abi.encode(tokenSymbols))
         );
     }
@@ -345,7 +316,7 @@ contract LogAutomationAce16 is ILogAutomation {
         view
         returns (uint256[16] memory winners, uint256[16] memory pricesWinners)
     {
-        for (uint256 i = 0; i < 4; i++) {
+        for (uint256 i = 0; i < 8; i++) {
             int256 variation1 = calculatePriceVariation(
                 pricesBegin[i * 2],
                 pricesEnd[i * 2]
