@@ -214,15 +214,6 @@ contract AceTheBrackets16 {
 
         game.rounds[currentRound].pricesEnd = pricesArray;
 
-        Round memory currentRoundData = game.rounds[currentRound];
-
-        if (
-            (currentRound == 0 && currentRoundData.start < _lastTimeStamp) ||
-            (currentRound > 0 && currentRoundData.end < _lastTimeStamp)
-        ) {
-            return;
-        }
-
         if (currentRound == 3) {
             game.finalPrice = abi.decode(_pricesWinners, (uint256[16]))[0];
 

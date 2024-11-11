@@ -119,10 +119,7 @@ contract LogAutomationAce16 is ILogAutomation {
             );
         } else if (updatePhase == 8) {
             //Activate game timer
-            performData = abi.encode(
-                4,
-                abi.encode(dataId, emptyBytes, emptyBytes, emptyBytes)
-            );
+            performData = abi.encode(updatePhase, abi.encode(dataId));
         } else {
             upkeepNeeded = false;
         }
@@ -169,10 +166,7 @@ contract LogAutomationAce16 is ILogAutomation {
             );
         } else if (updatePhase == 8) {
             //Activate game timer
-            performData = abi.encode(
-                4,
-                abi.encode(dataId, emptyBytes, emptyBytes, emptyBytes)
-            );
+            performData = abi.encode(updatePhase, abi.encode(dataId));
         } else {
             upkeepNeeded = false;
         }
@@ -245,6 +239,40 @@ contract LogAutomationAce16 is ILogAutomation {
                     timeStamp
                 );
             emit UpdateExecuted(gameId);
+        } else if (updatePhase == 8) {
+            //Activate game timer
+            uint256 gameId = abi.decode(_updateData, (uint256));
+            uint256 timeStamp = (block.timestamp / 120) * 120;
+            IAceTheBrackets16(gamesHub.games(keccak256("ACE16_PROXY")))
+                .performGames(
+                    "",
+                    abi.encode(
+                        [gameId, 0, 0, 0, 0],
+                        [
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes
+                        ],
+                        [
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes
+                        ],
+                        [
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes,
+                            emptyBytes
+                        ]
+                    ),
+                    timeStamp
+                );
+            emit GameTimeStarted(timeStamp);
         }
     }
 
@@ -350,12 +378,6 @@ contract LogAutomationAce16 is ILogAutomation {
                     pricesWinners[i] = pricesEnd[i * 2 + 1];
                 }
             }
-        }
-
-        // Fill the remaining positions with zeros
-        for (uint256 i = 8; i < 16; i++) {
-            winners[i] = 0;
-            pricesWinners[i] = 0;
         }
 
         return (winners, pricesWinners);

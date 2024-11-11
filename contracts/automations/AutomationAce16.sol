@@ -143,7 +143,7 @@ contract AutomationAce16 is AutomationCompatibleInterface {
         bytes memory roundData;
         bool active = true;
 
-        if (currentRound > 3) {
+        if (currentRound > 4) {
             return (false, "");
         } else if ((currentRound == 0) || (currentRound == 1)) {
             (roundData, , , , , , , , , active) = abi.decode(
