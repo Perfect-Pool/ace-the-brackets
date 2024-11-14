@@ -32,7 +32,8 @@ interface ISourceCodesAce {
 interface IAutomationTop100 {
     function sendRequest(
         string calldata source,
-        string[] calldata args
+        string[] calldata args,
+        bytes32 contractSymbol
     ) external;
 }
 
@@ -196,7 +197,7 @@ contract AutomationAce16 is AutomationCompatibleInterface {
                     bool
                 )
             );
-             (teamNames, , , , endTime) = abi.decode(
+            (teamNames, , , , endTime) = abi.decode(
                 roundData,
                 (string[16], uint256[16], uint256[16], uint256, uint256)
             );
@@ -305,7 +306,7 @@ contract AutomationAce16 is AutomationCompatibleInterface {
         string[] memory args = new string[](3);
 
         if (performData.length == 0) {
-            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
+            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE16")))
                 .emitUpdateGame(7, 0);
             emit PerformUpkeep(0, true);
             return;
@@ -315,7 +316,7 @@ contract AutomationAce16 is AutomationCompatibleInterface {
             .decode(performData, (uint256, bytes, bytes));
 
         if (listIds.length == 0) {
-            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
+            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE16")))
                 .emitUpdateGame(8, gameId);
             emit PerformUpkeep(gameId, false);
             return;
@@ -326,7 +327,11 @@ contract AutomationAce16 is AutomationCompatibleInterface {
         args[2] = string(geckoIds);
 
         IAutomationTop100(gamesHub.helpers(keccak256("AUTOMATION_TOP100")))
-            .sendRequest(sourceCodes.updateGame(), args);
+            .sendRequest(
+                sourceCodes.updateGame(),
+                args,
+                keccak256("FUNCTIONS_ACE16")
+            );
 
         emit PerformUpkeep(gameId, false);
     }

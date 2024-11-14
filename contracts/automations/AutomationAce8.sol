@@ -25,13 +25,15 @@ interface IAce8Entry {
 
 interface ISourceCodesAce {
     function updateGame() external view returns (string memory);
+
     function newGame() external view returns (string memory);
 }
 
 interface IAutomationTop100 {
     function sendRequest(
         string calldata source,
-        string[] calldata args
+        string[] calldata args,
+        bytes32 contractSymbol
     ) external;
 }
 
@@ -303,7 +305,11 @@ contract AutomationAce8 is AutomationCompatibleInterface {
         args[2] = string(geckoIds);
 
         IAutomationTop100(gamesHub.helpers(keccak256("AUTOMATION_TOP100")))
-            .sendRequest(sourceCodes.updateGame(), args);
+            .sendRequest(
+                sourceCodes.updateGame(),
+                args,
+                keccak256("FUNCTIONS_ACE8")
+            );
 
         emit PerformUpkeep(gameId, false);
     }

@@ -11,6 +11,13 @@ async function main() {
   let gamesHub = await ethers.getContractAt("GamesHub", networkData.GAMES_HUB);
   console.log(`GamesHub loaded at ${gamesHub.address}`);
 
+  console.log(`Setting Functions16 contract address to GamesHub...`);
+  await gamesHub.setGameContact(
+    networkData.FUNCTIONS_ACE16,
+    ethers.utils.id("FUNCTIONS_ACE16"),
+    true
+  );
+
   if (networkData.ACE16_AUTOMATION === "") {
     console.log(`Deploying AutomationAce16...`);
     const AutomationAce16 = await ethers.getContractFactory("AutomationAce16");

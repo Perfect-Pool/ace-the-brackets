@@ -44,6 +44,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
     uint256 public updateDataIndex;
 
     bool private _setInitialData = true;
+    uint64 public constant SUBSCRIPTION_ID = 176;
 
     constructor(
         address router,
@@ -66,10 +67,6 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
             msg.sender == gamesHub.helpers(keccak256("ACE8_LOGAUTOMATION")) ||
                 msg.sender == gamesHub.games(keccak256("ACE8")) ||
                 msg.sender == gamesHub.helpers(keccak256("ACE8_AUTOMATION")) ||
-                msg.sender ==
-                gamesHub.helpers(keccak256("ACE16_LOGAUTOMATION")) ||
-                msg.sender == gamesHub.helpers(keccak256("ACE16_AUTOMATION")) ||
-                msg.sender == gamesHub.games(keccak256("ACE16")) ||
                 msg.sender == gamesHub.helpers(keccak256("AUTOMATION_TOP100")),
             "Restricted to Project contracts"
         );
@@ -115,7 +112,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
         uint32 callbackGasLimit
     ) external {
         require(
-                msg.sender == gamesHub.helpers(keccak256("AUTOMATION_TOP100")) ||
+            msg.sender == gamesHub.helpers(keccak256("AUTOMATION_TOP100")) ||
                 gamesHub.checkRole(keccak256("ADMIN"), msg.sender),
             "Sender not allowed to send request"
         );
@@ -132,16 +129,6 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
                 keccak256(abi.encodePacked("8"))
             ) {
                 updatePhaseIndex = 2;
-            } else if (
-                keccak256(abi.encodePacked(args[0])) ==
-                keccak256(abi.encodePacked("N16"))
-            ) {
-                updatePhaseIndex = 3;
-            } else if (
-                keccak256(abi.encodePacked(args[0])) ==
-                keccak256(abi.encodePacked("16"))
-            ) {
-                updatePhaseIndex = 4;
             } else if (
                 keccak256(abi.encodePacked(args[0])) ==
                 keccak256(abi.encodePacked("T"))
@@ -165,7 +152,7 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
         }
         s_lastRequestId = _sendRequest(
             req.encodeCBOR(),
-            subscriptionId,
+            SUBSCRIPTION_ID,
             callbackGasLimit,
             donId
         );
@@ -174,11 +161,11 @@ contract FunctionsConsumer is FunctionsClient, ConfirmedOwner {
 
         if (_setInitialData) {
             IAutomationAce(gamesHub.helpers(keccak256("AUTOMATION_TOP100")))
-                    .initialize(
-                        encryptedSecretsReference,
-                        subscriptionId,
-                        callbackGasLimit
-                    );
+                .initialize(
+                    encryptedSecretsReference,
+                    subscriptionId,
+                    callbackGasLimit
+                );
             _setInitialData = false;
         }
     }

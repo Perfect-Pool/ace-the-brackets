@@ -114,6 +114,13 @@ async function main() {
     await new Promise((resolve) => setTimeout(resolve, 5000));
   } else {
     console.log(`AceTheBrackets16 already deployed at ${networkData.ACE16}`);
+    console.log(`Setting AceTheBrackets16 address to GamesHub...`);
+    await GamesHub.setGameContact(
+      networkData.ACE16,
+      ethers.utils.id("ACE16"),
+      false
+    );
+
   }
 
   if (networkData.ACE16_PROXY === "") {

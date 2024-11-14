@@ -232,7 +232,7 @@ contract AceTheBrackets16 {
 
             gameIdToCode[gameIndex] = gameCode;
 
-            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
+            IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE16")))
                 .emitUpdateGame(7, 0);
         } else {
             if (

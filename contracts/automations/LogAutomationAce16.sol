@@ -28,7 +28,8 @@ interface ILogAutomation {
 interface IAutomationTop100 {
     function sendRequestNewGame(
         string calldata arg0,
-        string calldata arg1
+        string calldata arg1,
+        bytes32 contractSymbol
     ) external;
 }
 
@@ -95,7 +96,7 @@ contract LogAutomationAce16 is ILogAutomation {
                     .prepareNewGame16(
                         parseUint8Array(
                             IFunctionsConsumer(
-                                gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                                gamesHub.helpers(keccak256("FUNCTIONS_ACE16"))
                             ).updateData(dataId)
                         )
                     )
@@ -107,7 +108,7 @@ contract LogAutomationAce16 is ILogAutomation {
             );
             uint256[16] memory prices = parseUint256Array(
                 IFunctionsConsumer(
-                    gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                    gamesHub.helpers(keccak256("FUNCTIONS_ACE16"))
                 ).updateData(dataId)
             );
 
@@ -142,7 +143,7 @@ contract LogAutomationAce16 is ILogAutomation {
                     .prepareNewGame16(
                         parseUint8Array(
                             IFunctionsConsumer(
-                                gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                                gamesHub.helpers(keccak256("FUNCTIONS_ACE16"))
                             ).updateData(dataId)
                         )
                     )
@@ -154,7 +155,7 @@ contract LogAutomationAce16 is ILogAutomation {
             );
             uint256[16] memory prices = parseUint256Array(
                 IFunctionsConsumer(
-                    gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                    gamesHub.helpers(keccak256("FUNCTIONS_ACE16"))
                 ).updateData(dataId)
             );
 
@@ -185,7 +186,7 @@ contract LogAutomationAce16 is ILogAutomation {
 
         if (updatePhase == 7) {
             IAutomationTop100(gamesHub.helpers(keccak256("AUTOMATION_TOP100")))
-                .sendRequestNewGame("N16", "16");
+                .sendRequestNewGame("N16", "16", keccak256("FUNCTIONS_ACE16"));
             emit NewGameRequested();
         } else if (updatePhase == 3) {
             IAceTheBrackets16(gamesHub.games(keccak256("ACE16_PROXY")))

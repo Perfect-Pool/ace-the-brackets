@@ -189,21 +189,22 @@ contract AutomationTop100 is AutomationCompatibleInterface {
      * @notice Generic function to send a request to FunctionsConsumer
      * @param source Source code to be executed
      * @param args Arguments to be passed to the source code
+     * @param contractSymbol Contract symbol
      */
     function sendRequest(
         string calldata source,
-        string[] calldata args
+        string[] calldata args,
+        bytes32 contractSymbol
     ) external onlyAutoContract {
-        IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
-            .sendRequest(
-                source,
-                FunctionsRequest.Location.Remote,
-                encryptedSecretsReference,
-                args,
-                new bytes[](0),
-                subscriptionId,
-                callbackGasLimit
-            );
+        IFunctionsConsumer(gamesHub.helpers(contractSymbol)).sendRequest(
+            source,
+            FunctionsRequest.Location.Remote,
+            encryptedSecretsReference,
+            args,
+            new bytes[](0),
+            subscriptionId,
+            callbackGasLimit
+        );
     }
 
     /**
@@ -211,23 +212,23 @@ contract AutomationTop100 is AutomationCompatibleInterface {
      */
     function sendRequestNewGame(
         string calldata arg0,
-        string calldata arg1
+        string calldata arg1,
+        bytes32 contractSymbol
     ) external onlyAutoContract {
         string[] memory args = new string[](2);
         args[0] = arg0;
         args[1] = arg1;
 
-        IFunctionsConsumer(gamesHub.helpers(keccak256("FUNCTIONS_ACE8")))
-            .sendRequest(
-                ISourceCodesAce(gamesHub.helpers(keccak256("SOURCE_CODES_ACE")))
-                    .newGame(),
-                FunctionsRequest.Location.Remote,
-                encryptedSecretsReference,
-                args,
-                new bytes[](0),
-                subscriptionId,
-                callbackGasLimit
-            );
+        IFunctionsConsumer(gamesHub.helpers(contractSymbol)).sendRequest(
+            ISourceCodesAce(gamesHub.helpers(keccak256("SOURCE_CODES_ACE")))
+                .newGame(),
+            FunctionsRequest.Location.Remote,
+            encryptedSecretsReference,
+            args,
+            new bytes[](0),
+            subscriptionId,
+            callbackGasLimit
+        );
     }
 
     /**
