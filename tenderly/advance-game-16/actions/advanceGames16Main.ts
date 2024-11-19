@@ -609,7 +609,7 @@ export const advanceGames16Main: ActionFn = async (
   let newGameCalldata = "0x";
 
   console.log("Checking if there is a new game to be created");
-  if (decodedGames.some((game) => game.game_round === 3)) {
+  if (decodedGames.some((game) => game.game_round === 3) || decodedGames.length === 0) {
     // if (true) {
     newGameCoins = await getCoinsTop(150, 16, context, lastTimeStamp);
     newGameCalldata = await createCalldataForNewGame(newGameCoins);

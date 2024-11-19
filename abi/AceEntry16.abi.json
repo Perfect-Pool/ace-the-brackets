@@ -427,19 +427,6 @@
   {
     "inputs": [
       {
-        "internalType": "uint8",
-        "name": "_newFee",
-        "type": "uint8"
-      }
-    ],
-    "name": "changeProtocolFee",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256[]",
         "name": "_tokenIds",
         "type": "uint256[]"
@@ -826,7 +813,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "players",
+        "name": "",
         "type": "uint256"
       }
     ],

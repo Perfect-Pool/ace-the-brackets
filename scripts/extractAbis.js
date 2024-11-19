@@ -13,6 +13,11 @@ const contracts = [
   { name: "Ace16Proxy", path: "games/Ace16Proxy.sol" },
   { name: "AceEntry16", path: "utils/AceEntry16.sol" },
   { name: "TokenFaucet", path: "utils/TokenFaucet.sol" },
+  { name: "AutomationAce8", path: "automations/AutomationAce8.sol" },
+  { name: "AutomationAce16", path: "automations/AutomationAce16.sol" },
+  { name: "AutomationTop100", path: "automations/AutomationTop100.sol" },
+  { name: "AutomationLogTop100", path: "automations/AutomationLogTop100.sol" },
+  { name: "FunctionsConsumerAce", path: "automations/FunctionsConsumerAce8.sol" },
 ];
 
 // Função para extrair e salvar ABI

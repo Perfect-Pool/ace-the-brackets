@@ -3,6 +3,8 @@ require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require("dotenv").config();
 
+const { ethers } = require("ethers");
+
 const privateKey = process.env.PRIVATE_KEY;
 
 module.exports = {
@@ -31,12 +33,13 @@ module.exports = {
       url: process.env.BASE_RPC_URL,
       accounts: [privateKey],
       chainId: parseInt(process.env.BASE_CHAIN_ID),
+      gasPrice: ethers.utils.parseUnits('0.06', 'gwei').toNumber(),
     },
     polygon: {
       url: process.env.POLYGON_RPC_URL,
       accounts: [privateKey],
       chainId: parseInt(process.env.POLYGON_CHAIN_ID),
-      gasPrice: 150000000000,
+      gasPrice: ethers.utils.parseUnits('150', 'gwei').toNumber(),
     },
   },
   etherscan: {

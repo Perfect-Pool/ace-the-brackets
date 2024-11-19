@@ -18,7 +18,7 @@
     "@truffle/hdwallet-provider": "^2.1.15",
     "axios": "^1.5.1",
     "dotenv": "^16.3.1",
-    "ethers": "^5.5.2",
+    "ethers": "^5",
     "fs-extra": "^11.1.1",
     "hardhat": "^2.20.1",
     "solc": "^0.8.24",

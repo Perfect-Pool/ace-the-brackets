@@ -274,4 +274,30 @@ contract AutomationLogTop100 is ILogAutomation {
         }
         return result;
     }
+
+    function testCheckLog(
+        uint8 updatePhaseIndex,
+        uint256 gameDataIndex,
+        bytes memory
+    )
+        external
+        view
+        returns (bool upkeepNeeded, bytes memory performData)
+    {
+        if (updatePhaseIndex != 5) return (false, "");
+
+        // Parse market data
+        (
+            uint256 lastIndex,
+            ICoins100Store.CoinData[] memory coins
+        ) = parseCoinsReturn(
+                IFunctionsConsumer(
+                    gamesHub.helpers(keccak256("FUNCTIONS_ACE8"))
+                ).updateData(gameDataIndex)
+            );
+
+        // Encode data for performUpkeep
+        performData = abi.encode(lastIndex, coins);
+        upkeepNeeded = true;
+    }
 }
