@@ -418,7 +418,7 @@ contract LogAutomationAce8 is ILogAutomation {
                     break;
                 }
             }
-            pricesEnd[i] = parseUint(stringArray, startIndex, endIndex);
+            pricesEnd[i] = parseUint(stringArray, startIndex, endIndex + (endIndex == stringArray.length - 1 ? 1 : 0));
             startIndex = endIndex + 1;
         }
 
@@ -450,7 +450,7 @@ contract LogAutomationAce8 is ILogAutomation {
                     break;
                 }
             }
-            uint256 value = parseUint(stringArray, startIndex, endIndex);
+            uint256 value = parseUint(stringArray, startIndex, endIndex + (endIndex == stringArray.length - 1 ? 1 : 0));
             require(value <= type(uint8).max, "Value exceeds uint8 max");
             values[i] = uint8(value);
             startIndex = endIndex + 1;

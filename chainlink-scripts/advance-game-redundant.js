@@ -4,6 +4,8 @@ if (secrets.cmcApiKey === "") {
 }
 
 const quantity = parseInt(qty);
+const PRECISION = 10 ** 8;
+const EPSILON = 1e-10; // Small value to handle floating-point precision
 
 // Filter out empty and zero IDs from CMC
 const cmcIdArray = cmcIds.split(",").filter((id) => id !== "0" && id !== "");
@@ -35,9 +37,9 @@ try {
     let prices = cmcIdArray.map((id) => {
       const symbol = idToSymbol[id];
       if (data[symbol] && data[symbol].quote && data[symbol].quote.USD) {
-        return Math.round(data[symbol].quote.USD.price * 10 ** 8) === 0
-          ? 1
-          : Math.round(data[symbol].quote.USD.price * 10 ** 8);
+        const price = data[symbol].quote.USD.price;
+        const scaledPrice = Math.floor((price + EPSILON) * PRECISION);
+        return scaledPrice > 0 ? scaledPrice : 1;
       }
       return 0;
     });
@@ -65,9 +67,9 @@ try {
   if (geckoResponse.data) {
     let prices = geckoIdArray.map((geckoId) => {
       if (geckoResponse.data[geckoId] && geckoResponse.data[geckoId].usd) {
-        return Math.round(geckoResponse.data[geckoId].usd * 10 ** 8) === 0
-          ? 1
-          : Math.round(geckoResponse.data[geckoId].usd * 10 ** 8);
+        const price = geckoResponse.data[geckoId].usd;
+        const scaledPrice = Math.floor((price + EPSILON) * PRECISION);
+        return scaledPrice > 0 ? scaledPrice : 1;
       }
       return 0;
     });
