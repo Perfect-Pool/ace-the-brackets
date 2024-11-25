@@ -44,6 +44,8 @@ async function main() {
 
   const results = [];
   let totalToDeposit = ethers.BigNumber.from(0);
+  let needsAttention = false;
+  let criticalContracts = [];
 
   // Process automations
   for (const automation of config.automations) {
@@ -63,18 +65,20 @@ async function main() {
       status = `\x1b[33mMedium (${percentageAboveMin.toFixed(0)}%)\x1b[0m`;
     } else if (percentageAboveMin >= 4) {
       status = `\x1b[35mLow (${percentageAboveMin.toFixed(0)}%)\x1b[0m`;
-      // Send Sentry log for low balance
-      await sendSentryLog(
-        `Low LINK balance for Automation ${automation.name}: ${percentageAboveMin.toFixed(2)}% above minimum`,
-        'warning'
-      );
+      needsAttention = true;
+      criticalContracts.push({
+        name: automation.name,
+        type: 'Automation',
+        percentage: percentageAboveMin
+      });
     } else {
       status = `\x1b[31mCritical (${percentageAboveMin.toFixed(0)}%)\x1b[0m`;
-      // Send Sentry log for critical balance
-      await sendSentryLog(
-        `Critical LINK balance for Automation ${automation.name}: ${percentageAboveMin.toFixed(2)}% above minimum`,
-        'error'
-      );
+      needsAttention = true;
+      criticalContracts.push({
+        name: automation.name,
+        type: 'Automation',
+        percentage: percentageAboveMin
+      });
     }
 
     const targetBalance = minBalanceLink * 1.2;
@@ -112,18 +116,20 @@ async function main() {
       status = `\x1b[33mMedium (${percentageAboveMin.toFixed(0)}%)\x1b[0m`;
     } else if (percentageAboveMin >= 4) {
       status = `\x1b[35mLow (${percentageAboveMin.toFixed(0)}%)\x1b[0m`;
-      // Send Sentry log for low balance
-      await sendSentryLog(
-        `Low LINK balance for Functions ${func.name}: ${percentageAboveMin.toFixed(2)}% above minimum`,
-        'warning'
-      );
+      needsAttention = true;
+      criticalContracts.push({
+        name: func.name,
+        type: 'Functions',
+        percentage: percentageAboveMin
+      });
     } else {
       status = `\x1b[31mCritical (${percentageAboveMin.toFixed(0)}%)\x1b[0m`;
-      // Send Sentry log for critical balance
-      await sendSentryLog(
-        `Critical LINK balance for Functions ${func.name}: ${percentageAboveMin.toFixed(2)}% above minimum`,
-        'error'
-      );
+      needsAttention = true;
+      criticalContracts.push({
+        name: func.name,
+        type: 'Functions',
+        percentage: percentageAboveMin
+      });
     }
 
     const toDeposit = currentBalanceLink >= 1 ? 0 : 1 - currentBalanceLink;
@@ -173,6 +179,18 @@ async function main() {
   console.log(table.toString());
   console.log("\nTotal LINK needed for deposit:", 
     parseFloat(ethers.utils.formatEther(totalToDeposit)).toFixed(4));
+
+  // Send a single Sentry message if there are any contracts needing attention
+  if (needsAttention) {
+    const totalWithBuffer = parseFloat(ethers.utils.formatEther(totalToDeposit)) * 1.2;
+    let message = `LINK Balance Alert:\n`;
+    criticalContracts.forEach(contract => {
+      message += `- ${contract.type} ${contract.name}: ${contract.percentage.toFixed(2)}% above minimum\n`;
+    });
+    message += `\nTotal LINK needed (with 20% buffer): ${totalWithBuffer.toFixed(4)}`;
+    
+    await sendSentryLog(message, criticalContracts.some(c => c.percentage < 4) ? 'error' : 'warning');
+  }
 }
 
 main()
