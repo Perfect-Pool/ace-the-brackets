@@ -17,6 +17,7 @@
     "@truffle/contract": "^4.6.31",
     "@truffle/hdwallet-provider": "^2.1.15",
     "axios": "^1.5.1",
+    "cli-table3": "^0.6.5",
     "dotenv": "^16.3.1",
     "ethers": "^5",
     "fs-extra": "^11.1.1",
@@ -46,6 +47,8 @@
     "verify-library-1": "hardhat run scripts/verify/verifyBuildImageAce.js --network",
     "verify-library-2": "hardhat run scripts/verify/verifyImageBetTexts.js --network",
     "verify-library-3": "hardhat run scripts/verify/verifyImageParts.js --network",
-    "verify-all": "node scripts/verify-all.js"
+    "verify-all": "node scripts/verify-all.js",
+    "chainlink-balance": "npx hardhat run scripts/checkLinkBalances.js --network",
+    "chainlink-fund": "npx hardhat run scripts/fundLinkBalances.js --network"
   }
 }

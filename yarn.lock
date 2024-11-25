@@ -469,6 +469,11 @@
     human-id "^1.0.2"
     prettier "^2.7.1"
 
+"@colors/colors@1.5.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
+  integrity sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==
+
 "@ensdomains/address-encoder@^0.1.7":
   version "0.1.9"
   resolved "https://registry.yarnpkg.com/@ensdomains/address-encoder/-/address-encoder-0.1.9.tgz#f948c485443d9ef7ed2c0c4790e931c33334d02d"
@@ -3471,6 +3476,15 @@ cli-regexp@~0.1.0:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/cli-regexp/-/cli-regexp-0.1.2.tgz#6bcd93b09fb2ed1025d30a1155d5997954a53512"
   integrity sha512-L++cAQ5g0Nu6aV56B3uaR+c7jEGSAa4WApY1ZN7XiD8niJ5jRfXE/qvMwgz3uZBG0rft4hJS75Vpz2F3mSm4Mg==
+
+cli-table3@^0.6.5:
+  version "0.6.5"
+  resolved "https://registry.yarnpkg.com/cli-table3/-/cli-table3-0.6.5.tgz#013b91351762739c16a9567c21a04632e449bf2f"
+  integrity sha512-+W/5efTR7y5HRD7gACw9yQjqMVvEMLBHmboM/kPWam+H+Hmyrgjh6YncVKK122YZkXrLudzTuAukUw9FnMf7IQ==
+  dependencies:
+    string-width "^4.2.0"
+  optionalDependencies:
+    "@colors/colors" "1.5.0"
 
 cli-util@~1.1.27:
   version "1.1.27"
