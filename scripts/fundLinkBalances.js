@@ -16,6 +16,8 @@ async function main() {
   // Initialize LINK token contract with our custom interface
   const linkTokenAbi = [
     "function balanceOf(address owner) view returns (uint256)",
+    "function approve(address spender, uint256 value) returns (bool)",
+    "function allowance(address owner, address spender) view returns (uint256)",
     "function transferAndCall(address to, uint256 value, bytes calldata data) returns (bool)"
   ];
   const linkToken = new ethers.Contract(config.LINK_TOKEN, linkTokenAbi, signer);
@@ -140,12 +142,14 @@ async function main() {
       const isAutomation = config.automations.some(a => a.name === result.name);
 
       if (isAutomation) {
-        // Fund automation using transferAndCall
-        const tx = await linkToken.transferAndCall(
-          config.AUTOMATIONS_REGISTRY,
-          fundAmount,
-          ethers.utils.defaultAbiCoder.encode(["uint96"], [result.id])
-        );
+        const allowance = await linkToken.allowance(signer.address, config.AUTOMATIONS_REGISTRY);
+        if (allowance.lt(fundAmount)) {
+          const approveTx = await linkToken.approve(config.AUTOMATIONS_REGISTRY, ethers.constants.MaxUint256);
+          await approveTx.wait();
+        }
+        
+        // Fund automation using addFunds
+        const tx = await registry.addFunds(result.id, fundAmount);
         await tx.wait();
       } else {
         // Fund Functions subscription using transferAndCall
