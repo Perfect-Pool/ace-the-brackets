@@ -24,28 +24,15 @@ module.exports = {
       accounts: [privateKey],
       chainId: parseInt(process.env.BASE_TESTNET_CHAIN_ID),
     },
-    mumbai: {
-      url: process.env.MUMBAI_RPC_URL,
-      accounts: [privateKey],
-      chainId: parseInt(process.env.MUMBAI_CHAIN_ID),
-    },
     base: {
       url: process.env.BASE_RPC_URL,
       accounts: [privateKey],
       chainId: parseInt(process.env.BASE_CHAIN_ID),
       gasPrice: ethers.utils.parseUnits('0.06', 'gwei').toNumber(),
-    },
-    polygon: {
-      url: process.env.POLYGON_RPC_URL,
-      accounts: [privateKey],
-      chainId: parseInt(process.env.POLYGON_CHAIN_ID),
-      gasPrice: ethers.utils.parseUnits('150', 'gwei').toNumber(),
-    },
+    }
   },
   etherscan: {
     apiKey: {
-      polygon: process.env.POLYGON_BLOCK_EXPLORER_API_KEY,
-      polygonMumbai: process.env.MUMBAI_BLOCK_EXPLORER_API_KEY,
       base: process.env.BASE_BLOCK_EXPLORER_API_KEY,
       "base-testnet": process.env.BASE_TESTNET_BLOCK_EXPLORER_API_KEY,
     },
