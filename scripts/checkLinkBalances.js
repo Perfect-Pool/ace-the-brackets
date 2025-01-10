@@ -18,6 +18,16 @@ async function sendSentryLog(message, level) {
     );
   } catch (error) {
     console.error("Error sending Sentry log:", error.message);
+    await callWebhook();
+  }
+}
+
+async function callWebhook() {
+  try {
+    await axios.post('http://3.139.107.23:5678/webhook/ace-the-brackets/fund-chainlink');
+    console.log('Successfully called fund-chainlink webhook');
+  } catch (error) {
+    console.error('Error calling fund-chainlink webhook:', error.message);
   }
 }
 
@@ -182,12 +192,12 @@ async function main() {
 
   // Send a single Sentry message if there are any contracts needing attention
   if (needsAttention) {
-    const totalWithBuffer = parseFloat(ethers.utils.formatEther(totalToDeposit)) * 1.20;
+    const totalWithBuffer = parseFloat(ethers.utils.formatEther(totalToDeposit)) * 1.25;
     let message = `LINK Balance Alert:\n`;
     criticalContracts.forEach(contract => {
       message += `- ${contract.type} ${contract.name}: ${contract.percentage.toFixed(2)}% above minimum\n`;
     });
-    message += `\nTotal LINK needed (with 20% buffer): ${totalWithBuffer.toFixed(4)}`;
+    message += `\nTotal LINK needed (with 25% buffer): ${totalWithBuffer.toFixed(4)}`;
     
     await sendSentryLog(message, criticalContracts.some(c => c.percentage < 15) ? 'error' : 'warning');
   }
