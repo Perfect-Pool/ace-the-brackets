@@ -13,6 +13,8 @@ async function main() {
 
   const [signer] = await ethers.getSigners();
 
+  const MIN_PERCENTAGE = 20;
+
   // Initialize LINK token contract with our custom interface
   const linkTokenAbi = [
     "function balanceOf(address owner) view returns (uint256)",
@@ -49,7 +51,7 @@ async function main() {
   let totalFunded = ethers.BigNumber.from(0);
 
   // Process automations
-  console.log("\nProcessing automations below 8%...");
+  console.log(`\nProcessing automations below ${MIN_PERCENTAGE}%...`);
   for (const automation of config.automations) {
     const currentBalance = await registry.getBalance(automation.id);
     const minBalance = await registry.getMinBalance(automation.id);
@@ -58,8 +60,8 @@ async function main() {
     const minBalanceLink = parseFloat(ethers.utils.formatEther(minBalance));
     const percentageAboveMin = ((currentBalanceLink - minBalanceLink) / minBalanceLink) * 100;
 
-    // Only consider automations below 8%
-    if (percentageAboveMin < 8) {
+    // Only consider automations below MIN_PERCENTAGE%
+    if (percentageAboveMin < MIN_PERCENTAGE) {
       const targetBalance = minBalanceLink * 1.2; // Target is min + 20%
       const toFund = Math.max(0, targetBalance - currentBalanceLink);
 
@@ -81,15 +83,15 @@ async function main() {
   }
 
   // Process Functions subscriptions
-  console.log("\nProcessing Functions subscriptions below 8%...");
+  console.log(`\nProcessing Functions subscriptions below ${MIN_PERCENTAGE}%...`);
   for (const func of config.functions) {
     const subscription = await functionsRouter.getSubscription(func.id);
     const currentBalanceLink = parseFloat(ethers.utils.formatEther(subscription.balance));
     const minBalanceLink = 0.5; // Fixed minimum balance for Functions
     const percentageAboveMin = ((currentBalanceLink - minBalanceLink) / minBalanceLink) * 100;
 
-    // Only consider functions below 8%
-    if (percentageAboveMin < 8) {
+    // Only consider functions below MIN_PERCENTAGE%
+    if (percentageAboveMin < MIN_PERCENTAGE) {
       const targetBalance = minBalanceLink * 1.2; // Target is min + 20%
       const toFund = Math.max(0, targetBalance - currentBalanceLink);
 
