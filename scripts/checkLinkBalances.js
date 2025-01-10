@@ -59,11 +59,11 @@ async function main() {
 
     // Determine status and send Sentry logs if needed
     let status;
-    if (percentageAboveMin >= 12) {
+    if (percentageAboveMin >= 20) {
       status = `\x1b[32mOK (${percentageAboveMin.toFixed(0)}%)\x1b[0m`;
-    } else if (percentageAboveMin >= 8) {
+    } else if (percentageAboveMin >= 15) {
       status = `\x1b[33mMedium (${percentageAboveMin.toFixed(0)}%)\x1b[0m`;
-    } else if (percentageAboveMin >= 4) {
+    } else if (percentageAboveMin >= 10) {
       status = `\x1b[35mLow (${percentageAboveMin.toFixed(0)}%)\x1b[0m`;
       needsAttention = true;
       criticalContracts.push({
@@ -110,11 +110,11 @@ async function main() {
 
     // Determine status for Functions and send Sentry logs if needed
     let status;
-    if (percentageAboveMin >= 12) {
+    if (percentageAboveMin >= 20) {
       status = `\x1b[32mOK (${percentageAboveMin.toFixed(0)}%)\x1b[0m`;
-    } else if (percentageAboveMin >= 8) {
+    } else if (percentageAboveMin >= 15) {
       status = `\x1b[33mMedium (${percentageAboveMin.toFixed(0)}%)\x1b[0m`;
-    } else if (percentageAboveMin >= 4) {
+    } else if (percentageAboveMin >= 10) {
       status = `\x1b[35mLow (${percentageAboveMin.toFixed(0)}%)\x1b[0m`;
       needsAttention = true;
       criticalContracts.push({
@@ -182,14 +182,14 @@ async function main() {
 
   // Send a single Sentry message if there are any contracts needing attention
   if (needsAttention) {
-    const totalWithBuffer = parseFloat(ethers.utils.formatEther(totalToDeposit)) * 1.2;
+    const totalWithBuffer = parseFloat(ethers.utils.formatEther(totalToDeposit)) * 1.20;
     let message = `LINK Balance Alert:\n`;
     criticalContracts.forEach(contract => {
       message += `- ${contract.type} ${contract.name}: ${contract.percentage.toFixed(2)}% above minimum\n`;
     });
     message += `\nTotal LINK needed (with 20% buffer): ${totalWithBuffer.toFixed(4)}`;
     
-    await sendSentryLog(message, criticalContracts.some(c => c.percentage < 4) ? 'error' : 'warning');
+    await sendSentryLog(message, criticalContracts.some(c => c.percentage < 15) ? 'error' : 'warning');
   }
 }
 

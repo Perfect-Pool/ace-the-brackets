@@ -13,7 +13,7 @@ async function main() {
 
   const [signer] = await ethers.getSigners();
 
-  const MIN_PERCENTAGE = 20;
+  const MIN_PERCENTAGE = 15;
 
   // Initialize LINK token contract with our custom interface
   const linkTokenAbi = [
@@ -62,7 +62,7 @@ async function main() {
 
     // Only consider automations below MIN_PERCENTAGE%
     if (percentageAboveMin < MIN_PERCENTAGE) {
-      const targetBalance = minBalanceLink * 1.2; // Target is min + 20%
+      const targetBalance = minBalanceLink * 1.25; // Target is min + 25%
       const toFund = Math.max(0, targetBalance - currentBalanceLink);
 
       if (toFund > 0) {
@@ -92,7 +92,7 @@ async function main() {
 
     // Only consider functions below MIN_PERCENTAGE%
     if (percentageAboveMin < MIN_PERCENTAGE) {
-      const targetBalance = minBalanceLink * 1.2; // Target is min + 20%
+      const targetBalance = minBalanceLink * 1.25; // Target is min + 25%
       const toFund = Math.max(0, targetBalance - currentBalanceLink);
 
       if (toFund > 0) {
