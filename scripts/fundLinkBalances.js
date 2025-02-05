@@ -87,7 +87,7 @@ async function main() {
   for (const func of config.functions) {
     const subscription = await functionsRouter.getSubscription(func.id);
     const currentBalanceLink = parseFloat(ethers.utils.formatEther(subscription.balance));
-    const minBalanceLink = 0.5; // Fixed minimum balance for Functions
+    const minBalanceLink = 0.4; // Fixed minimum balance for Functions
     const percentageAboveMin = ((currentBalanceLink - minBalanceLink) / minBalanceLink) * 100;
 
     // Only consider functions below MIN_PERCENTAGE%
